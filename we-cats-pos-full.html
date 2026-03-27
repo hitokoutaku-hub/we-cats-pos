@@ -5,6 +5,174 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>WE CATS</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===== SUPABASE設定 =====
+const SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ===== Supabase同期ヘルパー（fetch版）=====
+async function supaUpsert(table, data) {
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
+      method: 'POST',
+      headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(data)
+    });
+    if(!res.ok) { const t = await res.text(); console.error('Supabase upsert error:', table, t); }
+  } catch(e) { console.error('Supabase upsert error:', table, e.message); }
+}
+async function supaDelete(table, id) {
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: supaHeaders
+    });
+    if(!res.ok) { const t = await res.text(); console.error('Supabase delete error:', table, t); }
+  } catch(e) { console.error('Supabase delete error:', table, e.message); }
+}
+async function supaLoad(table) {
+  try {
+    const res = await fetch(SUPA_URL + '/rest/v1/' + table + '?select=*', {
+      headers: supaHeaders
+    });
+    if(!res.ok) { const t = await res.text(); console.error('Supabase load error:', table, t); return null; }
+    return await res.json();
+  } catch(e) { console.error('Supabase load error:', table, e.message); return null; }
+}
+
+// ===== 初回ロード: Supabaseからデータを取得 =====
+async function loadFromSupabase() {
+  console.log('Loading from Supabase...');
+  try {
+  
+  // 来店データ
+  const guests = await supaLoad('pos_guests');
+  if(guests && guests.length > 0) {
+    G = guests.map(g => ({
+      id: parseInt(g.id) || g.id,
+      d: g.date, tp: g.type, pt: g.pattern,
+      a: g.adults, c: g.children,
+      ci: g.checkin, co: g.checkout,
+      pr: g.price, st: g.status,
+      fn: g.free_nyan, bc: g.binder_color,
+      bcn: g.binder_name, mo: g.memo,
+      aq: g.survey || {}
+    }));
+  }
+  
+  // 物販データ
+  const merch = await supaLoad('pos_merch');
+  if(merch && merch.length > 0) {
+    MS = merch.map(m => ({ d: m.date, i: m.items, total: m.total }));
+  }
+  
+  // 物販商品マスタ
+  const merchItems = await supaLoad('pos_merch_items');
+  if(merchItems && merchItems.length > 0) {
+    MI = merchItems.sort((a,b) => a.sort_order - b.sort_order)
+      .map(m => ({ id: m.id, n: m.name, p: m.price }));
+  }
+  
+  // カルテ
+  const customers = await supaLoad('pos_customers');
+  if(customers && customers.length > 0) {
+    CU = customers.map(c => ({
+      id: parseInt(c.id) || c.id,
+      memberNo: c.member_no, name: c.name,
+      look: c.look, pref: c.pref,
+      alert: c.alert, birth: c.birth,
+      photo: c.photo,
+      trigger: c.trigger_list || [],
+      companion: c.companion || [],
+      gacha: c.gacha,
+      oshiCats: c.oshi_cats || [],
+      visits: c.visits || [],
+      memos: c.memos || []
+    }));
+  }
+  
+  // 金種
+  const cash = await supaLoad('pos_cash');
+  if(cash && cash.length > 0) {
+    CR = cash.map(c => ({ ...c.data, d: c.date, id: c.id }));
+  }
+  
+  // 設定
+  const settings = await supaLoad('pos_settings');
+  if(settings) {
+    const priceSetting = settings.find(s => s.key === 'price');
+    if(priceSetting) Price = { ...DefaultPrice, ...priceSetting.value };
+    const bcSetting = settings.find(s => s.key === 'binder_colors');
+    if(bcSetting) BCs = bcSetting.value;
+    const catsSetting = settings.find(s => s.key === 'cats');
+    if(catsSetting) Cats = catsSetting.value;
+    const trisSetting = settings.find(s => s.key === 'triggers');
+    if(trisSetting) Tris = trisSetting.value;
+    const carryMembersSetting = settings.find(s => s.key === 'carry_members');
+    if(carryMembersSetting) CarryMembers = carryMembersSetting.value;
+  }
+  
+  console.log('Supabase load complete!');
+  sv();
+  rfAll();
+  } catch(e) {
+    console.error('loadFromSupabase error:', e.message);
+    rfAll();
+  }
+}
+
+// ===== Supabaseへの保存関数 =====
+async function saveGuestToSupa(g) {
+  await supaUpsert('pos_guests', {
+    id: String(g.id), date: g.d, type: g.tp,
+    pattern: g.pt, adults: g.a, children: g.c,
+    checkin: g.ci, checkout: g.co || '',
+    price: g.pr, status: g.st,
+    free_nyan: g.fn, binder_color: g.bc || '',
+    binder_name: g.bcn || '', memo: g.mo || '',
+    survey: g.aq || {}
+  });
+}
+async function saveMerchToSupa(m) {
+  await supaUpsert('pos_merch', {
+    id: m.d, date: m.d, items: m.i, total: m.total
+  });
+}
+async function saveMerchItemsToSupa() {
+  for(let i=0; i<MI.length; i++) {
+    await supaUpsert('pos_merch_items', {
+      id: String(MI[i].id), name: MI[i].n,
+      price: MI[i].p, sort_order: i
+    });
+  }
+}
+async function saveCustomerToSupa(c) {
+  await supaUpsert('pos_customers', {
+    id: String(c.id), member_no: c.memberNo || '',
+    name: c.name, look: c.look || '',
+    pref: c.pref || '', alert: c.alert || '',
+    birth: c.birth || '', photo: c.photo || '',
+    trigger_list: c.trigger || [],
+    companion: c.companion || [],
+    gacha: c.gacha || '',
+    oshi_cats: c.oshiCats || [],
+    visits: c.visits || [],
+    memos: c.memos || []
+  });
+}
+async function saveCashToSupa(r) {
+  await supaUpsert('pos_cash', {
+    id: String(r.id || r.d), date: r.d, data: r
+  });
+}
+async function saveSettingToSupa(key, value) {
+  await supaUpsert('pos_settings', { key, value, updated_at: new Date().toISOString() });
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Kaisei+Opti:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -801,6 +969,7 @@ function savePriceSettings(){
   Price.hd60 = parseInt(document.getElementById('pr-hd60').value)||0;
   Price.fn = parseInt(document.getElementById('pr-fn').value)||0;
   savePrice();
+  saveSettingToSupa('price', Price);
   updateMenuPriceView();
   toast('料金設定を保存しました ✅');
   cModal('m-price');
@@ -912,7 +1081,7 @@ function regGuest(){
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
   var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
-  G.push(g);sv();toast('入店登録しました 🐾');
+  G.push(g);sv();saveGuestToSupa(g);toast('入店登録しました 🐾');
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
   document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
@@ -958,7 +1127,7 @@ function confCO(){
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var r=calcP(g.a,g.c,ci,co,g.d,g.fn);
   g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup);g.mo=document.getElementById('co-mo').value;g.st='done';
-  sv();cModal('m-co');rfAll();toast('退店登録しました ✅');
+  sv();saveGuestToSupa(g);cModal('m-co');rfAll();toast('退店登録しました ✅');
 }
 function showRcpt(){
   var g=G.find(function(x){return x.id===coId;});if(!g)return;
@@ -1094,7 +1263,7 @@ function saveMerch(){
   for(var i=0;i<MI.length;i++)items.push({id:MI[i].id,n:MI[i].n,p:MI[i].p,q:MQ[MI[i].id]||0});
   var total=0;for(var j=0;j<items.length;j++)total+=items[j].q*items[j].p;
   MS=MS.filter(function(m){return m.d!==t;});MS.push({d:t,i:items,total:total});
-  sv();rMerch();rGuests();toast('物販を保存しました 🛍️');
+  sv();saveMerchToSupa(MS.find(function(m){return m.d===t;}));rMerch();rGuests();toast('物販を保存しました 🛍️');
 }
 function oMF(id){
   document.getElementById('mf-id').value=id||'';
@@ -1108,7 +1277,7 @@ function saveMI(){
   var eid=parseInt(document.getElementById('mf-id').value);
   if(eid){var item=MI.find(function(x){return x.id===eid;});if(item){item.n=n;item.p=p;}}
   else MI.push({id:Date.now(),n:n,p:p});
-  sv();cModal('m-mf');rMerch();toast(eid?(n+' を更新しました'):(n+' を追加しました'));
+  sv();saveMerchItemsToSupa();cModal('m-mf');rMerch();toast(eid?(n+' を更新しました'):(n+' を追加しました'));
 }
 function delMI(id){if(!confirm('削除しますか？'))return;MI=MI.filter(function(x){return x.id!==id;});delete MQ[id];sv();rMerch();}
 
@@ -1227,7 +1396,7 @@ function saveCust(){
   var gEl=document.querySelector('#cf-gach .chip.on');var gacha=gEl?gEl.getAttribute('data-v'):'';
   if(custId){var c=CU.find(function(x){return x.id===custId;});if(c){c.name=name;c.look=document.getElementById('cf-look').value;c.pref=document.getElementById('cf-pref').value;c.alert=document.getElementById('cf-alert').value;c.birth=document.getElementById('cf-birth').value;c.photo=editPh;c.trigger=cfCh.tri.slice();c.companion=cfCh.companion.slice();c.gacha=gacha;c.oshiCats=cfCh.cats.slice();}}
   else{var no=String(CU.length+1).padStart(3,'0');CU.push({id:Date.now(),memberNo:no,name:name,look:document.getElementById('cf-look').value,pref:document.getElementById('cf-pref').value,alert:document.getElementById('cf-alert').value,birth:document.getElementById('cf-birth').value,photo:editPh,trigger:cfCh.tri.slice(),companion:cfCh.companion.slice(),gacha:gacha,oshiCats:cfCh.cats.slice(),visits:[],memos:[]});}
-  sv();cModal('m-cf');rCarte();toast(custId?'更新しました':'登録しました');
+  sv();var savedC=custId?CU.find(function(x){return x.id===custId;}):CU[CU.length-1];if(savedC)saveCustomerToSupa(savedC);cModal('m-cf');rCarte();toast(custId?'更新しました':'登録しました');
 }
 function delCust(id){var c=CU.find(function(x){return x.id===id;});if(!c||!confirm(c.name+' を削除しますか？'))return;CU=CU.filter(function(x){return x.id!==id;});sv();cModal('m-det');rCarte();toast('削除しました');}
 function oMemoModal(){document.getElementById('memo-txt').value='';oModal('m-memo');}
@@ -1374,7 +1543,7 @@ function saveCash(){
   var carryName=document.getElementById('k-carry-name')?document.getElementById('k-carry-name').value:'';
   var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,grand:grand,net:net,id:Date.now()};
   for(var j=0;j<AD.length;j++)data[AD[j].id]=CQ[AD[j].id]||0;
-  CR=CR.filter(function(r){return r.d!==date;});CR.push(data);sv();cModal('m-cash');rCash();toast('金種登録しました 💴');
+  CR=CR.filter(function(r){return r.d!==date;});CR.push(data);sv();saveCashToSupa(data);cModal('m-cash');rCash();toast('金種登録しました 💴');
 }
 function chKM(d){kM.setMonth(kM.getMonth()+d);rCash();}
 function rCash(){
@@ -1428,7 +1597,7 @@ function saveGEdit(){
   var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
   if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,g.fn);pr=r.t;}
   g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=document.getElementById('ge-mo').value;g.st=co?'done':'stay';
-  sv();cModal('m-gedit');rfAll();toast('編集しました ✅');
+  sv();var editedG=G.find(function(x){return x.id===id;});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
 function delGuest(){var id=parseInt(document.getElementById('ge-id').value);if(!confirm('この記録を削除しますか？'))return;G=G.filter(function(x){return x.id!==id;});sv();cModal('m-gedit');rfAll();toast('削除しました');}
 
@@ -1782,7 +1951,9 @@ function init(){
   var allOvs=document.querySelectorAll('.ov');
   for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
-  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();rfAll();
+  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();
+  // Supabaseからデータロード
+  loadFromSupabase().catch(function(e){ console.error('Load error:', e); rfAll(); });
 }
 init();
 </script>
