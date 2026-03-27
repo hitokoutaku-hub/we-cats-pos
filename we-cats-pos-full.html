@@ -12,7 +12,13 @@
 // ===== SUPABASE設定 =====
 const SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
-const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+// supabaseクライアント（互換性のため残す）
+const supaHeaders = {
+  'apikey': SUPA_KEY,
+  'Authorization': 'Bearer ' + SUPA_KEY,
+  'Content-Type': 'application/json',
+  'Prefer': 'return=minimal'
+};
 
 // ===== Supabase同期ヘルパー（fetch版）=====
 async function supaUpsert(table, data) {
