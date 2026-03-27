@@ -97,25 +97,31 @@ function loadFromSupabase() {
       if(cms) CarryMembers=cms.value;
     }
 
-    // localStorageにデータがあってSupabaseが空なら移行
-    var localG=JSON.parse(localStorage.getItem('wc_g')||'[]');
-    var localMS=JSON.parse(localStorage.getItem('wc_ms')||'[]');
-    var localCU=JSON.parse(localStorage.getItem('wc_cu')||'[]');
-    var localCR=JSON.parse(localStorage.getItem('wc_cr')||'[]');
-    if((!guests||guests.length===0)&&localG.length>0) {
-      G=localG; localG.forEach(function(g){saveGuestToSupa(g);});
+    // localStorageにデータがあってSupabaseが空なら移行（初回のみ）
+    var migrated = localStorage.getItem('wc_migrated');
+    if(!migrated) {
+      var localG=JSON.parse(localStorage.getItem('wc_g')||'[]');
+      var localMS=JSON.parse(localStorage.getItem('wc_ms')||'[]');
+      var localCU=JSON.parse(localStorage.getItem('wc_cu')||'[]');
+      var localCR=JSON.parse(localStorage.getItem('wc_cr')||'[]');
+      if((!guests||guests.length===0)&&localG.length>0) {
+        G=localG; localG.forEach(function(g){saveGuestToSupa(g);});
+        localStorage.setItem('wc_migrated','1');
+      }
+      if((!merch||merch.length===0)&&localMS.length>0) {
+        MS=localMS; localMS.forEach(function(m){saveMerchToSupa(m);});
+        localStorage.setItem('wc_migrated','1');
+      }
+      if((!customers||customers.length===0)&&localCU.length>0) {
+        CU=localCU; localCU.forEach(function(c){saveCustomerToSupa(c);});
+        localStorage.setItem('wc_migrated','1');
+      }
+      if((!cash||cash.length===0)&&localCR.length>0) {
+        CR=localCR; localCR.forEach(function(r){saveCashToSupa(r);});
+        localStorage.setItem('wc_migrated','1');
+      }
     }
-    if((!merch||merch.length===0)&&localMS.length>0) {
-      MS=localMS; localMS.forEach(function(m){saveMerchToSupa(m);});
-    }
-    if((!customers||customers.length===0)&&localCU.length>0) {
-      CU=localCU; localCU.forEach(function(c){saveCustomerToSupa(c);});
-    }
-    if((!cash||cash.length===0)&&localCR.length>0) {
-      CR=localCR; localCR.forEach(function(r){saveCashToSupa(r);});
-    }
-
-    sv(); rfAll();
+        sv(); rfAll();
     console.log('Supabase load complete!');
   }).catch(function(e){console.error('loadFromSupabase error:',e.message);rfAll();});
 }
@@ -1287,10 +1293,12 @@ function cancelMerch(){
   var t=td();
   MS=MS.filter(function(m){return m.d!==t;});
   for(var id in MQ) MQ[id]=0;
-  localStorage.setItem('wc_ms',JSON.stringify(MS));
-  supaDelete('pos_merch', t);
-  rMerch();rGuests();
-  toast('物販記録を取り消しました');
+  sv(); // localStorage全体を更新
+  // Supabaseから削除してから画面更新
+  supaDelete('pos_merch', t).then(function(){
+    rMerch();rGuests();
+    toast('物販記録を取り消しました');
+  });
 }
 
 // ===== CARTE =====
