@@ -1273,6 +1273,15 @@ function editMerch(){
   sv();rMerch();rGuests();
   toast('編集モードにしました。変更後「保存」を押してください');
 }
+function delMI(id){
+  if(!confirm('削除しますか？'))return;
+  MI=MI.filter(function(x){return x.id!==id;});
+  delete MQ[id];
+  sv();
+  saveMerchItemsToSupa();
+  rMerch();
+  toast('削除しました');
+}
 function cancelMerch(){
   if(!confirm('本日の物販記録を取り消しますか？'))return;
   var t=td();
