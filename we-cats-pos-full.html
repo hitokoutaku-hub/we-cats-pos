@@ -7,202 +7,151 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
 <!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ===== SUPABASE設定 =====
-const SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
-// supabaseクライアント（互換性のため残す）
-const supaHeaders = {
-  'apikey': SUPA_KEY,
-  'Authorization': 'Bearer ' + SUPA_KEY,
-  'Content-Type': 'application/json',
-  'Prefer': 'return=minimal'
-};
+// ===== SUPABASE設定（純粋fetch版）=====
+var SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDk3MDI1MDksImV4cCI6MjAyNTI3ODUwOX0.tSGJFtRbKMUOFCeHaXHzCGMiGN-Y-OUJrRCNJkPPXbw';
 
-// ===== Supabase同期ヘルパー（fetch版）=====
-async function supaUpsert(table, data) {
-  try {
-    const res = await fetch(SUPA_URL + '/rest/v1/' + table, {
-      method: 'POST',
-      headers: { ...supaHeaders, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify(data)
-    });
-    if(!res.ok) { const t = await res.text(); console.error('Supabase upsert error:', table, t); }
-  } catch(e) { console.error('Supabase upsert error:', table, e.message); }
-}
-async function supaDelete(table, id) {
-  try {
-    const res = await fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(id), {
-      method: 'DELETE',
-      headers: supaHeaders
-    });
-    if(!res.ok) { const t = await res.text(); console.error('Supabase delete error:', table, t); }
-  } catch(e) { console.error('Supabase delete error:', table, e.message); }
-}
-async function supaLoad(table) {
-  try {
-    const res = await fetch(SUPA_URL + '/rest/v1/' + table + '?select=*', {
-      headers: supaHeaders
-    });
-    if(!res.ok) { const t = await res.text(); console.error('Supabase load error:', table, t); return null; }
-    return await res.json();
-  } catch(e) { console.error('Supabase load error:', table, e.message); return null; }
+function getSupaHeaders() {
+  return {
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
 }
 
-// ===== 初回ロード: Supabaseからデータを取得 =====
-async function loadFromSupabase() {
+function supaUpsert(table, data) {
+  return fetch(SUPA_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: Object.assign({}, getSupaHeaders(), {'Prefer': 'resolution=merge-duplicates,return=minimal'}),
+    body: JSON.stringify(data)
+  }).then(function(r){
+    if(!r.ok) r.text().then(function(t){console.error('upsert err',table,t);});
+  }).catch(function(e){console.error('upsert err',table,e.message);});
+}
+
+function supaDelete(table, id) {
+  return fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(String(id)), {
+    method: 'DELETE',
+    headers: getSupaHeaders()
+  }).then(function(r){
+    if(!r.ok) r.text().then(function(t){console.error('delete err',table,t);});
+  }).catch(function(e){console.error('delete err',table,e.message);});
+}
+
+function supaLoad(table) {
+  return fetch(SUPA_URL + '/rest/v1/' + table + '?select=*', {
+    method: 'GET',
+    headers: getSupaHeaders()
+  }).then(function(r){
+    if(!r.ok) { r.text().then(function(t){console.error('load err',table,t);});return null;}
+    return r.json();
+  }).catch(function(e){console.error('load err',table,e.message);return null;});
+}
+
+function loadFromSupabase() {
   console.log('Loading from Supabase...');
-  try {
-  
-  // 来店データ
-  const guests = await supaLoad('pos_guests');
-  if(guests && guests.length > 0) {
-    G = guests.map(g => ({
-      id: parseInt(g.id) || g.id,
-      d: g.date, tp: g.type, pt: g.pattern,
-      a: g.adults, c: g.children,
-      ci: g.checkin, co: g.checkout,
-      pr: g.price, st: g.status,
-      fn: g.free_nyan, bc: g.binder_color,
-      bcn: g.binder_name, mo: g.memo,
-      aq: g.survey || {}
-    }));
-  }
-  
-  // 物販データ
-  const merch = await supaLoad('pos_merch');
-  if(merch && merch.length > 0) {
-    MS = merch.map(m => ({ d: m.date, i: m.items, total: m.total }));
-  }
-  
-  // 物販商品マスタ
-  const merchItems = await supaLoad('pos_merch_items');
-  if(merchItems && merchItems.length > 0) {
-    MI = merchItems.sort((a,b) => a.sort_order - b.sort_order)
-      .map(m => ({ id: m.id, n: m.name, p: m.price }));
-  }
-  
-  // カルテ
-  const customers = await supaLoad('pos_customers');
-  if(customers && customers.length > 0) {
-    CU = customers.map(c => ({
-      id: parseInt(c.id) || c.id,
-      memberNo: c.member_no, name: c.name,
-      look: c.look, pref: c.pref,
-      alert: c.alert, birth: c.birth,
-      photo: c.photo,
-      trigger: c.trigger_list || [],
-      companion: c.companion || [],
-      gacha: c.gacha,
-      oshiCats: c.oshi_cats || [],
-      visits: c.visits || [],
-      memos: c.memos || []
-    }));
-  }
-  
-  // 金種
-  const cash = await supaLoad('pos_cash');
-  if(cash && cash.length > 0) {
-    CR = cash.map(c => ({ ...c.data, d: c.date, id: c.id }));
-  }
-  
-  // 設定
-  const settings = await supaLoad('pos_settings');
-  if(settings) {
-    const priceSetting = settings.find(s => s.key === 'price');
-    if(priceSetting) Price = { ...DefaultPrice, ...priceSetting.value };
-    const bcSetting = settings.find(s => s.key === 'binder_colors');
-    if(bcSetting) BCs = bcSetting.value;
-    const catsSetting = settings.find(s => s.key === 'cats');
-    if(catsSetting) Cats = catsSetting.value;
-    const trisSetting = settings.find(s => s.key === 'triggers');
-    if(trisSetting) Tris = trisSetting.value;
-    const carryMembersSetting = settings.find(s => s.key === 'carry_members');
-    if(carryMembersSetting) CarryMembers = carryMembersSetting.value;
-  }
-  
-  console.log('Supabase load complete!');
-  
-  // Supabaseが空でlocalStorageにデータがある場合は移行する
-  var localG = JSON.parse(localStorage.getItem('wc_g')||'[]');
-  var localMS = JSON.parse(localStorage.getItem('wc_ms')||'[]');
-  var localCU = JSON.parse(localStorage.getItem('wc_cu')||'[]');
-  var localCR = JSON.parse(localStorage.getItem('wc_cr')||'[]');
-  
-  if((!guests || guests.length === 0) && localG.length > 0) {
-    console.log('Migrating localStorage data to Supabase...');
-    G = localG;
-    for(var i=0; i<G.length; i++) { await saveGuestToSupa(G[i]); }
-  }
-  if((!merch || merch.length === 0) && localMS.length > 0) {
-    MS = localMS;
-    for(var j=0; j<MS.length; j++) { await saveMerchToSupa(MS[j]); }
-  }
-  if((!customers || customers.length === 0) && localCU.length > 0) {
-    CU = localCU;
-    for(var k=0; k<CU.length; k++) { await saveCustomerToSupa(CU[k]); }
-  }
-  if((!cash || cash.length === 0) && localCR.length > 0) {
-    CR = localCR;
-    for(var l=0; l<CR.length; l++) { await saveCashToSupa(CR[l]); }
-  }
-  
-  sv();
-  rfAll();
-  console.log('All done!');
-  } catch(e) {
-    console.error('loadFromSupabase error:', e.message);
-    rfAll();
-  }
+  var tables = ['pos_guests','pos_merch','pos_merch_items','pos_customers','pos_cash','pos_settings'];
+  Promise.all(tables.map(supaLoad)).then(function(results) {
+    var guests=results[0], merch=results[1], merchItems=results[2];
+    var customers=results[3], cash=results[4], settings=results[5];
+
+    if(guests && guests.length>0) {
+      G = guests.map(function(g){return {
+        id:g.id, d:g.date, tp:g.type, pt:g.pattern,
+        a:g.adults, c:g.children, ci:g.checkin, co:g.checkout,
+        pr:g.price, st:g.status, fn:g.free_nyan,
+        bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
+      };});
+    }
+    if(merch && merch.length>0) {
+      MS = merch.map(function(m){return {d:m.date,i:m.items,total:m.total};});
+    }
+    if(merchItems && merchItems.length>0) {
+      MI = merchItems.sort(function(a,b){return a.sort_order-b.sort_order;})
+        .map(function(m){return {id:m.id,n:m.name,p:m.price};});
+    }
+    if(customers && customers.length>0) {
+      CU = customers.map(function(c){return {
+        id:c.id, memberNo:c.member_no, name:c.name,
+        look:c.look, pref:c.pref, alert:c.alert, birth:c.birth, photo:c.photo,
+        trigger:c.trigger_list||[], companion:c.companion||[],
+        gacha:c.gacha, oshiCats:c.oshi_cats||[],
+        visits:c.visits||[], memos:c.memos||[]
+      };});
+    }
+    if(cash && cash.length>0) {
+      CR = cash.map(function(c){return Object.assign({},c.data,{d:c.date,id:c.id});});
+    }
+    if(settings) {
+      var ps=settings.find(function(s){return s.key==='price';});
+      if(ps) Price=Object.assign({},DefaultPrice,ps.value);
+      var bs=settings.find(function(s){return s.key==='binder_colors';});
+      if(bs) BCs=bs.value;
+      var cs=settings.find(function(s){return s.key==='cats';});
+      if(cs) Cats=cs.value;
+      var ts=settings.find(function(s){return s.key==='triggers';});
+      if(ts) Tris=ts.value;
+      var cms=settings.find(function(s){return s.key==='carry_members';});
+      if(cms) CarryMembers=cms.value;
+    }
+
+    // localStorageにデータがあってSupabaseが空なら移行
+    var localG=JSON.parse(localStorage.getItem('wc_g')||'[]');
+    var localMS=JSON.parse(localStorage.getItem('wc_ms')||'[]');
+    var localCU=JSON.parse(localStorage.getItem('wc_cu')||'[]');
+    var localCR=JSON.parse(localStorage.getItem('wc_cr')||'[]');
+    if((!guests||guests.length===0)&&localG.length>0) {
+      G=localG; localG.forEach(function(g){saveGuestToSupa(g);});
+    }
+    if((!merch||merch.length===0)&&localMS.length>0) {
+      MS=localMS; localMS.forEach(function(m){saveMerchToSupa(m);});
+    }
+    if((!customers||customers.length===0)&&localCU.length>0) {
+      CU=localCU; localCU.forEach(function(c){saveCustomerToSupa(c);});
+    }
+    if((!cash||cash.length===0)&&localCR.length>0) {
+      CR=localCR; localCR.forEach(function(r){saveCashToSupa(r);});
+    }
+
+    sv(); rfAll();
+    console.log('Supabase load complete!');
+  }).catch(function(e){console.error('loadFromSupabase error:',e.message);rfAll();});
 }
 
-// ===== Supabaseへの保存関数 =====
-async function saveGuestToSupa(g) {
-  await supaUpsert('pos_guests', {
-    id: String(g.id), date: g.d, type: g.tp,
-    pattern: g.pt, adults: g.a, children: g.c,
-    checkin: g.ci, checkout: g.co || '',
-    price: g.pr, status: g.st,
-    free_nyan: g.fn, binder_color: g.bc || '',
-    binder_name: g.bcn || '', memo: g.mo || '',
-    survey: g.aq || {}
+function saveGuestToSupa(g) {
+  supaUpsert('pos_guests',{
+    id:String(g.id), date:g.d, type:g.tp, pattern:g.pt,
+    adults:g.a, children:g.c, checkin:g.ci, checkout:g.co||'',
+    price:g.pr, status:g.st, free_nyan:g.fn,
+    binder_color:g.bc||'', binder_name:g.bcn||'',
+    memo:g.mo||'', survey:g.aq||{}
   });
 }
-async function saveMerchToSupa(m) {
-  await supaUpsert('pos_merch', {
-    id: m.d, date: m.d, items: m.i, total: m.total
+function saveMerchToSupa(m) {
+  supaUpsert('pos_merch',{id:m.d,date:m.d,items:m.i,total:m.total});
+}
+function saveMerchItemsToSupa() {
+  MI.forEach(function(item,i){
+    supaUpsert('pos_merch_items',{id:String(item.id),name:item.n,price:item.p,sort_order:i});
   });
 }
-async function saveMerchItemsToSupa() {
-  for(let i=0; i<MI.length; i++) {
-    await supaUpsert('pos_merch_items', {
-      id: String(MI[i].id), name: MI[i].n,
-      price: MI[i].p, sort_order: i
-    });
-  }
-}
-async function saveCustomerToSupa(c) {
-  await supaUpsert('pos_customers', {
-    id: String(c.id), member_no: c.memberNo || '',
-    name: c.name, look: c.look || '',
-    pref: c.pref || '', alert: c.alert || '',
-    birth: c.birth || '', photo: c.photo || '',
-    trigger_list: c.trigger || [],
-    companion: c.companion || [],
-    gacha: c.gacha || '',
-    oshi_cats: c.oshiCats || [],
-    visits: c.visits || [],
-    memos: c.memos || []
+function saveCustomerToSupa(c) {
+  supaUpsert('pos_customers',{
+    id:String(c.id), member_no:c.memberNo||'', name:c.name,
+    look:c.look||'', pref:c.pref||'', alert:c.alert||'',
+    birth:c.birth||'', photo:c.photo||'',
+    trigger_list:c.trigger||[], companion:c.companion||[],
+    gacha:c.gacha||'', oshi_cats:c.oshiCats||[],
+    visits:c.visits||[], memos:c.memos||[]
   });
 }
-async function saveCashToSupa(r) {
-  await supaUpsert('pos_cash', {
-    id: String(r.id || r.d), date: r.d, data: r
-  });
+function saveCashToSupa(r) {
+  supaUpsert('pos_cash',{id:String(r.id||r.d),date:r.d,data:r});
 }
-async function saveSettingToSupa(key, value) {
-  await supaUpsert('pos_settings', { key, value, updated_at: new Date().toISOString() });
+function saveSettingToSupa(key,value) {
+  supaUpsert('pos_settings',{key:key,value:value,updated_at:new Date().toISOString()});
 }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Kaisei+Opti:wght@400;700&display=swap" rel="stylesheet">
@@ -1327,18 +1276,13 @@ function editMerch(){
 function cancelMerch(){
   if(!confirm('本日の物販記録を取り消しますか？'))return;
   var t=td();
-  var tr=MS.find(function(m){return m.d===t;});
-  if(tr){
-    // Supabaseからも削除
-    supaDelete('pos_merch', t);
-  }
   MS=MS.filter(function(m){return m.d!==t;});
-  // カウンタをリセット
   for(var id in MQ) MQ[id]=0;
-  sv();rMerch();rGuests();
+  localStorage.setItem('wc_ms',JSON.stringify(MS));
+  supaDelete('pos_merch', t);
+  rMerch();rGuests();
   toast('物販記録を取り消しました');
 }
-function delMI(id){if(!confirm('削除しますか？'))return;MI=MI.filter(function(x){return x.id!==id;});delete MQ[id];sv();rMerch();}
 
 // ===== CARTE =====
 var MS_LIST=[5,10,20,30,50,100];
@@ -2012,7 +1956,7 @@ function init(){
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
   buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();
   // Supabaseからデータロード
-  loadFromSupabase().catch(function(e){ console.error('Load error:', e); rfAll(); });
+  loadFromSupabase();
 }
 init();
 </script>
