@@ -1620,7 +1620,7 @@ function saveGEdit(){
   g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=document.getElementById('ge-mo').value;g.st=co?'done':'stay';
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
-function delGuest(){var id=document.getElementById('ge-id').value;if(!confirm('この記録を削除しますか？'))return;G=G.filter(function(x){return String(x.id)!==String(id);});sv();cModal('m-gedit');rfAll();toast('削除しました');}
+function delGuest(){var id=document.getElementById('ge-id').value;if(!confirm('この記録を削除しますか？'))return;G=G.filter(function(x){return String(x.id)!==String(id);});sv();supaDelete('pos_guests',id);cModal('m-gedit');rfAll();toast('削除しました');}
 
 // ===== PAST DATA =====
 function addPastData(){
