@@ -1170,8 +1170,8 @@ function rGuests(){
   var expBase=loadExpBase();
   var t=td();
   var tg=G.filter(function(g){return g.d===t;});
-  var stay=tg.filter(function(g){return g.st==='stay';});
-  var done=tg.filter(function(g){return g.st==='done';});
+  var stay=tg.filter(function(g){return g.st==='stay';}).sort(function(a,b){return a.ci.localeCompare(b.ci);});
+  var done=tg.filter(function(g){return g.st==='done';}).sort(function(a,b){return a.ci.localeCompare(b.ci);});
   document.getElementById('bs').textContent=stay.length;
   document.getElementById('bd2').textContent=done.length;
   var tp=0;for(var i=0;i<tg.length;i++)tp+=tg[i].a+tg[i].c;
@@ -1630,16 +1630,37 @@ function addPastData(){
   PastData=PastData.filter(function(d){return d.key!==key;});PastData.push({key:key,yr:yr,mo:mo,ppl:ppl,sales:sales});
   PastData.sort(function(a,b){return a.key.localeCompare(b.key);});sv();rPastData();toast('追加しました');
 }
+function editPastData(key){
+  var d=PastData.find(function(x){return x.key===key;});if(!d)return;
+  document.getElementById('pd-yr').value=d.yr;
+  document.getElementById('pd-mo').value=d.mo;
+  document.getElementById('pd-ppl').value=d.ppl;
+  document.getElementById('pd-sales').value=d.sales;
+  // 既存データを削除（再入力で上書き）
+  PastData=PastData.filter(function(x){return x.key!==key;});
+  sv();rPastData();
+  toast(d.yr+'年'+d.mo+'月のデータを編集フォームに読み込みました');
+}
 function delPastData(key){PastData=PastData.filter(function(d){return d.key!==key;});sv();rPastData();toast('削除しました');}
 function rPastData(){
   var el=document.getElementById('pd-list');if(!el)return;
   if(PastData.length===0){el.innerHTML='<div class="empty"><div class="ei">📅</div>データなし</div>';return;}
   var h='<div class="card"><div class="ct">登録済み過去データ</div><table class="st"><thead><tr><th>年月</th><th>人数</th><th style="text-align:right;">売上</th><th></th></tr></thead><tbody>';
-  for(var i=0;i<PastData.length;i++){var d=PastData[i];h+='<tr><td>'+d.yr+'/'+String(d.mo).padStart(2,'0')+'</td><td>'+d.ppl+'名</td><td class="amt">¥'+d.sales.toLocaleString()+'</td><td><button onclick="delPastData(\''+d.key+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:3px 8px;border-radius:12px;font-size:10px;cursor:pointer;">削除</button></td></tr>';}
-  h+='</tbody></table></div>';el.innerHTML=h;
+  for(var i=0;i<PastData.length;i++){
+    var d=PastData[i];
+    var k=d.key;
+    h+='<tr><td>'+d.yr+'/'+String(d.mo).padStart(2,'0')+'</td>';
+    h+='<td>'+d.ppl+'名</td>';
+    h+='<td class="amt">¥'+d.sales.toLocaleString()+'</td>';
+    h+='<td style="display:flex;gap:4px;">';
+    h+='<button onclick="editPastData(\'' + k + '\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:3px 8px;border-radius:12px;font-size:10px;cursor:pointer;">編集</button>';
+    h+='<button onclick="delPastData(\'' + k + '\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:3px 8px;border-radius:12px;font-size:10px;cursor:pointer;">削除</button>';
+    h+='</td></tr>';
+  }
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
 }
 
-// ===== 売上・経費タブ =====
 function etab(t){
   var tabs=['te-1','te-2','te-3'];var ids=['sum','inp','exp'];
   var tMap={sum:0,inp:1,exp:2};
@@ -1654,6 +1675,10 @@ function getESalesData(yr,mo){
   // ESalesに手入力データがあればそれを使う
   var key=String(yr);
   if(ESales[key]&&ESales[key][mo]){return ESales[key][mo];}
+  // PastDataに過去データがあればそれを使う
+  var pastKey=yr+'-'+String(mo).padStart(2,'0');
+  var pastItem=PastData.find(function(p){return p.key===pastKey;});
+  if(pastItem){return {sales:pastItem.sales,visitors:pastItem.ppl};}
   // なければPOSのGデータから集計
   var gVisitors=0,gSales=0;
   for(var i=0;i<G.length;i++){
