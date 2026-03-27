@@ -117,8 +117,34 @@ async function loadFromSupabase() {
   }
   
   console.log('Supabase load complete!');
+  
+  // Supabaseが空でlocalStorageにデータがある場合は移行する
+  var localG = JSON.parse(localStorage.getItem('wc_g')||'[]');
+  var localMS = JSON.parse(localStorage.getItem('wc_ms')||'[]');
+  var localCU = JSON.parse(localStorage.getItem('wc_cu')||'[]');
+  var localCR = JSON.parse(localStorage.getItem('wc_cr')||'[]');
+  
+  if((!guests || guests.length === 0) && localG.length > 0) {
+    console.log('Migrating localStorage data to Supabase...');
+    G = localG;
+    for(var i=0; i<G.length; i++) { await saveGuestToSupa(G[i]); }
+  }
+  if((!merch || merch.length === 0) && localMS.length > 0) {
+    MS = localMS;
+    for(var j=0; j<MS.length; j++) { await saveMerchToSupa(MS[j]); }
+  }
+  if((!customers || customers.length === 0) && localCU.length > 0) {
+    CU = localCU;
+    for(var k=0; k<CU.length; k++) { await saveCustomerToSupa(CU[k]); }
+  }
+  if((!cash || cash.length === 0) && localCR.length > 0) {
+    CR = localCR;
+    for(var l=0; l<CR.length; l++) { await saveCashToSupa(CR[l]); }
+  }
+  
   sv();
   rfAll();
+  console.log('All done!');
   } catch(e) {
     console.error('loadFromSupabase error:', e.message);
     rfAll();
