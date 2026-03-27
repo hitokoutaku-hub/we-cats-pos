@@ -1283,7 +1283,10 @@ function rMerch(){
   document.getElementById('ml').innerHTML=h;
   var se=document.getElementById('ml-saved');
   if(tr&&tr.i.some(function(i){return i.q>0;})){
-    var sh='<div class="card" style="background:linear-gradient(135deg,#f0f8ee,#e8f4e0);border-color:var(--ac2);"><div class="ct" style="color:var(--ok);">✅ 本日の保存済み物販</div>';
+    var sh='<div class="card" style="background:linear-gradient(135deg,#f0f8ee,#e8f4e0);border-color:var(--ac2);">';
+    sh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div class="ct" style="color:var(--ok);margin-bottom:0;">✅ 本日の保存済み物販</div>';
+    sh+='<div style="display:flex;gap:6px;"><button onclick="editMerch()" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">✏️ 編集</button>';
+    sh+='<button onclick="cancelMerch()" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🗑 取消</button></div></div>';
     for(var k=0;k<tr.i.length;k++){if(tr.i[k].q>0)sh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>'+tr.i[k].n+' × '+tr.i[k].q+'</span><span style="color:var(--ok);font-family:\'Kaisei Opti\',serif;">'+yn(tr.i[k].q*tr.i[k].p)+'</span></div>';}
     sh+='<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:700;font-size:13px;"><span>合計</span><span style="color:var(--ok);font-family:\'Kaisei Opti\',serif;">'+yn(tr.total)+'</span></div></div>';
     se.innerHTML=sh;
@@ -1310,6 +1313,30 @@ function saveMI(){
   if(eid){var item=MI.find(function(x){return x.id===eid;});if(item){item.n=n;item.p=p;}}
   else MI.push({id:Date.now(),n:n,p:p});
   sv();saveMerchItemsToSupa();cModal('m-mf');rMerch();toast(eid?(n+' を更新しました'):(n+' を追加しました'));
+}
+function editMerch(){
+  // 保存済み数量をMQに反映してそのまま編集可能にする
+  var t=td();var tr=MS.find(function(m){return m.d===t;});
+  if(!tr)return;
+  for(var i=0;i<tr.i.length;i++) MQ[tr.i[i].id]=tr.i[i].q;
+  // 一旦保存データを削除して編集モードへ
+  MS=MS.filter(function(m){return m.d!==t;});
+  sv();rMerch();rGuests();
+  toast('編集モードにしました。変更後「保存」を押してください');
+}
+function cancelMerch(){
+  if(!confirm('本日の物販記録を取り消しますか？'))return;
+  var t=td();
+  var tr=MS.find(function(m){return m.d===t;});
+  if(tr){
+    // Supabaseからも削除
+    supaDelete('pos_merch', t);
+  }
+  MS=MS.filter(function(m){return m.d!==t;});
+  // カウンタをリセット
+  for(var id in MQ) MQ[id]=0;
+  sv();rMerch();rGuests();
+  toast('物販記録を取り消しました');
 }
 function delMI(id){if(!confirm('削除しますか？'))return;MI=MI.filter(function(x){return x.id!==id;});delete MQ[id];sv();rMerch();}
 
