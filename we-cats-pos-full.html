@@ -1442,8 +1442,22 @@ function rDay(){
   }else me.style.display='none';
   var le=document.getElementById('d-list');
   if(dg.length===0){le.innerHTML='<div class="empty"><div class="ei">📋</div>記録なし</div>';return;}
-  var lh='<table class="st"><thead><tr><th>区分</th><th>人数</th><th>入店</th><th>退店</th><th style="text-align:right;">料金</th></tr></thead><tbody>';
-  for(var l=0;l<dg.length;l++){var g=dg[l];lh+='<tr><td>'+(g.tp==='new'?'新規':'リピ')+'</td><td>'+g.a+(g.c>0?'+子'+g.c:'')+'</td><td>'+g.ci+'</td><td>'+g.co+'</td><td class="amt">'+yn(g.pr)+'</td></tr>';}
+  var dsStr=fYMD(vD);
+  var lh='<div style="margin-bottom:8px;"><button onclick="openDayAdd()" class="btn bp bsm">➕ 記録を追加</button></div>';
+  lh+='<table class="st"><thead><tr><th>区分</th><th>人数</th><th>入店</th><th>退店</th><th style="text-align:right;">料金</th><th></th></tr></thead><tbody>';
+  for(var l=0;l<dg.length;l++){
+    var g=dg[l];
+    lh+='<tr>';
+    lh+='<td>'+(g.tp==='new'?'新規':'リピ')+'</td>';
+    lh+='<td>'+g.a+(g.c>0?'+子'+g.c:'')+'</td>';
+    lh+='<td>'+g.ci+'</td>';
+    lh+='<td>'+(g.co||'-')+'</td>';
+    lh+='<td class="amt">'+yn(g.pr)+'</td>';
+    lh+='<td style="white-space:nowrap;">';
+    lh+='<button onclick="oGEdit(\''+String(g.id)+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:2px 7px;border-radius:8px;font-size:10px;cursor:pointer;margin-right:3px;">✏️</button>';
+    lh+='<button onclick="dayDelGuest(\''+String(g.id)+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:2px 7px;border-radius:8px;font-size:10px;cursor:pointer;">🗑</button>';
+    lh+='</td></tr>';
+  }
   lh+='</tbody></table>';le.innerHTML=lh;
 }
 function rMon(){
@@ -1480,6 +1494,26 @@ function rAnket(){
 function chD(d){vD.setDate(vD.getDate()+d);rDay();}
 function chM(d){vM.setMonth(vM.getMonth()+d);rMon();}
 function chAM(d){aM.setMonth(aM.getMonth()+d);rAnket();}
+function dayDelGuest(id){
+  if(!confirm('この記録を削除しますか？'))return;
+  G=G.filter(function(x){return String(x.id)!==String(id);});
+  sv();supaDelete('pos_guests',id);rDay();rGuests();toast('削除しました');
+}
+function openDayAdd(){
+  // 日別追加：ge-idを空にしてgeditモーダルを開く
+  document.getElementById('ge-id').value='';
+  document.getElementById('ge-tp').value='new';
+  document.getElementById('ge-pt').value='友人';
+  document.getElementById('ge-a').value=1;
+  document.getElementById('ge-c').value=0;
+  document.getElementById('ge-ci').value='12:00';
+  document.getElementById('ge-co').value='13:00';
+  document.getElementById('ge-pr').value='';
+  document.getElementById('ge-mo').value='';
+  // 日付をvDの日付にセット
+  document.getElementById('ge-id').setAttribute('data-date', fYMD(vD));
+  oModal('m-gedit');
+}
 function stab(t){
   var tabs={d:'ts-d',m:'ts-m',a:'ts-a',p:'ts-p',e:'ts-e'};var divs={d:'s-d',m:'s-m',a:'s-a',p:'s-p',e:'s-e'};
   for(var k in tabs){document.getElementById(tabs[k]).classList.toggle('active',k===t);document.getElementById(divs[k]).style.display=k===t?'block':'none';}
@@ -1612,7 +1646,22 @@ function oGEdit(id){
   oModal('m-gedit');
 }
 function saveGEdit(){
-  var id=document.getElementById('ge-id').value;var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
+  var id=document.getElementById('ge-id').value;
+  // idが空なら新規追加
+  if(!id){
+    var dateAttr=document.getElementById('ge-id').getAttribute('data-date')||td();
+    var newId=String(Date.now());
+    var a=parseInt(document.getElementById('ge-a').value)||1;
+    var c=parseInt(document.getElementById('ge-c').value)||0;
+    var ci=document.getElementById('ge-ci').value;
+    var co=document.getElementById('ge-co').value;
+    var prInput=document.getElementById('ge-pr').value;
+    var pr=prInput!==''?parseInt(prInput):0;
+    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,false);pr=r.t;}
+    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,a:a,c:c,ci:ci,co:co||null,pr:pr,mo:document.getElementById('ge-mo').value,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{}};
+    G.push(newG);sv();saveGuestToSupa(newG);cModal('m-gedit');rfAll();toast('記録を追加しました ✅');return;
+  }
+  var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
   var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
   var ci=document.getElementById('ge-ci').value;var co=document.getElementById('ge-co').value;
   var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
