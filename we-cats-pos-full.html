@@ -445,9 +445,7 @@ select.fc{cursor:pointer;}
       <label class="fl">フリーにゃんタイム</label>
       <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
     </div>
-    <div class="fg"><label class="fl">🎨 バインダーカラー</label>
-      <div id="bc-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;"></div>
-    </div>
+
     <div class="sep"></div>
     <div class="stit">人数</div>
     <div class="fg"><label class="fl">大人</label>
@@ -822,7 +820,6 @@ select.fc{cursor:pointer;}
   <div style="display:flex;flex-direction:column;gap:8px;">
     <button class="btn bso bf" onclick="cModal('m-menu');oModal('m-price')">💴 料金設定</button>
     <button class="btn bso bf" onclick="cModal('m-menu');openOwnerLogin()">🔐 オーナーログイン</button>
-    <button class="btn bso bf" onclick="cModal('m-menu');oModal('m-bc')">🎨 バインダーカラー設定</button>
     <button class="btn bso bf" onclick="expData()">📤 データエクスポート</button>
     <button class="btn bso bf" onclick="document.getElementById('imp-f').click()">📥 データインポート</button>
     <input type="file" id="imp-f" accept=".json" style="display:none;" onchange="impData(event)">
