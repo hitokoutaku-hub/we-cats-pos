@@ -517,26 +517,38 @@ select.fc{cursor:pointer;}
       <div class="pbox-b" id="pb"></div>
     </div>
     <div class="sep"></div>
-    <div class="ct" style="margin-bottom:8px;">📋 アンケート（口頭で確認）</div>
-    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
-      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">何を見てきましたか？</div>
-      <div class="chips" id="aq-tri"></div>
-      <div style="margin-top:7px;display:flex;gap:6px;">
-        <input type="text" class="fc" id="aq-tri-add" placeholder="追加する" style="flex:1;padding:6px 10px;font-size:12px;">
-        <button class="btn bso bsm" onclick="addAqTri()">追加</button>
+    <!-- アンケート（非会員のみ表示） -->
+    <div id="r-anket-section">
+      <div class="ct" style="margin-bottom:8px;">📋 アンケート（口頭で確認）</div>
+      <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px;">何を見てきましたか？</div>
+        <div class="chips" id="aq-tri"></div>
+        <div style="margin-top:7px;display:flex;gap:6px;">
+          <input type="text" class="fc" id="aq-tri-add" placeholder="追加する" style="flex:1;padding:6px 10px;font-size:12px;">
+          <button class="btn bso bsm" onclick="addAqTri()">追加</button>
+        </div>
+      </div>
+      <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px;">猫カフェは初めてですか？</div>
+        <div class="chips" id="aq-exp">
+          <div class="chip" data-v="初めて" onclick="selOne(this,'aq-exp')">🐱 初めて</div>
+          <div class="chip" data-v="2〜3回目" onclick="selOne(this,'aq-exp')">🔁 2〜3回目</div>
+          <div class="chip" data-v="よく来る" onclick="selOne(this,'aq-exp')">⭐ よく来る</div>
+        </div>
+      </div>
+      <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px;">推し猫はいますか？</div>
+        <div class="chips" id="aq-cats"></div>
       </div>
     </div>
-    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
-      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">猫カフェは初めてですか？</div>
-      <div class="chips" id="aq-exp">
-        <div class="chip" data-v="初めて" onclick="selOne(this,'aq-exp')">🐱 初めて</div>
-        <div class="chip" data-v="2〜3回目" onclick="selOne(this,'aq-exp')">🔁 2〜3回目</div>
-        <div class="chip" data-v="よく来る" onclick="selOne(this,'aq-exp')">⭐ よく来る</div>
+    <!-- 来店履歴・メモ（会員のみ表示） -->
+    <div id="r-member-section" style="display:none;">
+      <div class="ct" style="margin-bottom:8px;">📅 来店履歴</div>
+      <div id="r-visit-history" style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;max-height:200px;overflow-y:auto;font-size:12px;color:var(--tx2);">
+        記録なし
       </div>
-    </div>
-    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">推し猫はいますか？</div>
-      <div class="chips" id="aq-cats"></div>
+      <div class="ct" style="margin-bottom:8px;">📝 今回のメモ</div>
+      <textarea class="fc" id="r-visit-memo" placeholder="今日の出来事・気づきなど" style="width:100%;min-height:72px;resize:vertical;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;margin-bottom:12px;"></textarea>
     </div>
     <button class="btn bp bf" onclick="regGuest()" style="font-size:15px;padding:14px;">🐾 入店登録</button>
   </div>
@@ -1190,6 +1202,26 @@ function selectMember(id){
   // バナー切り替え
   document.getElementById('member-banner').style.display='none';
   document.getElementById('member-info-bar').style.display='block';
+  // アンケート非表示・来店履歴表示
+  document.getElementById('r-anket-section').style.display='none';
+  document.getElementById('r-member-section').style.display='block';
+  // 来店履歴を描画
+  var vis=(c.visits||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  var memos=(c.memos||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  var tl=vis.map(function(v){return {type:'v',date:v.date,data:v};}).concat(memos.map(function(m){return {type:'m',date:m.date,data:m};}));
+  tl.sort(function(a,b){return b.date.localeCompare(a.date);});
+  var vh='';
+  if(tl.length===0){vh='<div style="text-align:center;padding:8px;">記録なし</div>';}
+  else{
+    for(var i=0;i<Math.min(tl.length,5);i++){
+      var item=tl[i];
+      if(item.type==='v'){var v=item.data;vh+='<div style="padding:5px 0;border-bottom:1px solid var(--bd);">🐾 '+v.date+(v.ppl?' '+v.ppl+'名':'')+(v.memo?' <span style="color:var(--tx2);">'+v.memo+'</span>':'')+'</div>';}
+      else{var memo=item.data;vh+='<div style="padding:5px 0;border-bottom:1px solid var(--bd);">📝 '+memo.date+' <span style="color:var(--tx2);">'+memo.text+'</span></div>';}
+    }
+    if(tl.length>5)vh+='<div style="text-align:center;color:var(--tx2);padding:4px;">他 '+(tl.length-5)+'件</div>';
+  }
+  document.getElementById('r-visit-history').innerHTML=vh;
+  document.getElementById('r-visit-memo').value='';
   // リピーターに自動セット
   document.getElementById('r-tp').value='rep';
   cModal('m-msearch');
@@ -1199,6 +1231,8 @@ function clearMember(){
   selectedMemberId=null;
   document.getElementById('member-banner').style.display='flex';
   document.getElementById('member-info-bar').style.display='none';
+  document.getElementById('r-anket-section').style.display='block';
+  document.getElementById('r-member-section').style.display='none';
 }
 function closeMemberBanner(){
   selectedMemberId=null;
@@ -1209,6 +1243,8 @@ function closeMemberBanner(){
 function showMemberBanner(){
   document.getElementById('member-back-bar').style.display='none';
   document.getElementById('member-banner').style.display='flex';
+  document.getElementById('r-anket-section').style.display='block';
+  document.getElementById('r-member-section').style.display='none';
 }
 
 // ===== BINDER =====
@@ -1271,12 +1307,25 @@ function regGuest(){
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
   var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
+  // 会員メモがあればカルテに保存
+  if(selectedMemberId){
+    var mc=CU.find(function(x){return String(x.id)===String(selectedMemberId);});
+    if(mc){
+      if(!mc.visits)mc.visits=[];
+      mc.visits.push({id:Date.now(),date:td(),ppl:aC+cC,price:0,memo:''});
+      var memoTxt=document.getElementById('r-visit-memo').value.trim();
+      if(memoTxt){if(!mc.memos)mc.memos=[];mc.memos.push({id:Date.now(),date:td(),text:memoTxt});}
+      sv();saveCustomerToSupa(mc);
+    }
+  }
   G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
   // 会員バナーリセット
   selectedMemberId=null;
   document.getElementById('member-banner').style.display='flex';
   document.getElementById('member-info-bar').style.display='none';
   document.getElementById('member-back-bar').style.display='none';
+  document.getElementById('r-anket-section').style.display='block';
+  document.getElementById('r-member-section').style.display='none';
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
   document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
