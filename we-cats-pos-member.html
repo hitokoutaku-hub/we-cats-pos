@@ -1,0 +1,2470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WE CATS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- Supabase SDK -->
+<script>
+// ===== SUPABASE設定（純粋fetch版）=====
+var SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
+
+function getSupaHeaders() {
+  return {
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  };
+}
+
+function supaUpsert(table, data) {
+  return fetch(SUPA_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: Object.assign({}, getSupaHeaders(), {'Prefer': 'resolution=merge-duplicates,return=minimal'}),
+    body: JSON.stringify(data)
+  }).then(function(r){
+    if(!r.ok) r.text().then(function(t){console.error('upsert err',table,t);});
+  }).catch(function(e){console.error('upsert err',table,e.message);});
+}
+
+function supaDelete(table, id) {
+  return fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(String(id)), {
+    method: 'DELETE',
+    headers: getSupaHeaders()
+  }).then(function(r){
+    if(!r.ok) r.text().then(function(t){console.error('delete err',table,t);});
+  }).catch(function(e){console.error('delete err',table,e.message);});
+}
+
+function supaLoad(table) {
+  return fetch(SUPA_URL + '/rest/v1/' + table + '?select=*', {
+    method: 'GET',
+    headers: getSupaHeaders()
+  }).then(function(r){
+    if(!r.ok) { r.text().then(function(t){console.error('load err',table,t);});return null;}
+    return r.json();
+  }).catch(function(e){console.error('load err',table,e.message);return null;});
+}
+
+function loadFromSupabase() {
+  console.log('Loading from Supabase...');
+  var tables = ['pos_guests','pos_merch','pos_merch_items','pos_customers','pos_cash','pos_settings'];
+  Promise.all(tables.map(supaLoad)).then(function(results) {
+    var guests=results[0], merch=results[1], merchItems=results[2];
+    var customers=results[3], cash=results[4], settings=results[5];
+
+    if(guests && guests.length>0) {
+      G = guests.map(function(g){return {
+        id:g.id, d:g.date, tp:g.type, pt:g.pattern,
+        a:g.adults, c:g.children, ci:g.checkin, co:g.checkout,
+        pr:g.price, st:g.status, fn:g.free_nyan,
+        bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
+      };});
+    }
+    if(merch && merch.length>0) {
+      MS = merch.map(function(m){return {d:m.date,i:m.items,total:m.total};});
+    }
+    if(merchItems && merchItems.length>0) {
+      MI = merchItems.sort(function(a,b){return a.sort_order-b.sort_order;})
+        .map(function(m){return {id:m.id,n:m.name,p:m.price};});
+    }
+    if(customers && customers.length>0) {
+      CU = customers.map(function(c){return {
+        id:c.id, memberNo:c.member_no, name:c.name,
+        look:c.look, pref:c.pref, alert:c.alert, birth:c.birth, photo:c.photo,
+        trigger:c.trigger_list||[], companion:c.companion||[],
+        gacha:c.gacha, oshiCats:c.oshi_cats||[],
+        visits:c.visits||[], memos:c.memos||[]
+      };});
+    }
+    if(cash && cash.length>0) {
+      CR = cash.map(function(c){return Object.assign({},c.data,{d:c.date,id:c.id});});
+    }
+    if(settings) {
+      var ps=settings.find(function(s){return s.key==='price';});
+      if(ps) Price=Object.assign({},DefaultPrice,ps.value);
+      var bs=settings.find(function(s){return s.key==='binder_colors';});
+      if(bs) BCs=bs.value;
+      var cs=settings.find(function(s){return s.key==='cats';});
+      if(cs) Cats=cs.value;
+      var ts=settings.find(function(s){return s.key==='triggers';});
+      if(ts) Tris=ts.value;
+      var cms=settings.find(function(s){return s.key==='carry_members';});
+      if(cms) CarryMembers=cms.value;
+    }
+
+    // localStorageにデータがあってSupabaseが空なら移行（初回のみ）
+    var migrated = localStorage.getItem('wc_migrated');
+    if(!migrated) {
+      var localG=JSON.parse(localStorage.getItem('wc_g')||'[]');
+      var localMS=JSON.parse(localStorage.getItem('wc_ms')||'[]');
+      var localCU=JSON.parse(localStorage.getItem('wc_cu')||'[]');
+      var localCR=JSON.parse(localStorage.getItem('wc_cr')||'[]');
+      if((!guests||guests.length===0)&&localG.length>0) {
+        G=localG; localG.forEach(function(g){saveGuestToSupa(g);});
+        localStorage.setItem('wc_migrated','1');
+      }
+      if((!merch||merch.length===0)&&localMS.length>0) {
+        MS=localMS; localMS.forEach(function(m){saveMerchToSupa(m);});
+        localStorage.setItem('wc_migrated','1');
+      }
+      if((!customers||customers.length===0)&&localCU.length>0) {
+        CU=localCU; localCU.forEach(function(c){saveCustomerToSupa(c);});
+        localStorage.setItem('wc_migrated','1');
+      }
+      if((!cash||cash.length===0)&&localCR.length>0) {
+        CR=localCR; localCR.forEach(function(r){saveCashToSupa(r);});
+        localStorage.setItem('wc_migrated','1');
+      }
+    }
+        sv(); rfAll();
+    console.log('Supabase load complete!');
+  }).catch(function(e){console.error('loadFromSupabase error:',e.message);rfAll();});
+}
+
+function saveGuestToSupa(g) {
+  supaUpsert('pos_guests',{
+    id:String(g.id), date:g.d, type:g.tp, pattern:g.pt,
+    adults:g.a, children:g.c, checkin:g.ci, checkout:g.co||'',
+    price:g.pr, status:g.st, free_nyan:g.fn,
+    binder_color:g.bc||'', binder_name:g.bcn||'',
+    memo:g.mo||'', survey:g.aq||{}
+  });
+}
+function saveMerchToSupa(m) {
+  supaUpsert('pos_merch',{id:m.d,date:m.d,items:m.i,total:m.total});
+}
+function saveMerchItemsToSupa() {
+  MI.forEach(function(item,i){
+    supaUpsert('pos_merch_items',{id:String(item.id),name:item.n,price:item.p,sort_order:i});
+  });
+}
+function saveCustomerToSupa(c) {
+  supaUpsert('pos_customers',{
+    id:String(c.id), member_no:c.memberNo||'', name:c.name,
+    look:c.look||'', pref:c.pref||'', alert:c.alert||'',
+    birth:c.birth||'', photo:c.photo||'',
+    trigger_list:c.trigger||[], companion:c.companion||[],
+    gacha:c.gacha||'', oshi_cats:c.oshiCats||[],
+    visits:c.visits||[], memos:c.memos||[]
+  });
+}
+function saveCashToSupa(r) {
+  supaUpsert('pos_cash',{id:String(r.id||r.d),date:r.d,data:r});
+}
+function saveSettingToSupa(key,value) {
+  supaUpsert('pos_settings',{key:key,value:value,updated_at:new Date().toISOString()});
+}
+
+// ===== 編集履歴ログ =====
+var OWNER_PW = '0103';
+var isOwnerMode = false;
+
+function logAction(action, detail) {
+  var log = {
+    id: String(Date.now()),
+    action: action,
+    detail: detail,
+    ts: new Date().toLocaleString('ja-JP'),
+    ua: navigator.userAgent.substring(0,50)
+  };
+  supaUpsert('pos_logs', log);
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Kaisei+Opti:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fffbe0;--sf:#fff;--sf2:#edf7f7;--bd:#b8dede;
+  --ac:#2a9d8f;--ac2:#e9c46a;--pk:#52b6b0;--lp:#a8d8d8;
+  --tx:#1a3a3a;--tx2:#5a8a8a;--ok:#2a9d8f;--ng:#e76f51;
+  --wn:#e9c46a;--r:16px;--sh:0 2px 16px rgba(42,157,143,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{background:#fffbe0;min-height:100%;}
+body{background:#fffbe0;min-height:100vh;color:var(--tx);font-family:\'Zen Maru Gothic\',sans-serif;font-size:14px;}
+.hdr{background:linear-gradient(135deg,#2a9d8f 0%,#40b4a6 50%,#52c4b4 100%);border-bottom:2px solid var(--bd);padding:0 16px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(200,140,120,.15);}
+.logo{font-family:\'Kaisei Opti\',serif;font-size:26px;color:#fff;letter-spacing:4px;text-shadow:0 2px 8px rgba(0,0,0,.2),0 0 20px rgba(255,255,255,.3);font-weight:700;}
+.hdate{color:rgba(255,255,255,.9);text-align:right;line-height:1.4;}
+.nav{background:rgba(255,255,255,.95);border-bottom:1px solid var(--bd);display:flex;position:sticky;top:62px;z-index:99;overflow-x:auto;scrollbar-width:none;box-shadow:0 2px 8px rgba(200,140,120,.08);}
+.nav::-webkit-scrollbar{display:none;}
+.ni{flex:1;min-width:46px;padding:9px 4px 7px;text-align:center;font-size:10px;color:var(--tx2);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .2s;}
+.ni.active{color:var(--ac);border-bottom-color:var(--ac);font-weight:700;}
+.ni i{font-size:18px;display:block;margin-bottom:1px;font-style:normal;}
+.pg{display:none;padding:12px;position:relative;background:#fffbe0;min-height:calc(100vh - 108px);}
+.pg.active{display:block;}
+.card{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--sh);}
+.ct{font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.8px;margin-bottom:12px;}
+.sr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.sr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+.sc{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px 8px;text-align:center;box-shadow:var(--sh);}
+.sc.pk{border-top:3px solid var(--ac);}
+.sc.gr{border-top:3px solid var(--ac2);}
+.sc.pu{border-top:3px solid var(--lp);}
+.sc.gd{border-top:3px solid var(--wn);}
+.sl{font-size:10px;color:var(--tx2);margin-bottom:3px;}
+.sv{font-family:\'Kaisei Opti\',serif;font-size:24px;color:var(--ac);}
+.sv.g{color:var(--ok);}
+.sv.p{color:#9060b0;}
+.sv.w{color:var(--wn);}
+.su{font-size:10px;color:var(--tx2);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 16px;border-radius:24px;font-size:13px;font-family:\'Zen Maru Gothic\',sans-serif;font-weight:500;cursor:pointer;border:none;transition:transform .1s;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.btn:active{transform:scale(.96);}
+.bp{background:linear-gradient(135deg,#2a9d8f,#1a8070);color:#fff;}
+.bs{background:var(--sf);color:var(--tx);border:1.5px solid var(--bd);}
+.bsu{background:linear-gradient(135deg,#2a9d8f,#1a8070);color:#fff;}
+.bso{background:var(--sf2);color:var(--tx);border:1.5px solid var(--bd);}
+.bf{width:100%;}
+.bsm{padding:6px 12px;font-size:11px;}
+.fg{margin-bottom:12px;}
+.fl{font-size:11px;color:var(--tx2);margin-bottom:5px;display:block;font-weight:500;}
+.fc{width:100%;background:var(--sf2);border:1.5px solid var(--bd);color:var(--tx);padding:10px 12px;border-radius:10px;font-size:14px;font-family:\'Zen Maru Gothic\',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+.fc:focus{border-color:var(--ac);background:var(--sf);}
+textarea.fc{resize:vertical;min-height:70px;}
+select.fc{cursor:pointer;}
+.cr{display:flex;align-items:center;gap:8px;}
+.cb{width:38px;height:38px;border-radius:50%;background:var(--sf);border:1.5px solid var(--bd);color:var(--ac);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);}
+.cb:active{background:var(--ac);color:#fff;}
+.cv{flex:1;text-align:center;font-family:\'Kaisei Opti\',serif;font-size:24px;color:var(--ac);}
+.tabs{display:flex;background:var(--sf2);border-radius:24px;padding:3px;margin-bottom:12px;border:1.5px solid var(--bd);}
+.tab{flex:1;padding:7px;text-align:center;font-size:12px;border-radius:20px;cursor:pointer;color:var(--tx2);transition:all .2s;white-space:nowrap;}
+.tab.active{background:var(--ac);color:#fff;box-shadow:var(--sh);font-weight:700;}
+.sep{height:1px;background:var(--bd);margin:12px 0;}
+.stit{font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:1px;margin:14px 0 8px;display:flex;align-items:center;gap:5px;}
+.stit:before,.stit:after{content:'';flex:1;height:1px;background:var(--bd);}
+.tag{font-size:10px;padding:2px 8px;border-radius:16px;background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);}
+.tag.pk{background:#fef0f2;border-color:var(--pk);color:#c06070;}
+.tag.gr{background:#f0f8ee;border-color:var(--ac2);color:#5a8050;}
+.tag.ac{background:#fef0ec;border-color:var(--ac);color:var(--ac);}
+.tag.gd{background:#fff8e8;border-color:var(--wn);color:var(--wn);}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;background:var(--ac2);color:#3a3a00;border-radius:8px;font-size:9px;font-weight:700;padding:0 3px;margin-left:2px;}
+.pbox{background:linear-gradient(135deg,#e8f7f6,#d4f0ee);border:1.5px solid var(--ac);border-radius:var(--r);padding:14px;text-align:center;margin-bottom:12px;}
+.pbox.gr{background:linear-gradient(135deg,#f0f8ee,#e8f4e0);border-color:var(--ac2);}
+.pbox-l{font-size:10px;color:var(--tx2);margin-bottom:3px;}
+.pbox-a{font-family:\'Kaisei Opti\',serif;font-size:32px;color:var(--ac);}
+.pbox.gr .pbox-a{color:var(--ok);}
+.pbox-b{font-size:11px;color:var(--tx2);margin-top:4px;white-space:pre-line;line-height:1.6;}
+.gi{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;box-shadow:var(--sh);cursor:pointer;}
+.gi.done{opacity:.6;}
+.gtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.gname{font-size:14px;font-weight:700;}
+.gprice{font-family:\'Kaisei Opti\',serif;font-size:16px;color:var(--ok);}
+.gmeta{display:flex;flex-wrap:wrap;gap:4px;}
+.sbdg{font-size:11px;color:#fff;background:var(--ac);padding:2px 8px;border-radius:16px;}
+.ov{position:fixed;inset:0;background:rgba(80,40,30,.4);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.ov.on{display:flex;}
+.modal{background:var(--bg);border-radius:24px 24px 0 0;padding:20px 16px 32px;width:100%;max-width:540px;max-height:92vh;overflow-y:auto;border:1.5px solid var(--bd);border-bottom:none;box-shadow:0 -4px 24px rgba(200,140,120,.2);}
+.mh{width:32px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 18px;display:block;}
+.mt{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;font-family:\'Kaisei Opti\',serif;}
+.mc{width:28px;height:28px;background:var(--sf2);border:1.5px solid var(--bd);border-radius:50%;color:var(--tx2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+.chip{font-size:11px;padding:5px 11px;border-radius:18px;background:#fff;border:1.5px solid var(--bd);color:var(--tx2);cursor:pointer;transition:all .15s;}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700;}
+.chip.on2{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700;}
+.bc{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;flex-shrink:0;}
+.bc.on{border-color:#333;transform:scale(1.15);}
+.mi{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;box-shadow:var(--sh);}
+.cc{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;box-shadow:var(--sh);cursor:pointer;display:flex;gap:10px;align-items:center;}
+.cc.ms{border-color:var(--ac2);background:linear-gradient(135deg,#fdfff0,#fafae8);}
+.cav{width:46px;height:46px;border-radius:50%;border:2px solid var(--bd);flex-shrink:0;background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;}
+.cav img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.drow{display:grid;grid-template-columns:58px 40px 1fr 72px;align-items:center;gap:5px;padding:6px 0;border-bottom:1px solid var(--bd);}
+.drow:last-child{border-bottom:none;}
+.dlbl{font-size:12px;color:var(--tx2);text-align:right;}
+.dprev{font-size:11px;color:var(--tx2);text-align:center;background:var(--sf2);border-radius:6px;padding:2px 4px;}
+.dctrl{display:flex;align-items:center;gap:4px;justify-content:center;}
+.dbtn{width:28px;height:28px;border-radius:50%;background:var(--sf);border:1.5px solid var(--bd);color:var(--ac);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dbtn:active{background:var(--ac);color:#fff;}
+.dqty{font-family:\'Kaisei Opti\',serif;font-size:18px;color:var(--ac);min-width:22px;text-align:center;}
+.dsub{font-size:11px;color:var(--tx);text-align:right;}
+.csb{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:10px;text-align:center;box-shadow:var(--sh);}
+.csb.full{grid-column:1/-1;}
+.csb.tot{border-top:3px solid var(--ac);}
+.csb.car{border-top:3px solid var(--wn);}
+.csb.net{border-top:3px solid var(--ok);}
+.csb.ov2{border-top:3px solid var(--ok);}
+.csb.un{border-top:3px solid var(--ng);}
+.csl{font-size:9px;color:var(--tx2);margin-bottom:3px;}
+.csv{font-family:\'Kaisei Opti\',serif;font-size:20px;color:var(--ac);}
+.csb.car .csv{color:var(--wn);}
+.csb.net .csv,.csb.ov2 .csv{color:var(--ok);}
+.csb.un .csv{color:var(--ng);}
+.carry{background:linear-gradient(135deg,#fff8e8,#fff0d0);border:2px solid var(--wn);border-radius:var(--r);padding:12px;margin-bottom:12px;}
+.carry-l{font-size:10px;color:var(--wn);font-weight:700;margin-bottom:6px;}
+.carry-h{font-size:10px;color:var(--wn);margin-top:5px;text-align:center;}
+.mnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.mnbtn{background:var(--sf);border:1.5px solid var(--bd);color:var(--tx);padding:6px 12px;border-radius:18px;cursor:pointer;font-size:11px;font-family:\'Zen Maru Gothic\',sans-serif;box-shadow:var(--sh);}
+.mnlbl{font-family:\'Kaisei Opti\',serif;font-size:18px;color:var(--ac);}
+.pharea{width:80px;height:80px;border-radius:50%;border:2px dashed var(--bd);background:var(--sf2);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto 12px;overflow:hidden;}
+.pharea img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.cbar{margin-bottom:6px;}
+.cbar-l{font-size:11px;color:var(--tx2);margin-bottom:2px;display:flex;justify-content:space-between;}
+.cbar-bg{background:var(--sf2);border-radius:6px;height:18px;overflow:hidden;}
+.cbar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--ac),#e09080);transition:width .4s;}
+.cbar-fill.gr{background:linear-gradient(90deg,var(--ok),#90c880);}
+.cbar-fill.pu{background:linear-gradient(90deg,#c090e0,#a060c0);}
+.tl{display:flex;gap:10px;margin-bottom:12px;}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--ac);flex-shrink:0;margin-top:3px;}
+.tl-dot.v{background:var(--ok);}
+.tl-dot.m{background:#9060b0;}
+.tl-body{flex:1;}
+.tl-d{font-size:10px;color:var(--tx2);margin-bottom:2px;}
+.tl-vc{background:var(--sf2);border-radius:10px;padding:8px;font-size:12px;}
+.tl-mc{background:#f4eef8;border-radius:10px;padding:8px;font-size:12px;}
+.tl-pr{font-family:\'Kaisei Opti\',serif;font-size:14px;color:var(--ok);}
+.ir{display:flex;padding:7px 0;border-bottom:1px solid var(--bd);font-size:12px;}
+.ir:last-child{border-bottom:none;}
+.il{color:var(--tx2);width:80px;flex-shrink:0;}
+.msbdg{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#fff8e8,#ffe8c0);border:2px solid var(--wn);border-radius:18px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--wn);}
+.sbr{display:flex;gap:8px;margin-bottom:12px;}
+.si{flex:1;background:var(--sf);border:1.5px solid var(--bd);color:var(--tx);padding:9px 12px;border-radius:22px;font-size:13px;font-family:\'Zen Maru Gothic\',sans-serif;outline:none;}
+.si:focus{border-color:var(--ac);}
+.st{width:100%;border-collapse:collapse;}
+.st th{font-size:10px;color:var(--tx2);font-weight:500;text-align:left;padding:5px 6px;border-bottom:1px solid var(--bd);}
+.st td{padding:8px 6px;border-bottom:1px solid var(--bd);font-size:12px;}
+.st tr:last-child td{border-bottom:none;}
+.st .amt{text-align:right;font-family:\'Kaisei Opti\',serif;font-size:14px;color:var(--ok);}
+.empty{text-align:center;padding:40px 20px;color:var(--tx2);}
+.ei{font-size:44px;margin-bottom:10px;}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ok);color:#fff;padding:10px 22px;border-radius:28px;font-size:13px;font-weight:700;z-index:999;transition:transform .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+.toast.on{transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--ng);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+
+/* 売上・経費専用 */
+.annual-card{background:linear-gradient(135deg,#e8f7f6,#d0f2ee);border:2px solid var(--ac);border-radius:var(--r);padding:18px;text-align:center;margin-bottom:12px;position:relative;overflow:hidden;}
+.annual-card::after{content:'🐱';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:36px;opacity:.2;}
+.annual-lbl{font-size:11px;color:var(--tx2);letter-spacing:1px;margin-bottom:4px;}
+.annual-val{font-family:\'Kaisei Opti\',serif;font-size:36px;color:var(--ac);line-height:1;}
+.annual-sub{font-size:11px;color:var(--tx2);margin-top:5px;}
+.chart-wrap{position:relative;height:180px;margin-top:8px;}
+.exp-balance{background:linear-gradient(135deg,#e8f7f6,#d4f0ee);border:2px solid var(--bd);border-radius:var(--r);padding:18px;text-align:center;margin-bottom:12px;transition:border-color .3s;}
+.exp-balance.warn{border-color:var(--ng) !important;animation:epulse 1.5s infinite;}
+@keyframes epulse{0%,100%{box-shadow:0 0 0 0 rgba(231,111,81,.3);}50%{box-shadow:0 0 0 8px rgba(231,111,81,0);}}
+.exp-bal-lbl{font-size:11px;color:var(--tx2);margin-bottom:4px;}
+.exp-bal-val{font-family:\'Kaisei Opti\',serif;font-size:40px;line-height:1;}
+.exp-bal-val.safe{color:var(--ok);}
+.exp-bal-val.warn{color:var(--ng);}
+.exp-bar{height:7px;background:var(--sf2);border-radius:4px;margin-top:10px;overflow:hidden;}
+.exp-bar-fill{height:100%;border-radius:4px;transition:width .5s,background .3s;}
+.alarm-banner{display:none;background:var(--ng);color:#fff;border-radius:12px;padding:12px;text-align:center;font-weight:700;font-size:14px;margin-bottom:12px;animation:shake .4s;}
+.alarm-banner.show{display:block;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.exp-item{background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;box-shadow:var(--sh);}
+.exp-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.exp-amt{font-family:\'Kaisei Opti\',serif;font-size:16px;color:var(--ng);}
+.exp-bottom{display:flex;justify-content:space-between;align-items:center;}
+.exp-cat-badge{font-size:10px;background:var(--sf2);color:var(--tx2);border-radius:6px;padding:2px 8px;border:1px solid var(--bd);}
+.photo-btn{width:100%;padding:12px;border:2px dashed var(--bd);border-radius:12px;background:none;color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:13px;cursor:pointer;margin-bottom:8px;}
+.rcpt-prev{width:100%;border-radius:10px;margin-top:8px;display:none;}
+.rcpt-prev.show{display:block;}
+</style>
+
+<script>
+(function(){
+  var c=document.createElement('canvas');
+  c.width=c.height=180;
+  var ctx=c.getContext('2d');
+  ctx.fillStyle='#2a9d8f';
+  ctx.beginPath();
+  ctx.roundRect(0,0,180,180,[40]);
+  ctx.fill();
+  ctx.font='80px serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('🐱',90,95);
+  ctx.font='bold 18px sans-serif';
+  ctx.fillStyle='white';
+  ctx.fillText('POS',90,155);
+  var png=c.toDataURL('image/png');
+  var link=document.createElement('link');
+  link.rel='apple-touch-icon';
+  link.href=png;
+  document.head.appendChild(link);
+  var fav=document.querySelector("link[rel*='icon']")||document.createElement('link');
+  fav.rel='icon';fav.href=png;
+  document.head.appendChild(fav);
+})();
+</script>
+</head>
+<body>
+
+<!-- パスワード認証画面 -->
+<div id="auth-screen" style="position:fixed;inset:0;background:linear-gradient(135deg,#2a9d8f,#40b4a6);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;">
+  <div style="font-family:'Kaisei Opti',serif;font-size:32px;color:#fff;letter-spacing:3px;margin-bottom:8px;">🐾 WE CATS</div>
+  <div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:48px;letter-spacing:1px;">cat cafe</div>
+  <div style="background:rgba(255,255,255,.15);border-radius:20px;padding:32px 28px;width:100%;max-width:320px;backdrop-filter:blur(10px);">
+    <div style="font-size:13px;color:#fff;text-align:center;margin-bottom:16px;opacity:.9;">パスワードを入力してください</div>
+    <input type="password" id="auth-input" maxlength="20" placeholder="パスワード"
+      style="width:100%;padding:14px;border-radius:12px;border:none;font-size:18px;text-align:center;letter-spacing:4px;font-family:'Kaisei Opti',serif;outline:none;margin-bottom:12px;"
+      onkeydown="if(event.key==='Enter')checkAuth()">
+    <button onclick="checkAuth()" style="width:100%;padding:14px;background:#fff;color:#2a9d8f;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Zen Maru Gothic',sans-serif;">入る</button>
+    <div id="auth-error" style="color:#ffe0d0;font-size:12px;text-align:center;margin-top:10px;display:none;">パスワードが違います</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var PW = '0000';
+  var STORAGE_KEY = 'wc_auth';
+  if(localStorage.getItem(STORAGE_KEY) === PW){
+    document.getElementById('auth-screen').style.display = 'none';
+  }
+  window.checkAuth = function(){
+    var input = document.getElementById('auth-input').value;
+    if(input === PW){
+      localStorage.setItem(STORAGE_KEY, PW);
+      document.getElementById('auth-screen').style.display = 'none';
+    } else {
+      document.getElementById('auth-error').style.display = 'block';
+      document.getElementById('auth-input').value = '';
+    }
+  };
+})();
+</script>
+
+<div class="hdr">
+  <div class="logo">🐾 WE CATS</div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="hdate" id="hdate"></div>
+    <button class="btn bso bsm" onclick="oModal('m-menu')" style="padding:6px 10px;background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff;">⚙️</button>
+  </div>
+</div>
+
+<div class="nav">
+  <div class="ni active" onclick="sp('p-g')" id="n-g"><i>🐱</i>来店</div>
+  <div class="ni" onclick="sp('p-r')" id="n-r"><i>➕</i>新規</div>
+  <div class="ni" onclick="sp('p-m')" id="n-m"><i>🛍️</i>物販</div>
+  <div class="ni" onclick="sp('p-c')" id="n-c"><i>👤</i>カルテ</div>
+  <div class="ni" onclick="sp('p-s')" id="n-s"><i>📊</i>集計</div>
+  <div class="ni" onclick="sp('p-k')" id="n-k"><i>💴</i>金種</div>
+</div>
+
+<!-- ===== GUESTS ===== -->
+<div class="pg active" id="p-g">
+  <div class="sr2">
+    <div class="sc pk"><div class="sl">本日の来店</div><div class="sv" id="sg">0</div><div class="su">名</div></div>
+    <div class="sc gr"><div class="sl">本日の売上</div><div class="sv g" id="ss">0</div><div class="su">円</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="ts1" onclick="gtab('stay')">滞在中 <span class="badge" id="bs">0</span></div>
+    <div class="tab" id="ts2" onclick="gtab('done')">退店済 <span class="badge" id="bd2">0</span></div>
+  </div>
+  <div id="gl-s"></div>
+  <div id="gl-d" style="display:none;"></div>
+</div>
+
+<!-- ===== REGISTER ===== -->
+<div class="pg" id="p-r">
+  <!-- 会員選択バナー -->
+  <div id="member-banner" style="background:linear-gradient(135deg,#e8f5f3,#d4ede9);border:1.5px solid var(--ac);border-radius:14px;padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:13px;font-weight:700;color:var(--ac);text-align:center;">🪪 会員様ですか？</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="openMemberSearch()" style="flex:1;padding:11px;background:var(--ac);color:#fff;border:none;border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">✅ 会員です</button>
+      <button onclick="closeMemberBanner()" style="flex:1;padding:11px;background:var(--sf2);color:var(--tx2);border:1.5px solid var(--bd);border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;cursor:pointer;">— 非会員</button>
+    </div>
+  </div>
+  <!-- 会員情報表示エリア（選択後に表示） -->
+  <div id="member-info-bar" style="display:none;background:linear-gradient(135deg,#fff9e6,#fff3cc);border:1.5px solid var(--wn);border-radius:14px;padding:12px;margin-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-size:15px;font-weight:700;" id="mib-name">—</div>
+        <div style="font-size:11px;color:var(--tx2);margin-top:3px;" id="mib-sub">—</div>
+      </div>
+      <button onclick="clearMember()" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:'Zen Maru Gothic',sans-serif;">✕ 解除</button>
+    </div>
+    <div id="mib-alert" style="display:none;margin-top:8px;background:#fff0f0;border:1px solid var(--pk);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--ng);"></div>
+  </div>
+  <!-- 非会員選択後の戻るバー -->
+  <div id="member-back-bar" style="display:none;margin-bottom:12px;text-align:center;">
+    <button onclick="showMemberBanner()" style="background:var(--sf2);border:1.5px solid var(--bd);color:var(--tx2);padding:8px 20px;border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:12px;cursor:pointer;">← 会員選択に戻る</button>
+  </div>
+  <div class="card">
+    <div class="ct">🐾 新規入店登録</div>
+    <div class="fg"><label class="fl">お客様区分</label>
+      <select class="fc" id="r-tp"><option value="new">ご新規様</option><option value="rep">リピーター様</option></select>
+    </div>
+    <div class="fg"><label class="fl">来店パターン</label>
+      <select class="fc" id="r-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
+    </div>
+    <div class="fg">
+      <label class="fl">フリーにゃんタイム</label>
+      <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
+    </div>
+
+    <div class="sep"></div>
+    <div class="stit">人数</div>
+    <div class="fg"><label class="fl">大人</label>
+      <div class="cr"><button class="cb" onclick="cc2('a',-1)">－</button><div class="cv" id="ca">1</div><button class="cb" onclick="cc2('a',1)">＋</button></div>
+    </div>
+    <div class="fg"><label class="fl">子ども（小学生以下）</label>
+      <div class="cr"><button class="cb" onclick="cc2('c',-1)">－</button><div class="cv" id="cc3">0</div><button class="cb" onclick="cc2('c',1)">＋</button></div>
+    </div>
+    <div class="sep"></div>
+    <div class="fg"><label class="fl">入店時間</label><input type="time" class="fc" id="r-time" oninput="ppCalc()"></div>
+    <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="r-memo" placeholder="例：大学生位女子"></div>
+    <div class="pbox" id="pp-box">
+      <div class="pbox-l">料金目安</div>
+      <div class="pbox-a" id="pp">¥—</div>
+      <div class="pbox-b" id="pb"></div>
+    </div>
+    <div class="sep"></div>
+    <div class="ct" style="margin-bottom:8px;">📋 アンケート（口頭で確認）</div>
+    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">何を見てきましたか？</div>
+      <div class="chips" id="aq-tri"></div>
+      <div style="margin-top:7px;display:flex;gap:6px;">
+        <input type="text" class="fc" id="aq-tri-add" placeholder="追加する" style="flex:1;padding:6px 10px;font-size:12px;">
+        <button class="btn bso bsm" onclick="addAqTri()">追加</button>
+      </div>
+    </div>
+    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">猫カフェは初めてですか？</div>
+      <div class="chips" id="aq-exp">
+        <div class="chip" data-v="初めて" onclick="selOne(this,'aq-exp')">🐱 初めて</div>
+        <div class="chip" data-v="2〜3回目" onclick="selOne(this,'aq-exp')">🔁 2〜3回目</div>
+        <div class="chip" data-v="よく来る" onclick="selOne(this,'aq-exp')">⭐ よく来る</div>
+      </div>
+    </div>
+    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;">推し猫はいますか？</div>
+      <div class="chips" id="aq-cats"></div>
+    </div>
+    <button class="btn bp bf" onclick="regGuest()" style="font-size:15px;padding:14px;">🐾 入店登録</button>
+  </div>
+</div>
+
+<!-- ===== MERCH ===== -->
+<div class="pg" id="p-m">
+  <div class="sr2">
+    <div class="sc pk"><div class="sl">本日の物販点数</div><div class="sv" id="mc">0</div><div class="su">点</div></div>
+    <div class="sc gr"><div class="sl">本日の物販売上</div><div class="sv g" id="ms">0</div><div class="su">円</div></div>
+  </div>
+  <div id="ml"></div>
+  <div class="sep"></div>
+  <div class="fg">
+    <label class="fl">保存する日付</label>
+    <input type="date" class="fc" id="merch-date">
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn bso bf" onclick="oMF(null)">＋ 商品追加</button>
+    <button class="btn bp bf" onclick="saveMerch()">💾 保存</button>
+  </div>
+  <div id="ml-saved" style="margin-top:12px;"></div>
+</div>
+
+<!-- ===== CARTE ===== -->
+<div class="pg" id="p-c">
+  <div class="sbr">
+    <input class="si" type="text" id="cs" placeholder="🔍 名前・番号で検索" oninput="rCarte()">
+    <button class="btn bp bsm" onclick="oNewCust()">＋ 新規</button>
+  </div>
+  <div class="sr2">
+    <div class="sc pk"><div class="sl">登録数</div><div class="sv" id="ct-tot">0</div><div class="su">名</div></div>
+    <div class="sc gr"><div class="sl">今月来店</div><div class="sv g" id="ct-m">0</div><div class="su">回</div></div>
+  </div>
+  <div id="cl"></div>
+</div>
+
+<!-- ===== STATS ===== -->
+<div class="pg" id="p-s">
+  <div class="tabs" style="overflow-x:auto;">
+    <div class="tab active" id="ts-d" onclick="stab('d')" style="white-space:nowrap;">日別</div>
+    <div class="tab" id="ts-m" onclick="stab('m')" style="white-space:nowrap;">月別</div>
+    <div class="tab" id="ts-a" onclick="stab('a')" style="white-space:nowrap;">アンケート</div>
+    <div class="tab" id="ts-p" onclick="stab('p')" style="white-space:nowrap;">過去データ</div>
+    <div class="tab" id="ts-e" onclick="stab('e')" style="white-space:nowrap;">📈 年間売上</div>
+    <div class="tab" id="ts-z" onclick="stab('z')" style="white-space:nowrap;">📈 分析</div>
+  </div>
+  <div id="s-d">
+    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div class="mnlbl" id="d-lbl"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
+    <div class="sr2">
+      <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="d-g">0</div><div class="su">名</div></div>
+      <div class="sc gr"><div class="sl">売上合計</div><div class="sv g" id="d-s">0</div><div class="su">円</div></div>
+    </div>
+    <div id="d-ms" class="card" style="display:none;"><div class="ct">🛍️ 物販内訳</div><div id="d-md"></div></div>
+    <div id="d-list"></div>
+  </div>
+  <div id="s-m" style="display:none;">
+    <div class="mnav"><button class="mnbtn" onclick="chM(-1)">＜前月</button><div class="mnlbl" id="m-lbl"></div><button class="mnbtn" onclick="chM(1)">翌月＞</button></div>
+    <div class="sr2">
+      <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="m-g">0</div><div class="su">名</div></div>
+      <div class="sc gr"><div class="sl">月間売上</div><div class="sv g" id="m-s">0</div><div class="su">円</div></div>
+    </div>
+    <div id="m-list"></div>
+  </div>
+  <div id="s-p" style="display:none;">
+    <div class="card">
+      <div class="ct">📅 過去の月別売上を入力</div>
+      <div style="font-size:11px;color:var(--tx2);margin-bottom:12px;">古いアプリのデータや手書きの記録を入力できます</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div><label class="fl">年</label><input type="number" class="fc" id="pd-yr" value="2025" style="padding:8px;"></div>
+        <div><label class="fl">月</label><select class="fc" id="pd-mo" style="padding:8px;">
+          <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option>
+          <option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option>
+          <option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+        </select></div>
+        <div><label class="fl">来店人数</label><input type="number" class="fc" id="pd-ppl" value="0" min="0" style="padding:8px;"></div>
+      </div>
+      <div class="fg"><label class="fl">売上金額（円）</label><input type="number" class="fc" id="pd-sales" value="0" min="0"></div>
+      <button class="btn bp bf" onclick="addPastData()">追加</button>
+    </div>
+    <div id="pd-list"></div>
+  </div>
+  <div id="s-a" style="display:none;">
+    <div class="mnav"><button class="mnbtn" onclick="chAM(-1)">＜前月</button><div class="mnlbl" id="am-lbl"></div><button class="mnbtn" onclick="chAM(1)">翌月＞</button></div>
+    <div class="card"><div class="ct">📍 来店きっかけ</div><div id="ch-tri"></div></div>
+    <div class="card"><div class="ct">🐱 猫カフェ経験</div><div id="ch-exp"></div></div>
+    <div class="card"><div class="ct">🐾 人気の猫ランキング</div><div id="ch-cat"></div></div>
+  </div>
+
+  <!-- 分析セクション -->
+  <div id="s-z" style="display:none;">
+    <div class="tabs" style="margin-bottom:12px;">
+      <div class="tab active" id="tz-d" onclick="ztab('d')">日別</div>
+      <div class="tab" id="tz-m" onclick="ztab('m')">月別</div>
+      <div class="tab" id="tz-y" onclick="ztab('y')">年別</div>
+    </div>
+    <div id="z-d">
+      <div class="mnav"><button class="mnbtn" onclick="chZD(-1)">＜前日</button><div class="mnlbl" id="z-d-lbl"></div><button class="mnbtn" onclick="chZD(1)">翌日＞</button></div>
+      <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-d-type"></div></div>
+      <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-d-pattern"></div></div>
+      <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-d-time"></div></div>
+      <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-d-merch"></div></div>
+    </div>
+    <div id="z-m" style="display:none;">
+      <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div class="mnlbl" id="z-m-lbl"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
+      <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-m-type"></div></div>
+      <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-m-pattern"></div></div>
+      <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-m-time"></div></div>
+      <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-m-merch"></div></div>
+    </div>
+    <div id="z-y" style="display:none;">
+      <div class="mnav"><button class="mnbtn" onclick="chZY(-1)">＜前年</button><div class="mnlbl" id="z-y-lbl"></div><button class="mnbtn" onclick="chZY(1)">翌年＞</button></div>
+      <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-y-type"></div></div>
+      <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-y-pattern"></div></div>
+      <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-y-time"></div></div>
+      <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-y-merch"></div></div>
+      <div class="card"><div class="ct">📅 月別来店数推移</div><div id="z-y-monthly"></div></div>
+    </div>
+  </div>
+
+  <!-- 年間売上セクション（集計タブ内） -->
+  <div id="s-e" style="display:none;">
+    <div class="mnav">
+      <button class="mnbtn" onclick="chEY(-1)">＜前年</button>
+      <div class="mnlbl" id="e-yr-lbl2">2026年</div>
+      <button class="mnbtn" onclick="chEY(1)">翌年＞</button>
+    </div>
+    <div class="annual-card">
+      <div class="annual-lbl">年間売上合計</div>
+      <div class="annual-val" id="e-annual2">¥0</div>
+      <div class="annual-sub" id="e-annual-sub2">年間来店 0人</div>
+    </div>
+    <div class="sr2">
+      <div class="sc pk"><div class="sl">年間来店人数</div><div class="sv" id="e-tot-v2">0</div><div class="su">人</div></div>
+      <div class="sc gr"><div class="sl">平均客単価</div><div class="sv g" id="e-avg2">¥—</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">月別売上グラフ</div>
+      <div class="chart-wrap"><canvas id="e-chart-s2"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">月別来店人数</div>
+      <div class="chart-wrap"><canvas id="e-chart-v2"></canvas></div>
+    </div>
+    <div class="sep"></div>
+    <div class="card">
+      <div class="ct">📅 月別データ手入力</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="fg"><label class="fl">月</label>
+          <select class="fc" id="ei-month2">
+            <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+            <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+            <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+            <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">売上金額（円）</label>
+          <input type="number" class="fc" id="ei-sales2" placeholder="例: 250000">
+        </div>
+      </div>
+      <div class="fg"><label class="fl">来店人数（人）</label>
+        <input type="number" class="fc" id="ei-visitors2" placeholder="例: 120">
+      </div>
+      <button class="btn bp bf" onclick="saveEData2()">💾 保存する</button>
+    </div>
+    <div class="stit">入力済みデータ</div>
+    <div id="e-month-list2"></div>
+  </div>
+</div>
+
+<!-- ===== CASH ===== -->
+<div class="pg" id="p-k">
+  <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div class="mnlbl" id="k-lbl"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
+  <div id="k-list"></div>
+  <button class="btn bp bf" onclick="oCash()" style="margin-top:8px;">＋ 金種登録</button>
+</div>
+
+
+<!-- ===== MODALS ===== -->
+
+<!-- CHECKOUT -->
+<div class="ov" id="m-co"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🚪 退店処理</span><button class="mc" onclick="cModal('m-co')">✕</button></div>
+  <div id="co-info" style="margin-bottom:12px;"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+    <div><label class="fl">入店時間（編集可）</label><input type="time" class="fc" id="co-ci" oninput="rcCO()" onchange="rcCO()" onblur="rcCO()"></div>
+    <div><label class="fl">退店時間</label><input type="time" class="fc" id="co-co" oninput="rcCO()" onchange="rcCO()" onblur="rcCO()"></div>
+  </div>
+  <div class="pbox"><div class="pbox-l">滞在時間</div><div class="pbox-a" id="co-dur">—</div></div>
+  <div id="co-det" style="font-size:11px;color:var(--tx2);margin-bottom:10px;text-align:center;"></div>
+  <div class="fg"><label class="fl">割引クーポン（金額）</label><input type="number" class="fc" id="co-cup" value="0" min="0" oninput="rcCO()"></div>
+  <div class="fg"><label class="fl">地域振興券・商品券</label><input type="number" class="fc" id="co-tkt" value="0" min="0" oninput="rcCO()"></div>
+  <div class="fg"><label class="fl">応援券</label><input type="number" class="fc" id="co-sup" value="0" min="0" oninput="rcCO()"></div>
+  <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="co-mo"></div>
+  <div class="pbox gr"><div class="pbox-l">レジ精算料金</div><div class="pbox-a" id="co-tot">¥0</div><div class="pbox-b" id="co-bd"></div></div>
+  <div style="display:flex;gap:8px;margin-bottom:8px;">
+    <button class="btn bs" style="flex:1;" onclick="cModal('m-co')">キャンセル</button>
+    <button class="btn bsu" style="flex:2;" onclick="confCO()">退店登録</button>
+  </div>
+  <button class="btn bf" style="background:linear-gradient(135deg,#f4eef8,#ead4f4);border:1.5px solid var(--lp);color:#9060b0;" onclick="showRcpt()">🧾 お会計画面（お客様向け）</button>
+</div></div>
+
+<!-- DETAIL -->
+<div class="ov" id="m-det"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span id="det-tit">詳細</span><button class="mc" onclick="cModal('m-det')">✕</button></div>
+  <div id="det-body"></div>
+  <div style="display:flex;gap:8px;margin-top:14px;" id="det-act"></div>
+</div></div>
+
+<!-- RECEIPT SCREEN -->
+<div class="ov" id="m-rcpt" style="align-items:stretch;">
+  <div style="background:linear-gradient(160deg,#e8f7f6 0%,#fffbe0 60%,#e8f7f6 100%);width:100%;max-width:540px;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;position:relative;">
+    <button onclick="cModal('m-rcpt')" style="position:absolute;top:20px;right:20px;background:rgba(0,0,0,.08);border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--tx2);">✕</button>
+    <div style="font-family:\'Kaisei Opti\',serif;font-size:28px;color:var(--ac);letter-spacing:3px;margin-bottom:6px;">🐾 WE CATS</div>
+    <div style="font-size:13px;color:var(--tx2);margin-bottom:40px;letter-spacing:1px;">cat cafe</div>
+    <div id="rc-ppl" style="font-family:\'Kaisei Opti\',serif;font-size:32px;color:var(--tx);margin-bottom:32px;text-align:center;line-height:1.5;"></div>
+    <div style="background:rgba(255,255,255,.8);border-radius:24px;padding:32px 40px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(42,157,143,.12);margin-bottom:32px;">
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:6px;letter-spacing:1px;">ご滞在時間</div>
+      <div id="rc-dur" style="font-family:\'Kaisei Opti\',serif;font-size:32px;color:var(--tx);margin-bottom:24px;"></div>
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:6px;letter-spacing:1px;">お会計</div>
+      <div id="rc-tot" style="font-family:\'Kaisei Opti\',serif;font-size:60px;color:var(--ac);line-height:1.2;"></div>
+      <div id="rc-bd" style="font-size:12px;color:var(--tx2);margin-top:8px;"></div>
+    </div>
+    <div style="font-family:\'Kaisei Opti\',serif;font-size:18px;color:var(--ac);text-align:center;margin-bottom:8px;">またのご来店をお待ちしております</div>
+    <div style="font-size:13px;color:var(--tx2);text-align:center;margin-bottom:40px;">🐱 猫たちも待ってます 🐱</div>
+    <button class="btn bs" onclick="cModal('m-rcpt')" style="width:200px;font-size:14px;">閉じる</button>
+  </div>
+</div>
+
+<!-- MERCH FORM -->
+<div class="ov" id="m-mf"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span id="mf-tit">🛍️ 商品追加</span><button class="mc" onclick="cModal('m-mf')">✕</button></div>
+  <input type="hidden" id="mf-id">
+  <div class="fg"><label class="fl">商品名</label><input type="text" class="fc" id="mf-n" placeholder="例：猫カード"></div>
+  <div class="fg"><label class="fl">単価（円）</label><input type="number" class="fc" id="mf-p" placeholder="例：300" min="0"></div>
+  <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-mf')">キャンセル</button><button class="btn bp" style="flex:2;" onclick="saveMI()">保存</button></div>
+</div></div>
+
+<!-- CARTE FORM -->
+<div class="ov" id="m-cf"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span id="cf-tit">👤 新規登録</span><button class="mc" onclick="cModal('m-cf')">✕</button></div>
+  <div class="pharea" onclick="document.getElementById('ph-in').click()" id="ph-prev"><div style="font-size:10px;color:var(--tx2);text-align:center;">📷<br>写真</div></div>
+  <input type="file" id="ph-in" accept="image/*" style="display:none;" onchange="loadPh(event)">
+  <div class="fg"><label class="fl">名前・ニックネーム *</label><input type="text" class="fc" id="cf-n" placeholder="例：田中さん"></div>
+  <div class="fg"><label class="fl">特徴・見た目</label><textarea class="fc" id="cf-look" placeholder="例：ショートヘアの女性"></textarea></div>
+  <div class="stit">来店きっかけ（複数可）</div>
+  <div class="chips" id="cf-tri"></div>
+  <div class="stit">同伴者パターン</div>
+  <div class="chips" id="cf-comp">
+    <div class="chip" data-v="おひとり様" onclick="togMulti(this,'cf-comp','companion')">🧍 おひとり様</div>
+    <div class="chip" data-v="カップル" onclick="togMulti(this,'cf-comp','companion')">💑 カップル</div>
+    <div class="chip" data-v="友人" onclick="togMulti(this,'cf-comp','companion')">👭 友人</div>
+    <div class="chip" data-v="家族" onclick="togMulti(this,'cf-comp','companion')">👨‍👩‍👧 家族</div>
+  </div>
+  <div class="stit">ガチャ</div>
+  <div class="chips" id="cf-gach">
+    <div class="chip" data-v="よくする" onclick="selOne(this,'cf-gach')">🎰 よくする</div>
+    <div class="chip" data-v="たまにする" onclick="selOne(this,'cf-gach')">🎲 たまにする</div>
+    <div class="chip" data-v="しない" onclick="selOne(this,'cf-gach')">— しない</div>
+  </div>
+  <div class="sep"></div>
+  <div class="fg"><label class="fl">好み・話題メモ</label><textarea class="fc" id="cf-pref" placeholder="例：黒猫が好き"></textarea></div>
+  <div class="fg"><label class="fl">アレルギー・注意事項</label><textarea class="fc" id="cf-alert" placeholder="例：猫アレルギー軽度あり"></textarea></div>
+  <div class="fg"><label class="fl">誕生月</label>
+    <select class="fc" id="cf-birth">
+      <option value="">未設定</option>
+      <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option><option value="4">4月</option>
+      <option value="5">5月</option><option value="6">6月</option><option value="7">7月</option><option value="8">8月</option>
+      <option value="9">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+    </select>
+  </div>
+  <div class="stit">推し猫</div>
+  <div class="chips" id="cf-cats"></div>
+  <div style="margin-top:7px;display:flex;gap:6px;">
+    <input type="text" class="fc" id="cf-cat-add" placeholder="猫の名前を追加" style="flex:1;padding:6px 10px;font-size:12px;">
+    <button class="btn bso bsm" onclick="addCfCat()">追加</button>
+  </div>
+  <div class="sep"></div>
+  <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-cf')">キャンセル</button><button class="btn bp" style="flex:2;" onclick="saveCust()">保存</button></div>
+</div></div>
+
+<!-- MEMO -->
+<div class="ov" id="m-memo"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>📝 スタッフメモ追加</span><button class="mc" onclick="cModal('m-memo')">✕</button></div>
+  <div class="fg"><label class="fl">メモ内容</label><textarea class="fc" id="memo-txt" style="min-height:100px;" placeholder="例：にゃあなと仲良くなってた"></textarea></div>
+  <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-memo')">キャンセル</button><button class="btn bp" style="flex:2;" onclick="saveMemo()">追加</button></div>
+</div></div>
+
+<!-- VISIT -->
+<div class="ov" id="m-vis"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🐾 来店記録を追加</span><button class="mc" onclick="cModal('m-vis')">✕</button></div>
+  <div class="fg"><label class="fl">来店日</label><input type="date" class="fc" id="v-d"></div>
+  <div class="fg"><label class="fl">人数</label><input type="number" class="fc" id="v-p" value="1" min="1"></div>
+  <div class="fg"><label class="fl">料金</label><input type="number" class="fc" id="v-pr" value="0" min="0"></div>
+  <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="v-m" placeholder="例：誕生日来店"></div>
+  <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-vis')">キャンセル</button><button class="btn bsu" style="flex:2;" onclick="saveVis()">追加</button></div>
+</div></div>
+
+<!-- 会員検索モーダル -->
+<div class="ov" id="m-msearch"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🪪 会員検索</span><button class="mc" onclick="cModal('m-msearch')">✕</button></div>
+  <div class="fg" style="margin-bottom:8px;">
+    <input type="text" class="fc" id="msearch-q" placeholder="名前 または 会員番号" oninput="doMemberSearch()" style="font-size:15px;">
+  </div>
+  <div id="msearch-results" style="max-height:280px;overflow-y:auto;"></div>
+</div></div>
+
+<!-- CASH -->
+<div class="ov" id="m-cash"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>💴 金種登録</span><button class="mc" onclick="cModal('m-cash')">✕</button></div>
+  <div class="fg"><label class="fl">日付</label><input type="date" class="fc" id="k-d" onchange="loadPrev()"></div>
+  <div style="display:grid;grid-template-columns:58px 40px 1fr 72px;gap:5px;padding:3px 0 5px;font-size:9px;color:var(--tx2);">
+    <div style="text-align:right;">金種</div><div style="text-align:center;">前日</div><div style="text-align:center;">今日の枚数</div><div style="text-align:right;">小計</div>
+  </div>
+  <div class="stit" style="margin-top:2px;">紙幣</div><div id="d-bills"></div>
+  <div class="stit">硬貨</div><div id="d-coins"></div>
+  <div class="sep"></div>
+  <div class="fg"><label class="fl">応援券など（金額）</label><input type="number" class="fc" id="k-sup" value="0" min="0" oninput="rcCash()"></div>
+  <div class="carry">
+    <div class="carry-l">🏦 持ち帰り</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+      <select class="fc" id="k-carry-name" style="flex:1;background:#fff;border-color:var(--wn);">
+        <option value="">— 氏名を選択 —</option>
+      </select>
+      <button onclick="addCarryMember()" style="background:var(--wn);border:none;color:#3a3a00;padding:8px 12px;border-radius:10px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:\'Zen Maru Gothic\',sans-serif;">＋追加</button>
+    </div>
+    <input type="number" class="fc" id="k-carry" value="0" min="0" oninput="rcCash()" style="background:#fff;border-color:var(--wn);font-size:17px;text-align:center;font-family:\'Kaisei Opti\',serif;">
+    <div class="carry-h" id="k-carry-h">金種合計から引かれます</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;" id="k-sum"></div>
+  <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="k-mo"></div>
+  <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-cash')">キャンセル</button><button class="btn bp" style="flex:2;" onclick="saveCash()">登録</button></div>
+</div></div>
+
+<!-- BINDER -->
+<div class="ov" id="m-bc"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🎨 バインダーカラー設定</span><button class="mc" onclick="cModal('m-bc')">✕</button></div>
+  <div id="bc-list"></div>
+  <div class="sep"></div>
+  <div class="fg"><label class="fl">新しい色を追加</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" class="fc" id="bc-n" placeholder="例：水色" style="flex:1;">
+      <input type="color" id="bc-c" value="#74c0fc" style="width:44px;height:44px;border-radius:10px;border:1.5px solid var(--bd);cursor:pointer;padding:2px;">
+      <button class="btn bp bsm" onclick="addBC()">追加</button>
+    </div>
+  </div>
+  <button class="btn bs bf" onclick="cModal('m-bc')">閉じる</button>
+</div></div>
+
+<!-- MENU -->
+<div class="ov" id="m-menu"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>⚙️ メニュー</span><button class="mc" onclick="cModal('m-menu')">✕</button></div>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <button class="btn bso bf" onclick="cModal('m-menu');oModal('m-price')">💴 料金設定</button>
+    <button class="btn bso bf" onclick="cModal('m-menu');openOwnerLogin()">🔐 オーナーログイン</button>
+    <button class="btn bso bf" onclick="expData()">📤 データエクスポート</button>
+    <button class="btn bso bf" onclick="document.getElementById('imp-f').click()">📥 データインポート</button>
+    <input type="file" id="imp-f" accept=".json" style="display:none;" onchange="impData(event)">
+    <div class="sep"></div>
+    <div id="menu-price-view" style="font-size:11px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);"></div>
+  </div>
+</div></div>
+
+<!-- GUEST EDIT -->
+<div class="ov" id="m-gedit"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>✏️ 来店記録を編集</span><button class="mc" onclick="cModal('m-gedit')">✕</button></div>
+  <input type="hidden" id="ge-id">
+  <div class="fg"><label class="fl">お客様区分</label>
+    <select class="fc" id="ge-tp"><option value="new">ご新規様</option><option value="rep">リピーター様</option></select>
+  </div>
+  <div class="fg"><label class="fl">来店パターン</label>
+    <select class="fc" id="ge-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="fg"><label class="fl">大人</label><input type="number" class="fc" id="ge-a" min="0" value="1"></div>
+    <div class="fg"><label class="fl">子ども</label><input type="number" class="fc" id="ge-c" min="0" value="0"></div>
+  </div>
+  <div class="fg"><label class="fl">入店時間</label><input type="time" class="fc" id="ge-ci"></div>
+  <div class="fg"><label class="fl">退店時間（滞在中の場合は空白でOK）</label><input type="time" class="fc" id="ge-co"></div>
+  <div class="fg"><label class="fl">料金（手動入力）</label><input type="number" class="fc" id="ge-pr" min="0" placeholder="空白で自動計算"></div>
+  <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="ge-mo"></div>
+  <div class="sep"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn bs" style="flex:1;" onclick="cModal('m-gedit')">キャンセル</button>
+    <button class="btn bp" style="flex:2;" onclick="saveGEdit()">保存</button>
+  </div>
+  <div class="sep"></div>
+  <button class="btn bf" onclick="delGuest()" style="background:#fef0ec;border:1.5px solid var(--pk);color:var(--ng);">🗑️ この記録を削除</button>
+</div></div>
+
+<!-- MONTH EDIT (売上タブ用) -->
+<div class="ov" id="m-medit"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span id="medit-tit">月データ編集</span><button class="mc" onclick="cModal('m-medit')">✕</button></div>
+  <div class="fg"><label class="fl">売上金額（円）</label><input type="number" class="fc" id="medit-sales"></div>
+  <div class="fg"><label class="fl">来店人数（人）</label><input type="number" class="fc" id="medit-visitors"></div>
+  <input type="hidden" id="medit-month">
+  <div style="display:flex;gap:8px;">
+    <button class="btn bs" style="flex:1;" onclick="cModal('m-medit')">キャンセル</button>
+    <button class="btn bp" style="flex:2;" onclick="saveEEdit()">更新する</button>
+  </div>
+</div></div>
+
+<!-- RECEIPT MODAL (経費用) -->
+<div class="ov" id="m-ercpt"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>📷 レシート撮影</span><button class="mc" onclick="cModal('m-ercpt')">✕</button></div>
+  <input type="file" id="e-rcpt-in" accept="image/*" capture="environment" style="display:none;" onchange="ePreviewRcpt(this)">
+  <button class="photo-btn" onclick="document.getElementById('e-rcpt-in').click()">📷 カメラで撮影 / ライブラリから選択</button>
+  <img id="e-rcpt-prev" class="rcpt-prev" alt="レシートプレビュー">
+  <button class="btn bp bf" onclick="eSaveExpWithRcpt()" style="margin-top:12px;">この内容で保存</button>
+  <button class="btn bso bf" onclick="var mode=document.getElementById('m-ercpt').getAttribute('data-mode')||'e';if(mode==='x'){xSaveExp(null);}else{eSaveExp(null);}cModal('m-ercpt');" style="margin-top:8px;">レシートなしで保存</button>
+</div></div>
+
+<!-- PRICE SETTINGS -->
+<div class="ov" id="m-price"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>💴 料金設定</span><button class="mc" onclick="cModal('m-price')">✕</button></div>
+  <div class="stit">平日料金</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+    <div class="fg"><label class="fl">30分</label><input type="number" class="fc" id="pr-wd30" min="0"></div>
+    <div class="fg"><label class="fl">1時間</label><input type="number" class="fc" id="pr-wd60" min="0"></div>
+  </div>
+  <div class="fg"><label class="fl">延長30分ごと</label><input type="number" class="fc" id="pr-wdext" min="0"></div>
+  <div class="stit">休日料金</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+    <div class="fg"><label class="fl">30分</label><input type="number" class="fc" id="pr-hd30" min="0"></div>
+    <div class="fg"><label class="fl">1時間</label><input type="number" class="fc" id="pr-hd60" min="0"></div>
+  </div>
+  <div class="stit">特別コース</div>
+  <div class="fg"><label class="fl">フリーにゃんタイム（1名）</label><input type="number" class="fc" id="pr-fn" min="0"></div>
+  <div style="display:flex;gap:8px;margin-top:4px;">
+    <button class="btn bs" style="flex:1;" onclick="cModal('m-price')">キャンセル</button>
+    <button class="btn bp" style="flex:2;" onclick="savePriceSettings()">💾 保存する</button>
+  </div>
+</div></div>
+
+<!-- オーナーログインモーダル -->
+<div class="ov" id="m-owner"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🔐 オーナーログイン</span><button class="mc" onclick="cModal('m-owner')">✕</button></div>
+  <div id="owner-content">
+    <div class="fg"><label class="fl">オーナーパスワード</label>
+      <input type="password" class="fc" id="owner-pw" placeholder="パスワードを入力">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn bs" style="flex:1;" onclick="cModal('m-owner')">キャンセル</button>
+      <button class="btn bp" style="flex:2;" onclick="checkOwnerPw()">ログイン</button>
+    </div>
+  </div>
+  <div id="owner-logs" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:700;color:var(--ac);">📋 編集履歴</div>
+      <button onclick="ownerLogout()" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;">ログアウト</button>
+    </div>
+    <div id="log-list"></div>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+var G=JSON.parse(localStorage.getItem('wc_g')||'[]');
+var CR=JSON.parse(localStorage.getItem('wc_cr')||'[]');
+var MS=JSON.parse(localStorage.getItem('wc_ms')||'[]');
+var MI=JSON.parse(localStorage.getItem('wc_mi')||'[{"id":1,"n":"ガチャ","p":400},{"id":2,"n":"靴下","p":200},{"id":3,"n":"ドリンク","p":200},{"id":4,"n":"チュールアイス","p":300}]');
+var CU=JSON.parse(localStorage.getItem('wc_cu')||'[]');
+var Cats=JSON.parse(localStorage.getItem('wc_cats')||'["にゃあな","にゃあ","こきん","なずな","すぎな","ももりん","あおい","くぅ","わらび","ブラン","ハニ","ルル","とら","あさひ","まひる","ふく","たまぞう","みーこ","あやめ"]');
+var Tris=JSON.parse(localStorage.getItem('wc_tris')||'["Google Maps","インスタ","TikTok","友人紹介","X","アメブロ","その他"]');
+var BCs=JSON.parse(localStorage.getItem('wc_bcs')||'[{"id":1,"n":"赤","c":"#f28b82"},{"id":2,"n":"オレンジ","c":"#f9b468"},{"id":3,"n":"黄","c":"#f7d86c"},{"id":4,"n":"緑","c":"#81c995"},{"id":5,"n":"青","c":"#76b9ed"},{"id":6,"n":"紫","c":"#b39ddb"},{"id":7,"n":"ピンク","c":"#f48fb1"},{"id":8,"n":"茶","c":"#a1887f"}]');
+var MQ={};
+var PastData=JSON.parse(localStorage.getItem('wc_past')||'[]');
+
+// 売上タブ専用データ
+var ESales=JSON.parse(localStorage.getItem('wc_esales')||'{}'); // {year: {month: {sales, visitors}}}
+function loadExpBase(){return JSON.parse(localStorage.getItem('wc_expense')||'{"balance":0,"history":[]}');}
+function saveExpBase(d){localStorage.setItem('wc_expense',JSON.stringify(d));}
+
+var coId=null,custId=null,editPh=null;
+var aC=1,cC=0,isFN=false;
+var selBC_id=null;
+var cfCh={tri:[],companion:[],gacha:'',cats:[]};
+var aqCh={tri:[],exp:'',cats:[]};
+var vD=new Date(),vM=new Date(),aM=new Date(),kM=new Date();
+var eYear=new Date().getFullYear();
+var eCurrentRcpt=null;
+
+// Charts
+var eChartS=null,eChartV=null;
+
+// ===== HELPERS =====
+function p2(n){return String(n).padStart(2,'0');}
+function ft(d){return p2(d.getHours())+':'+p2(d.getMinutes());}
+function fYMD(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+function td(){return fYMD(new Date());}
+function yn(n){return '¥'+Number(n).toLocaleString();}
+function sv(){
+  localStorage.setItem('wc_g',JSON.stringify(G));
+  localStorage.setItem('wc_cr',JSON.stringify(CR));
+  localStorage.setItem('wc_ms',JSON.stringify(MS));
+  localStorage.setItem('wc_mi',JSON.stringify(MI));
+  localStorage.setItem('wc_cu',JSON.stringify(CU));
+  localStorage.setItem('wc_cats',JSON.stringify(Cats));
+  localStorage.setItem('wc_tris',JSON.stringify(Tris));
+  localStorage.setItem('wc_bcs',JSON.stringify(BCs));
+  localStorage.setItem('wc_past',JSON.stringify(PastData));
+  localStorage.setItem('wc_esales',JSON.stringify(ESales));
+}
+function toast(msg,err){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(err?' err':'');
+  t.classList.add('on');setTimeout(function(){t.classList.remove('on');},2500);
+}
+function oModal(id){document.getElementById(id).classList.add('on');if(id==='m-bc')rBCList();if(id==='m-price')loadPriceModal();}
+function cModal(id){document.getElementById(id).classList.remove('on');}
+function sp(id){
+  var pages=['p-g','p-r','p-m','p-c','p-s','p-k'];
+  var navs=['n-g','n-r','n-m','n-c','n-s','n-k'];
+  for(var i=0;i<pages.length;i++){
+    document.getElementById(pages[i]).classList.remove('active');
+    document.getElementById(navs[i]).classList.remove('active');
+  }
+  document.getElementById(id).classList.add('active');
+  var map={'p-g':'n-g','p-r':'n-r','p-m':'n-m','p-c':'n-c','p-s':'n-s','p-k':'n-k'};
+  if(map[id])document.getElementById(map[id]).classList.add('active');
+  rfAll();
+}
+
+// ===== CLOCK =====
+function clk(){
+  var n=new Date();
+  var w=['日','月','火','水','木','金','土'];
+  document.getElementById('hdate').innerHTML='<span style="font-size:9px;opacity:.8;">'+n.getFullYear()+'/'+p2(n.getMonth()+1)+'/'+p2(n.getDate())+'（'+w[n.getDay()]+'）</span><br><span style="font-size:18px;font-family:\'Kaisei Opti\',serif;letter-spacing:1px;">'+p2(n.getHours())+':'+p2(n.getMinutes())+'<span style="font-size:12px;">:'+p2(n.getSeconds())+'</span></span>';
+}
+
+// ===== PRICING =====
+var DefaultPrice = {wd30:1000,wd60:1500,wdext:500,hd30:1200,hd60:1800,fn:2600};
+var Price = JSON.parse(localStorage.getItem('wc_price') || JSON.stringify(DefaultPrice));
+function savePrice(){ localStorage.setItem('wc_price', JSON.stringify(Price)); }
+function loadPriceModal(){
+  document.getElementById('pr-wd30').value = Price.wd30;
+  document.getElementById('pr-wd60').value = Price.wd60;
+  document.getElementById('pr-wdext').value = Price.wdext;
+  document.getElementById('pr-hd30').value = Price.hd30;
+  document.getElementById('pr-hd60').value = Price.hd60;
+  document.getElementById('pr-fn').value = Price.fn;
+}
+function savePriceSettings(){
+  Price.wd30 = parseInt(document.getElementById('pr-wd30').value)||0;
+  Price.wd60 = parseInt(document.getElementById('pr-wd60').value)||0;
+  Price.wdext = parseInt(document.getElementById('pr-wdext').value)||0;
+  Price.hd30 = parseInt(document.getElementById('pr-hd30').value)||0;
+  Price.hd60 = parseInt(document.getElementById('pr-hd60').value)||0;
+  Price.fn = parseInt(document.getElementById('pr-fn').value)||0;
+  savePrice();
+  saveSettingToSupa('price', Price);
+  updateMenuPriceView();
+  toast('料金設定を保存しました ✅');
+  cModal('m-price');
+}
+function updateMenuPriceView(){
+  var el = document.getElementById('menu-price-view');
+  if(!el) return;
+  el.innerHTML = '📋 料金表<br>平日：30分¥'+Price.wd30.toLocaleString()+' / 1時間¥'+Price.wd60.toLocaleString()+' / 延長30分¥'+Price.wdext.toLocaleString()+'<br>休日：30分¥'+Price.hd30.toLocaleString()+' / 1時間¥'+Price.hd60.toLocaleString()+'<br>フリーにゃん：¥'+Price.fn.toLocaleString()+'（1名）<br>キッズデイ（土）：1時間以上で小学生以下半額';
+}
+
+
+function isHol(ds){var w=new Date(ds||td()).getDay();return w===0||w===6;}
+function isSat(ds){return new Date(ds||td()).getDay()===6;}
+function calcP(a,c,ci,co,dt,fn){
+  var ds=dt||td();
+  if(fn){return {t:Price.fn*(a+c),bd:'フリーにゃんタイム ¥'+Price.fn+'×'+(a+c)+'名',dur:'〜4時間',m:0};}
+  var hol=isHol(ds),sat=isSat(ds);
+  var ciArr=ci.split(':');var ih=parseInt(ciArr[0]),im=parseInt(ciArr[1]);
+  var m=0;
+  if(co){var coArr=co.split(':');var oh=parseInt(coArr[0]),om=parseInt(coArr[1]);m=(oh*60+om)-(ih*60+im);if(m<0)m+=1440;}
+  var dur=co?(Math.floor(m/60)+'時間'+(m%60)+'分'):null;
+  var mn=co?m:60;
+  function adultP(){if(mn<=30)return hol?Price.hd30:Price.wd30;if(mn<=60)return hol?Price.hd60:Price.wd60;var base=hol?Price.hd60:Price.wd60;var ext=hol?0:Price.wdext*Math.ceil((mn-60)/30);return base+ext;}
+  function childP(){if(!sat)return adultP();if(mn<=30)return Math.floor((hol?Price.hd30:Price.wd30)/2);if(mn<=60)return Math.floor((hol?Price.hd60:Price.wd60)/2);var base=Math.floor((hol?Price.hd60:Price.wd60)/2);var ext=hol?0:Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);return base+ext;}
+  var ap=adultP(),cp=childP();
+  var t=ap*a+(c>0?cp*c:0);
+  var bd='大人 '+yn(ap)+'×'+a+'名';
+  if(c>0)bd+=' + 子ども '+yn(cp)+'×'+c+'名'+(sat?' (半額)':'');
+  return {t:t,bd:bd,dur:dur,m:m};
+}
+function ppCalc(){
+  var ppEl=document.getElementById('pp');var pbEl=document.getElementById('pb');var tEl=document.getElementById('r-time');
+  if(!ppEl||!pbEl||!tEl)return;
+  var t=tEl.value;if(!t)return;
+  var ds=td(),hol=isHol(ds),sat=isSat(ds);
+  if(isFN){ppEl.textContent=yn(2600*(aC+cC));pbEl.textContent='フリーにゃんタイム　¥2,600×'+(aC+cC)+'名';return;}
+  var a30=hol?Price.hd30:Price.wd30,a60=hol?Price.hd60:Price.wd60;
+  var c30=sat?Math.floor(a30/2):a30,c60=sat?Math.floor(a60/2):a60;
+  var p30=a30*aC+(cC>0?c30*cC:0),p60=a60*aC+(cC>0?c60*cC:0);
+  var parts=['大人 '+yn(a60)+'×'+aC+'名'];
+  if(cC>0)parts.push('子ども '+yn(c60)+'×'+cC+'名'+(sat?' (半額)':''));
+  ppEl.textContent=yn(p30)+'　/　'+yn(p60);
+  pbEl.textContent='30分 / 1時間\n'+parts.join(' + ');
+}
+function togFN(){
+  isFN=!isFN;var btn=document.getElementById('fn-btn');if(!btn)return;
+  if(isFN){btn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';btn.style.borderColor='var(--ac2)';btn.style.color='#5a8050';btn.textContent='🐱 フリーにゃん　ON ✓';}
+  else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='🐱 フリーにゃん　OFF';}
+  ppCalc();
+}
+
+// ===== MEMBER SEARCH =====
+var selectedMemberId = null;
+function openMemberSearch(){
+  document.getElementById('msearch-q').value='';
+  document.getElementById('msearch-results').innerHTML='';
+  oModal('m-msearch');
+  setTimeout(function(){document.getElementById('msearch-q').focus();},300);
+}
+function doMemberSearch(){
+  var q=document.getElementById('msearch-q').value.trim().toLowerCase();
+  var el=document.getElementById('msearch-results');
+  if(!q){el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">名前か会員番号を入力してください</div>';return;}
+  var res=CU.filter(function(c){
+    return (c.name&&c.name.toLowerCase().indexOf(q)>=0)||(c.memberNo&&c.memberNo.indexOf(q)>=0);
+  });
+  if(res.length===0){el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">見つかりませんでした</div>';return;}
+  var h='';
+  for(var i=0;i<res.length;i++){
+    var c=res[i];
+    var vis=c.visits||[];var tot=vis.length;
+    var lastDate=tot>0?vis.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0].date:'—';
+    var cats=c.oshiCats&&c.oshiCats.length?c.oshiCats.map(function(x){return '🐱'+x;}).join(' '):'';
+    var alertBadge=c.alert?'<span style="color:var(--ng);font-size:11px;margin-left:4px;">⚠️</span>':'';
+    h+='<div onclick="selectMember('+c.id+')" style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer;border-radius:10px;margin-bottom:4px;background:var(--sf);">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+    h+='<div style="font-size:15px;font-weight:700;">'+c.name+alertBadge+'</div>';
+    h+='<div style="font-size:11px;color:var(--tx2);">No.'+c.memberNo+'</div>';
+    h+='</div>';
+    h+='<div style="font-size:11px;color:var(--tx2);margin-top:4px;">累計 '+tot+'回　前回 '+lastDate+'</div>';
+    if(cats)h+='<div style="font-size:11px;color:var(--ac);margin-top:3px;">'+cats+'</div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function selectMember(id){
+  var c=CU.find(function(x){return String(x.id)===String(id);});if(!c)return;
+  selectedMemberId=id;
+  // 表示更新
+  var vis=c.visits||[];var tot=vis.length;
+  var lastDate=tot>0?vis.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0].date:'なし';
+  var cats=c.oshiCats&&c.oshiCats.length?'推し猫：'+c.oshiCats.join('・'):'';
+  document.getElementById('mib-name').textContent=c.name+' 様　No.'+c.memberNo;
+  document.getElementById('mib-sub').textContent='累計 '+tot+'回　前回来店：'+lastDate+(cats?'　'+cats:'');
+  var alertEl=document.getElementById('mib-alert');
+  if(c.alert){alertEl.textContent='⚠️ '+c.alert;alertEl.style.display='block';}
+  else{alertEl.style.display='none';}
+  // バナー切り替え
+  document.getElementById('member-banner').style.display='none';
+  document.getElementById('member-info-bar').style.display='block';
+  // リピーターに自動セット
+  document.getElementById('r-tp').value='rep';
+  cModal('m-msearch');
+  toast('👋 '+c.name+'さん おかえりなさい！');
+}
+function clearMember(){
+  selectedMemberId=null;
+  document.getElementById('member-banner').style.display='flex';
+  document.getElementById('member-info-bar').style.display='none';
+}
+function closeMemberBanner(){
+  selectedMemberId=null;
+  document.getElementById('member-banner').style.display='none';
+  document.getElementById('member-info-bar').style.display='none';
+  document.getElementById('member-back-bar').style.display='block';
+}
+function showMemberBanner(){
+  document.getElementById('member-back-bar').style.display='none';
+  document.getElementById('member-banner').style.display='flex';
+}
+
+// ===== BINDER =====
+function buildBCChips(){
+  var el=document.getElementById('bc-chips');if(!el)return;
+  var h='';
+  for(var i=0;i<BCs.length;i++){var bc=BCs[i];var on=selBC_id===bc.id?' on':'';h+='<div class="bc'+on+'" data-id="'+bc.id+'" style="background:'+bc.c+';" title="'+bc.n+'" onclick="selBc('+bc.id+')"></div>';}
+  el.innerHTML=h;
+}
+function selBc(id){selBC_id=(selBC_id===id)?null:id;buildBCChips();}
+function rBCList(){
+  var el=document.getElementById('bc-list');if(!el)return;
+  var h='';
+  for(var i=0;i<BCs.length;i++){
+    var bc=BCs[i];
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);">';
+    h+='<div style="width:28px;height:28px;border-radius:50%;background:'+bc.c+';flex-shrink:0;border:1px solid rgba(0,0,0,.1);"></div>';
+    h+='<input type="text" value="'+bc.n+'" onchange="updBCN('+bc.id+',this.value)" style="flex:1;background:var(--sf2);border:1.5px solid var(--bd);color:var(--tx);padding:5px 8px;border-radius:8px;font-size:13px;font-family:\'Zen Maru Gothic\',sans-serif;outline:none;">';
+    h+='<input type="color" value="'+bc.c+'" onchange="updBCC('+bc.id+',this.value)" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--bd);cursor:pointer;padding:1px;">';
+    h+='<button onclick="delBC('+bc.id+')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:18px;font-size:11px;cursor:pointer;">削除</button>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function updBCN(id,n){var bc=BCs.find(function(x){return x.id===id;});if(bc&&n.trim())bc.n=n.trim();sv();buildBCChips();}
+function updBCC(id,c){var bc=BCs.find(function(x){return x.id===id;});if(bc){bc.c=c;sv();buildBCChips();rBCList();}}
+function delBC(id){if(BCs.length<=2){toast('最低2色は必要です',true);return;}BCs=BCs.filter(function(x){return x.id!==id;});if(selBC_id===id)selBC_id=null;sv();buildBCChips();rBCList();}
+function addBC(){
+  var n=document.getElementById('bc-n').value.trim();var c=document.getElementById('bc-c').value;
+  if(!n){toast('色の名前を入力してください',true);return;}
+  BCs.push({id:Date.now(),n:n,c:c});document.getElementById('bc-n').value='';
+  sv();buildBCChips();rBCList();toast(n+' を追加しました');
+}
+
+// ===== COUNTER =====
+function cc2(t,d){
+  if(t==='a'){aC=Math.max(0,aC+d);if(aC===0&&cC===0)aC=1;document.getElementById('ca').textContent=aC;}
+  else{cC=Math.max(0,cC+d);document.getElementById('cc3').textContent=cC;}
+  ppCalc();
+}
+
+// ===== ANKET =====
+function buildAqChips(){
+  var te=document.getElementById('aq-tri');var ce=document.getElementById('aq-cats');if(!te||!ce)return;
+  var icons={'Google Maps':'📍','インスタ':'📸','TikTok':'🎵','友人紹介':'👥','X':'🐦','アメブロ':'📖','その他':'💬'};
+  var h='';
+  for(var i=0;i<Tris.length;i++){var t=Tris[i];var on=aqCh.tri.indexOf(t)>=0?' on2':'';h+='<div class="chip'+on+'" data-v="'+t+'" onclick="togAqTri(this)">'+(icons[t]||'💬')+' '+t+'</div>';}
+  te.innerHTML=h;h='';
+  for(var j=0;j<Cats.length;j++){var cat=Cats[j];var on2=aqCh.cats.indexOf(cat)>=0?' on2':'';h+='<div class="chip'+on2+'" data-v="'+cat+'" onclick="togAqCat(this)">'+cat+'</div>';}
+  ce.innerHTML=h;
+}
+function togAqTri(el){var v=el.getAttribute('data-v');var idx=aqCh.tri.indexOf(v);if(idx>=0){aqCh.tri.splice(idx,1);el.classList.remove('on2');}else{aqCh.tri.push(v);el.classList.add('on2');}}
+function togAqCat(el){var v=el.getAttribute('data-v');var idx=aqCh.cats.indexOf(v);if(idx>=0){aqCh.cats.splice(idx,1);el.classList.remove('on2');}else{aqCh.cats.push(v);el.classList.add('on2');}}
+function addAqTri(){var v=document.getElementById('aq-tri-add').value.trim();if(!v)return;if(Tris.indexOf(v)<0)Tris.push(v);if(aqCh.tri.indexOf(v)<0)aqCh.tri.push(v);document.getElementById('aq-tri-add').value='';sv();buildAqChips();}
+function selOne(el,gid){var els=document.querySelectorAll('#'+gid+' .chip');for(var i=0;i<els.length;i++)els[i].classList.remove('on');el.classList.add('on');}
+
+// ===== REGISTER =====
+function regGuest(){
+  var t=document.getElementById('r-time').value;if(!t){toast('入店時間を入力してください',true);return;}
+  var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
+  var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
+  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
+  G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
+  // 会員バナーリセット
+  selectedMemberId=null;
+  document.getElementById('member-banner').style.display='flex';
+  document.getElementById('member-info-bar').style.display='none';
+  document.getElementById('member-back-bar').style.display='none';
+  aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
+  document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
+  document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
+  isFN=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};
+  var fnBtn=document.getElementById('fn-btn');
+  if(fnBtn){fnBtn.style.background='var(--sf2)';fnBtn.style.borderColor='var(--bd)';fnBtn.style.color='var(--tx2)';fnBtn.textContent='🐱 フリーにゃん　OFF';}
+  buildBCChips();buildAqChips();
+  var chips=document.querySelectorAll('#aq-exp .chip');for(var i=0;i<chips.length;i++)chips[i].classList.remove('on');
+  ppCalc();sp('p-g');
+}
+
+// ===== CHECKOUT =====
+function oCO(id){
+  var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
+  coId=id;
+  document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱 フリーにゃん</span>':'')+'</div>';
+  document.getElementById('co-ci').value=g.ci;document.getElementById('co-co').value=ft(new Date());
+  document.getElementById('co-cup').value=0;document.getElementById('co-tkt').value=0;document.getElementById('co-sup').value=0;
+  document.getElementById('co-mo').value=g.mo||'';
+  rcCO();oModal('m-co');
+}
+function rcCO(){
+  var g=G.find(function(x){return String(x.id)===String(coId);});if(!g)return;
+  var ci=document.getElementById('co-ci').value||g.ci;
+  var co=document.getElementById('co-co').value;
+  var cup=parseInt(document.getElementById('co-cup').value)||0;
+  var tkt=parseInt(document.getElementById('co-tkt').value)||0;
+  var sup=parseInt(document.getElementById('co-sup').value)||0;
+  var disc=cup+tkt+sup;
+  var r=calcP(g.a,g.c,ci,co,g.d,g.fn);
+  document.getElementById('co-dur').textContent=r.dur||'—';
+  document.getElementById('co-det').textContent=r.bd;
+  document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
+  var parts=[];if(cup>0)parts.push('クーポン -'+yn(cup));if(tkt>0)parts.push('振興券 -'+yn(tkt));if(sup>0)parts.push('応援券 -'+yn(sup));
+  document.getElementById('co-bd').textContent=parts.join('　');
+}
+function confCO(){
+  var g=G.find(function(x){return x.id===coId;});if(!g)return;
+  var ci=document.getElementById('co-ci').value||g.ci;
+  var co=document.getElementById('co-co').value;
+  var cup=parseInt(document.getElementById('co-cup').value)||0;
+  var tkt=parseInt(document.getElementById('co-tkt').value)||0;
+  var sup=parseInt(document.getElementById('co-sup').value)||0;
+  var r=calcP(g.a,g.c,ci,co,g.d,g.fn);
+  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup);g.mo=document.getElementById('co-mo').value;g.st='done';
+  sv();saveGuestToSupa(g);logAction('退店登録','料金:'+yn(g.pr)+' 退店'+g.co);cModal('m-co');rfAll();toast('退店登録しました ✅');
+}
+function showRcpt(){
+  var g=G.find(function(x){return x.id===coId;});if(!g)return;
+  var ci=document.getElementById('co-ci').value||g.ci;
+  var co=document.getElementById('co-co').value;
+  var cup=parseInt(document.getElementById('co-cup').value)||0;
+  var tkt=parseInt(document.getElementById('co-tkt').value)||0;
+  var sup=parseInt(document.getElementById('co-sup').value)||0;
+  var disc=cup+tkt+sup;
+  var r=calcP(g.a,g.c,ci,co,g.d,g.fn);
+  var tot=Math.max(0,r.t-disc);
+  document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
+  document.getElementById('rc-dur').textContent=r.dur||'—';
+  document.getElementById('rc-tot').textContent=yn(tot);
+  var bdParts=[r.bd];
+  if(cup>0)bdParts.push('割引クーポン　-'+yn(cup));if(tkt>0)bdParts.push('振興券　-'+yn(tkt));if(sup>0)bdParts.push('応援券　-'+yn(sup));
+  var bdHtml='<div style="border-top:1px solid #e0e0e0;margin-top:12px;padding-top:12px;text-align:left;">';
+  for(var bi=0;bi<bdParts.length;bi++)bdHtml+='<div style="font-size:13px;color:#5a8a8a;padding:3px 0;">'+bdParts[bi]+'</div>';
+  bdHtml+='</div>';
+  document.getElementById('rc-bd').innerHTML=bdHtml;
+  oModal('m-rcpt');
+}
+
+// ===== GUEST DETAIL =====
+function oDet(id){
+  var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
+  var st=g.st==='stay';var sd='';
+  if(st){var now=new Date();var ciArr=g.ci.split(':');var ih=parseInt(ciArr[0]),im=parseInt(ciArr[1]);var mn=(now.getHours()*60+now.getMinutes())-(ih*60+im);sd=Math.floor(mn/60)+'時間'+(mn%60)+'分';}
+  document.getElementById('det-tit').textContent=(g.tp==='new'?'ご新規様':'リピーター様');
+  var aq=g.aq||{};
+  var h='<table class="st">';
+  h+='<tr><td class="il">パターン</td><td>'+g.pt+'</td></tr>';
+  h+='<tr><td class="il">人数</td><td>大人'+g.a+'名'+(g.c>0?' ・ 子ども'+g.c+'名':'')+'</td></tr>';
+  h+='<tr><td class="il">入店</td><td>'+g.ci+'</td></tr>';
+  if(g.co)h+='<tr><td class="il">退店</td><td>'+g.co+'</td></tr>';
+  if(st)h+='<tr><td class="il">滞在</td><td style="color:var(--ac);font-family:\'Kaisei Opti\',serif;font-size:16px;">'+sd+'</td></tr>';
+  if(g.pr)h+='<tr><td class="il">料金</td><td style="color:var(--ok);font-family:\'Kaisei Opti\',serif;font-size:18px;">'+yn(g.pr)+'</td></tr>';
+  if(g.fn)h+='<tr><td class="il">コース</td><td><span class="tag gr">🐱 フリーにゃん</span></td></tr>';
+  if(aq.tri&&aq.tri.length)h+='<tr><td class="il">きっかけ</td><td>'+aq.tri.join(' / ')+'</td></tr>';
+  if(aq.exp)h+='<tr><td class="il">経験</td><td>'+aq.exp+'</td></tr>';
+  if(aq.cats&&aq.cats.length)h+='<tr><td class="il">推し猫</td><td>'+aq.cats.join('・')+'</td></tr>';
+  if(g.mo)h+='<tr><td class="il">メモ</td><td>'+g.mo+'</td></tr>';
+  h+='</table>';
+  document.getElementById('det-body').innerHTML=h;
+  document.getElementById('det-act').innerHTML=st
+    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="oGEdit('+id+')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO('+id+')">退店処理</button>'
+    :'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bp" style="flex:1;" onclick="oGEdit('+id+')">✏️ 編集・削除</button>';
+  oModal('m-det');
+}
+
+// ===== RENDER GUESTS =====
+function rGuests(){
+  var expBase=loadExpBase();
+  var t=td();
+  var tg=G.filter(function(g){return g.d===t;});
+  var stay=tg.filter(function(g){return g.st==='stay';}).sort(function(a,b){return a.ci.localeCompare(b.ci);});
+  var done=tg.filter(function(g){return g.st==='done';}).sort(function(a,b){return a.ci.localeCompare(b.ci);});
+  document.getElementById('bs').textContent=stay.length;
+  document.getElementById('bd2').textContent=done.length;
+  var tp=0;for(var i=0;i<tg.length;i++)tp+=tg[i].a+tg[i].c;
+  var ts=0;for(var j=0;j<done.length;j++)ts+=done[j].pr;
+  var tm=MS.find(function(m){return m.d===t;});
+  document.getElementById('sg').textContent=tp;
+  document.getElementById('ss').textContent=(ts+(tm?tm.total:0)).toLocaleString();
+  var now=new Date();var sh='';
+  if(stay.length===0){sh='<div class="empty"><div class="ei">🐱</div>滞在中のお客様はいません</div>';}
+  else{
+    for(var k=0;k<stay.length;k++){
+      var g=stay[k];
+      var ciArr=g.ci.split(':');var ih=parseInt(ciArr[0]),im=parseInt(ciArr[1]);
+      var mn=(now.getHours()*60+now.getMinutes())-(ih*60+im);
+      var dur=mn>=0?(Math.floor(mn/60)+':'+p2(mn%60)+' 経過'):'';
+      var bcS=g.bc?'background:'+g.bc+'22;border-left:4px solid '+g.bc+';':'';
+      var bcD=g.bc?'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+g.bc+';margin-right:3px;border:1px solid rgba(0,0,0,.1);"></span>':'';
+      sh+='<div class="gi" style="'+bcS+'" onclick="oDet(\''+g.id+'\')" >';
+      sh+='<div class="gtop"><span class="gname">'+bcD+(g.tp==='new'?'ご新規様':'リピーター様')+(g.bcn?' <span style="font-size:10px;color:var(--tx2);">('+g.bcn+')</span>':'')+'</span><span class="sbdg">'+dur+'</span></div>';
+      sh+='<div class="gmeta"><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱フリーにゃん</span>':'')+(g.mo?'<span class="tag">'+g.mo+'</span>':'')+'</div>';
+      sh+='<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn bso bsm" onclick="event.stopPropagation();oGEdit(\''+g.id+'\')" >✏️</button><button class="btn bsu bsm" style="flex:1;" onclick="event.stopPropagation();oCO(\''+g.id+'\')" >退店処理</button></div>';
+      sh+='</div>';
+    }
+  }
+  document.getElementById('gl-s').innerHTML=sh;
+  var dh='';
+  if(done.length===0){dh='<div class="empty"><div class="ei">✅</div>退店済みのお客様はいません</div>';}
+  else{
+    for(var l=0;l<done.length;l++){
+      var gd=done[l];var bcS2=gd.bc?'border-left:4px solid '+gd.bc+';':'';
+      dh+='<div class="gi done" style="'+bcS2+'" onclick="oDet(\''+gd.id+'\')">';
+      dh+='<div class="gtop"><span class="gname">'+(gd.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="gprice">'+yn(gd.pr)+'</span></div>';
+      dh+='<div class="gmeta"><span class="tag">'+gd.pt+'</span><span class="tag gr">大人'+gd.a+'名'+(gd.c>0?'・子'+gd.c+'名':'')+'</span><span class="tag">'+gd.ci+' → '+gd.co+'</span>'+(gd.mo?'<span class="tag">'+gd.mo+'</span>':'')+'</div>';
+      dh+='<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn bso bsm" onclick="event.stopPropagation();oGEdit(\''+gd.id+'\')" >✏️ 編集・削除</button></div>';
+      dh+='</div>';
+    }
+  }
+  document.getElementById('gl-d').innerHTML=dh;
+}
+function gtab(t){
+  document.getElementById('ts1').classList.toggle('active',t==='stay');
+  document.getElementById('ts2').classList.toggle('active',t==='done');
+  document.getElementById('gl-s').style.display=t==='stay'?'block':'none';
+  document.getElementById('gl-d').style.display=t==='done'?'block':'none';
+}
+
+// ===== MERCH =====
+function rMerch(){
+  var t=td(),tr=MS.find(function(m){return m.d===t;});
+  var cnt=0,sal=0;
+  if(tr){for(var i=0;i<tr.i.length;i++){cnt+=tr.i[i].q;sal+=tr.i[i].q*tr.i[i].p;}}
+  document.getElementById('mc').textContent=cnt;document.getElementById('ms').textContent=sal.toLocaleString();
+  var h='';
+  for(var j=0;j<MI.length;j++){
+    var item=MI[j];var q=MQ[item.id]||0,sub=q*item.p;
+    h+='<div class="mi"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
+    h+='<div><div style="font-size:14px;font-weight:500;">'+item.n+'</div><div style="font-size:11px;color:var(--tx2);">'+yn(item.p)+'/個</div></div>';
+    h+='<div style="display:flex;gap:5px;align-items:center;">'+(sub>0?'<span style="font-family:\'Kaisei Opti\',serif;font-size:16px;color:var(--ok);">'+yn(sub)+'</span>':'');
+    h+='<button onclick="oMF(\''+item.id+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:5px 10px;border-radius:16px;font-size:11px;cursor:pointer;">✏️</button>';
+    h+='<button onclick="delMI(\''+item.id+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:16px;font-size:11px;cursor:pointer;">削除</button>';
+    h+='</div></div>';
+    h+='<div style="display:flex;align-items:center;gap:10px;"><button class="cb" onclick="chMQ('+item.id+',-1)">－</button><div style="font-family:\'Kaisei Opti\',serif;font-size:24px;color:var(--ac);min-width:32px;text-align:center;">'+q+'</div><button class="cb" onclick="chMQ('+item.id+',1)">＋</button></div>';
+    h+='</div>';
+  }
+  document.getElementById('ml').innerHTML=h;
+  var se=document.getElementById('ml-saved');
+  if(tr&&tr.i.some(function(i){return i.q>0;})){
+    var sh='<div class="card" style="background:linear-gradient(135deg,#f0f8ee,#e8f4e0);border-color:var(--ac2);">';
+    sh+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div class="ct" style="color:var(--ok);margin-bottom:0;">✅ 本日の保存済み物販</div>';
+    sh+='<div style="display:flex;gap:6px;"><button onclick="editMerch()" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">✏️ 編集</button>';
+    sh+='<button onclick="cancelMerch()" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🗑 取消</button></div></div>';
+    for(var k=0;k<tr.i.length;k++){if(tr.i[k].q>0)sh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>'+tr.i[k].n+' × '+tr.i[k].q+'</span><span style="color:var(--ok);font-family:\'Kaisei Opti\',serif;">'+yn(tr.i[k].q*tr.i[k].p)+'</span></div>';}
+    sh+='<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-weight:700;font-size:13px;"><span>合計</span><span style="color:var(--ok);font-family:\'Kaisei Opti\',serif;">'+yn(tr.total)+'</span></div></div>';
+    se.innerHTML=sh;
+  }else{se.innerHTML='';}
+  // 過去の物販履歴を表示
+  rMerchHistory();
+}
+function rMerchHistory(){
+  var he=document.getElementById('ml-history');if(!he)return;
+  var t=td();
+  // 過去7日分の物販データを表示（本日以外）
+  var history=MS.filter(function(m){return m.d!==t&&m.i.some(function(i){return i.q>0;});})
+    .sort(function(a,b){return b.d.localeCompare(a.d);}).slice(0,10);
+  if(history.length===0){he.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">過去の物販記録なし</div>';return;}
+  var h='';
+  for(var i=0;i<history.length;i++){
+    var m=history[i];
+    h+='<div class="card" style="margin-bottom:8px;">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+    h+='<div style="font-size:13px;font-weight:700;">'+m.d+'</div>';
+    h+='<div style="display:flex;gap:5px;align-items:center;">';
+    h+='<span style="font-family:\'Kaisei Opti\',serif;font-size:16px;color:var(--ok);">'+yn(m.total)+'</span>';
+    h+='<button onclick="openMerchEdit(\''+m.d+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 8px;border-radius:10px;font-size:11px;cursor:pointer;">✏️ 編集</button>';
+    h+='<button onclick="deleteMerchHistory(\''+m.d+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 8px;border-radius:10px;font-size:11px;cursor:pointer;">🗑</button>';
+    h+='</div></div>';
+    for(var j=0;j<m.i.length;j++){
+      if(m.i[j].q>0)h+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--bd);"><span>'+m.i[j].n+' × '+m.i[j].q+'</span><span style="color:var(--ok);">'+yn(m.i[j].q*m.i[j].p)+'</span></div>';
+    }
+    h+='</div>';
+  }
+  he.innerHTML=h;
+}
+function openMerchEdit(date){
+  // 指定日の物販データをMQに読み込んで編集
+  var m=MS.find(function(x){return x.d===date;});
+  if(!m)return;
+  // 一旦その日のデータを削除
+  MS=MS.filter(function(x){return x.d!==date;});
+  // MQに数量を設定
+  for(var i=0;i<m.i.length;i++) MQ[String(m.i[i].id)]=m.i[i].q;
+  // 保存日付を変更するためにtd()の代わりにdateを使う必要がある
+  // → 編集用の日付をグローバルに保持
+  window._editMerchDate=date;
+  sv();rMerch();
+  toast(date+'の物販を編集モードにしました。変更後「保存」を押してください');
+}
+function deleteMerchHistory(date){
+  if(!confirm(date+'の物販記録を削除しますか？'))return;
+  MS=MS.filter(function(m){return m.d!==date;});
+  sv();supaDelete('pos_merch',date);rMerch();rGuests();toast('削除しました');
+}
+function chMQ(id,d){id=String(id);MQ[id]=(MQ[id]||0)+d;if(MQ[id]<0)MQ[id]=0;rMerch();}
+function saveMerch(){
+  var dateEl=document.getElementById('merch-date');
+  var t=window._editMerchDate||(dateEl&&dateEl.value?dateEl.value:td());window._editMerchDate=null;var items=[];
+  for(var i=0;i<MI.length;i++)items.push({id:MI[i].id,n:MI[i].n,p:MI[i].p,q:MQ[MI[i].id]||0});
+  var total=0;for(var j=0;j<items.length;j++)total+=items[j].q*items[j].p;
+  MS=MS.filter(function(m){return m.d!==t;});MS.push({d:t,i:items,total:total});
+  sv();saveMerchToSupa(MS.find(function(m){return m.d===t;}));logAction('物販保存','日付:'+t+' 合計:'+yn(total));rMerch();rGuests();toast('物販を保存しました 🛍️');
+}
+function oMF(id){
+  document.getElementById('mf-id').value=id||'';
+  if(id){var item=MI.find(function(x){return String(x.id)===String(id);});if(!item)return;document.getElementById('mf-tit').textContent='✏️ 商品編集';document.getElementById('mf-n').value=item.n;document.getElementById('mf-p').value=item.p;}
+  else{document.getElementById('mf-tit').textContent='🛍️ 商品追加';document.getElementById('mf-n').value='';document.getElementById('mf-p').value='';}
+  oModal('m-mf');
+}
+function saveMI(){
+  var n=document.getElementById('mf-n').value.trim();var p=parseInt(document.getElementById('mf-p').value)||0;
+  if(!n||p<=0){toast('名前と単価を入力してください',true);return;}
+  var eid=parseInt(document.getElementById('mf-id').value);
+  if(eid){var item=MI.find(function(x){return x.id===eid;});if(item){item.n=n;item.p=p;}}
+  else MI.push({id:Date.now(),n:n,p:p});
+  sv();saveMerchItemsToSupa();cModal('m-mf');rMerch();toast(eid?(n+' を更新しました'):(n+' を追加しました'));
+}
+function editMerch(){
+  // 保存済み数量をMQに反映してそのまま編集可能にする
+  var t=td();var tr=MS.find(function(m){return m.d===t;});
+  if(!tr)return;
+  for(var i=0;i<tr.i.length;i++) MQ[tr.i[i].id]=tr.i[i].q;
+  // 一旦保存データを削除して編集モードへ
+  MS=MS.filter(function(m){return m.d!==t;});
+  sv();rMerch();rGuests();
+  toast('編集モードにしました。変更後「保存」を押してください');
+}
+function delMI(id){
+  if(!confirm('削除しますか？'))return;
+  MI=MI.filter(function(x){return x.id!==id;});
+  delete MQ[id];
+  sv();
+  saveMerchItemsToSupa();
+  rMerch();
+  toast('削除しました');
+}
+function cancelMerch(){
+  if(!confirm('本日の物販記録を取り消しますか？'))return;
+  var t=td();
+  MS=MS.filter(function(m){return m.d!==t;});
+  for(var id in MQ) MQ[id]=0;
+  sv(); // localStorage全体を更新
+  // Supabaseから削除してから画面更新
+  supaDelete('pos_merch', t).then(function(){
+    rMerch();rGuests();
+    toast('物販記録を取り消しました');
+  });
+}
+
+// ===== CARTE =====
+var MS_LIST=[5,10,20,30,50,100];
+function msLbl(n){if(n>=100)return'🏆 100回';if(n>=50)return'👑 50回';if(n>=30)return'🌟 30回';if(n>=20)return'✨ 20回';if(n>=10)return'🎊 10回';if(n>=5)return'🎉 5回';return null;}
+function isMSN(n){return MS_LIST.indexOf(n)>=0;}
+function getThisM(cu){var now=new Date();var vis=cu.visits||[];var cnt=0;for(var i=0;i<vis.length;i++){var d=new Date(vis[i].date);if(d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth())cnt++;}return cnt;}
+function rCarte(){
+  var q=document.getElementById('cs').value.toLowerCase();
+  var fl=CU.filter(function(c){return !q||c.name.toLowerCase().indexOf(q)>=0||(c.memberNo&&c.memberNo.indexOf(q)>=0);});
+  var thisM=0;for(var i=0;i<CU.length;i++)thisM+=getThisM(CU[i]);
+  document.getElementById('ct-tot').textContent=CU.length;document.getElementById('ct-m').textContent=thisM;
+  if(fl.length===0){document.getElementById('cl').innerHTML='<div class="empty"><div class="ei">👤</div>'+(q?'見つかりませんでした':'常連さんを登録しましょう！')+'</div>';return;}
+  var sorted=fl.slice().sort(function(a,b){
+    var la=a.visits&&a.visits.length?a.visits.slice().sort(function(x,y){return y.date.localeCompare(x.date);})[0].date:'';
+    var lb=b.visits&&b.visits.length?b.visits.slice().sort(function(x,y){return y.date.localeCompare(x.date);})[0].date:'';
+    return lb.localeCompare(la);
+  });
+  var h='';
+  for(var j=0;j<sorted.length;j++){
+    var c=sorted[j];var vis=c.visits||[],tot=vis.length,thisM2=getThisM(c);
+    var last=vis.length?vis.slice().sort(function(x,y){return y.date.localeCompare(x.date);})[0].date:null;
+    var ml=msLbl(tot),next=null;for(var k=0;k<MS_LIST.length;k++){if(MS_LIST[k]>tot){next=MS_LIST[k];break;}}
+    var av=c.photo?'<div class="cav"><img src="'+c.photo+'"></div>':'<div class="cav">👤</div>';
+    var tags='';if(c.trigger&&c.trigger.length)tags+='<span class="tag ac">'+c.trigger[0]+'</span>';
+    if(c.oshiCats&&c.oshiCats.length)tags+='<span class="tag gr">🐱 '+c.oshiCats.slice(0,2).join('・')+'</span>';
+    if(ml)tags+='<span class="tag gd">'+ml+'</span>';
+    h+='<div class="cc'+(isMSN(tot)?' ms':'')+'" onclick="showCust('+c.id+')">';
+    h+=av;
+    h+='<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;margin-bottom:3px;">'+c.name+(c.memberNo?' <span style="font-size:10px;color:var(--tx2);">No.'+c.memberNo+'</span>':'')+'</div>';
+    if(c.look)h+='<div style="font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">'+c.look+'</div>';
+    h+='<div style="display:flex;flex-wrap:wrap;gap:3px;">'+tags+'</div></div>';
+    h+='<div style="text-align:right;flex-shrink:0;"><div style="font-family:\'Kaisei Opti\',serif;font-size:22px;color:var(--ac);">'+tot+'</div><div style="font-size:9px;color:var(--tx2);">回（累計）</div>'+(thisM2>0?'<div style="font-size:10px;color:var(--ok);font-weight:500;">今月'+thisM2+'回</div>':'')+'<div style="font-size:10px;color:var(--tx2);">'+(last?last.slice(5):'')+'</div>'+(next?'<div style="font-size:9px;color:var(--tx2);">次'+next+'回</div>':'')+'</div>';
+    h+='</div>';
+  }
+  document.getElementById('cl').innerHTML=h;
+}
+function showCust(id){
+  custId=id;var c=CU.find(function(x){return x.id===id;});if(!c)return;
+  var vis=(c.visits||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
+  var tot=vis.length,thisM=getThisM(c);
+  var ts=0;for(var i=0;i<vis.length;i++)ts+=vis[i].price||0;
+  var ml=msLbl(tot),next=null;for(var k=0;k<MS_LIST.length;k++){if(MS_LIST[k]>tot){next=MS_LIST[k];break;}}
+  var av=c.photo?'<img src="'+c.photo+'" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid var(--bd);display:block;margin:0 auto 10px;">':'<div style="width:70px;height:70px;border-radius:50%;background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 10px;border:2px solid var(--bd);">👤</div>';
+  var memos=c.memos||[];
+  var tl=vis.map(function(v){return {type:'v',date:v.date,data:v};}).concat(memos.map(function(m){return {type:'m',date:m.date,data:m};}));
+  tl.sort(function(a,b){return b.date.localeCompare(a.date);});
+  var tlh='';
+  if(tl.length===0){tlh='<div style="color:var(--tx2);font-size:12px;text-align:center;padding:16px;">記録なし</div>';}
+  else{
+    for(var j=0;j<tl.length;j++){
+      var item=tl[j];var line=j<tl.length-1?'<div style="width:2px;flex:1;background:var(--bd);min-height:14px;margin-top:3px;"></div>':'';
+      if(item.type==='v'){var v=item.data;tlh+='<div class="tl"><div style="display:flex;flex-direction:column;align-items:center;"><div class="tl-dot v"></div>'+line+'</div><div class="tl-body"><div class="tl-d">'+v.date+'</div><div class="tl-vc">'+(v.ppl?'👥 '+v.ppl+'名　':'')+(v.price?'<span class="tl-pr">'+yn(v.price)+'</span>':'')+(v.memo?'<br><span style="font-size:11px;color:var(--tx2);">'+v.memo+'</span>':'')+'</div></div></div>';}
+      else{var memo=item.data;tlh+='<div class="tl"><div style="display:flex;flex-direction:column;align-items:center;"><div class="tl-dot m"></div>'+line+'</div><div class="tl-body"><div class="tl-d">📝 '+memo.date+'</div><div class="tl-mc">'+memo.text+'</div></div></div>';}
+    }
+  }
+  document.getElementById('det-tit').textContent=c.name+(c.memberNo?' No.'+c.memberNo:'');
+  var h=(ml?'<div style="text-align:center;margin-bottom:10px;"><span class="msbdg">'+ml+' 達成！</span></div>':'')+av;
+  h+='<div style="text-align:center;margin-bottom:12px;"><div style="font-family:\'Kaisei Opti\',serif;font-size:20px;">'+c.name+'</div>'+(c.look?'<div style="font-size:11px;color:var(--tx2);margin-top:3px;">'+c.look+'</div>':'')+'</div>';
+  h+='<div class="sr3" style="margin-bottom:8px;"><div class="sc pk"><div class="sl">累計来店</div><div class="sv">'+tot+'</div><div class="su">回</div></div><div class="sc gr"><div class="sl">今月来店</div><div class="sv g">'+thisM+'</div><div class="su">回</div></div><div class="sc pu"><div class="sl">累計売上</div><div class="sv p" style="font-size:16px;">'+ts.toLocaleString()+'</div><div class="su">円</div></div></div>';
+  if(next)h+='<div style="font-size:11px;color:var(--tx2);text-align:center;margin-bottom:10px;">次のマイルストーン：<strong style="color:var(--wn);">'+next+'回</strong> まであと <strong style="color:var(--wn);">'+(next-tot)+'回</strong></div>';
+  h+='<div class="card"><div class="ct">📋 プロフィール</div>';
+  if(c.trigger&&c.trigger.length)h+='<div class="ir"><div class="il">来店きっかけ</div><div>'+c.trigger.join(' / ')+'</div></div>';
+  if(c.companion&&c.companion.length)h+='<div class="ir"><div class="il">同伴パターン</div><div>'+c.companion.join(' / ')+'</div></div>';
+  if(c.gacha)h+='<div class="ir"><div class="il">ガチャ</div><div>'+c.gacha+'</div></div>';
+  if(c.oshiCats&&c.oshiCats.length)h+='<div class="ir"><div class="il">推し猫</div><div>'+c.oshiCats.join('・')+'</div></div>';
+  if(c.pref)h+='<div class="ir"><div class="il">好み・話題</div><div>'+c.pref+'</div></div>';
+  if(c.alert)h+='<div class="ir"><div class="il">⚠️ 注意</div><div style="color:var(--ng);">'+c.alert+'</div></div>';
+  if(c.birth)h+='<div class="ir"><div class="il">誕生月</div><div>'+c.birth+'月 🎂</div></div>';
+  h+='</div>';
+  h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="ct" style="margin-bottom:0;">📅 タイムライン</div><div style="display:flex;gap:5px;"><button class="btn bso bsm" onclick="oVisModal()">＋ 来店</button><button onclick="oMemoModal()" style="background:#f4eef8;border:1.5px solid var(--lp);color:#9060b0;padding:6px 12px;border-radius:22px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">📝 メモ</button></div></div>'+tlh+'</div>';
+  document.getElementById('det-body').innerHTML=h;
+  document.getElementById('det-act').innerHTML='<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso" style="flex:1;" onclick="cModal(\'m-det\');oEditCust('+id+')">✏️ 編集</button><button onclick="delCust('+id+')" style="background:#fef0ec;border:1.5px solid var(--pk);color:var(--ng);padding:6px 12px;border-radius:22px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">削除</button>';
+  oModal('m-det');
+}
+function buildCfTri(){
+  var el=document.getElementById('cf-tri');if(!el)return;
+  var icons={'Google Maps':'📍','インスタ':'📸','TikTok':'🎵','友人紹介':'👥','X':'🐦','アメブロ':'📖','その他':'💬'};
+  var h='';for(var i=0;i<Tris.length;i++){var t=Tris[i];var on=cfCh.tri.indexOf(t)>=0?' on':'';h+='<div class="chip'+on+'" data-v="'+t+'" onclick="togMulti(this,\'cf-tri\',\'tri\')">'+(icons[t]||'💬')+' '+t+'</div>';}
+  el.innerHTML=h;
+}
+function buildCfCats(){
+  var el=document.getElementById('cf-cats');if(!el)return;
+  var h='';for(var i=0;i<Cats.length;i++){var cat=Cats[i];var on=cfCh.cats.indexOf(cat)>=0?' on2':'';h+='<div class="chip'+on+'" data-v="'+cat+'" onclick="togCfCat(this)">'+cat+'</div>';}
+  el.innerHTML=h;
+}
+function togMulti(el,gid,key){var v=el.getAttribute('data-v');var arr=cfCh[key];var idx=arr.indexOf(v);if(idx>=0){arr.splice(idx,1);el.classList.remove('on');}else{arr.push(v);el.classList.add('on');}}
+function togCfCat(el){var v=el.getAttribute('data-v');var idx=cfCh.cats.indexOf(v);if(idx>=0){cfCh.cats.splice(idx,1);el.classList.remove('on2');}else{cfCh.cats.push(v);el.classList.add('on2');}}
+function addCfCat(){var v=document.getElementById('cf-cat-add').value.trim();if(!v)return;if(Cats.indexOf(v)<0)Cats.push(v);if(cfCh.cats.indexOf(v)<0)cfCh.cats.push(v);document.getElementById('cf-cat-add').value='';sv();buildCfCats();}
+function loadPh(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(ev){editPh=ev.target.result;document.getElementById('ph-prev').innerHTML='<img src="'+editPh+'">';};r.readAsDataURL(f);}
+function resetCf(){
+  cfCh={tri:[],companion:[],gacha:'',cats:[]};editPh=null;
+  var phPrev=document.getElementById('ph-prev');if(phPrev)phPrev.innerHTML='<div style="font-size:10px;color:var(--tx2);text-align:center;">📷<br>写真</div>';
+  var ids=['cf-n','cf-look','cf-pref','cf-alert'];for(var i=0;i<ids.length;i++){var el=document.getElementById(ids[i]);if(el)el.value='';}
+  var cb=document.getElementById('cf-birth');if(cb)cb.value='';
+  var chips=document.querySelectorAll('#m-cf .chip');for(var j=0;j<chips.length;j++)chips[j].classList.remove('on','on2');
+  buildCfTri();buildCfCats();
+}
+function oNewCust(){custId=null;resetCf();document.getElementById('cf-tit').textContent='👤 新規登録';oModal('m-cf');}
+function oEditCust(id){
+  var c=CU.find(function(x){return x.id===id;});if(!c)return;custId=id;resetCf();
+  document.getElementById('cf-tit').textContent='✏️ 編集';
+  document.getElementById('cf-n').value=c.name||'';document.getElementById('cf-look').value=c.look||'';
+  document.getElementById('cf-pref').value=c.pref||'';document.getElementById('cf-alert').value=c.alert||'';
+  document.getElementById('cf-birth').value=c.birth||'';editPh=c.photo||null;
+  if(editPh)document.getElementById('ph-prev').innerHTML='<img src="'+editPh+'">';
+  cfCh.tri=c.trigger?c.trigger.slice():[];cfCh.companion=c.companion?c.companion.slice():[];cfCh.gacha=c.gacha||'';cfCh.cats=c.oshiCats?c.oshiCats.slice():[];
+  buildCfTri();buildCfCats();
+  var compChips=document.querySelectorAll('#cf-comp .chip');for(var i=0;i<compChips.length;i++){if(cfCh.companion.indexOf(compChips[i].getAttribute('data-v'))>=0)compChips[i].classList.add('on');}
+  var gachChips=document.querySelectorAll('#cf-gach .chip');for(var j=0;j<gachChips.length;j++){if(gachChips[j].getAttribute('data-v')===cfCh.gacha)gachChips[j].classList.add('on');}
+  oModal('m-cf');
+}
+function saveCust(){
+  var name=document.getElementById('cf-n').value.trim();if(!name){toast('名前を入力してください',true);return;}
+  var gEl=document.querySelector('#cf-gach .chip.on');var gacha=gEl?gEl.getAttribute('data-v'):'';
+  if(custId){var c=CU.find(function(x){return x.id===custId;});if(c){c.name=name;c.look=document.getElementById('cf-look').value;c.pref=document.getElementById('cf-pref').value;c.alert=document.getElementById('cf-alert').value;c.birth=document.getElementById('cf-birth').value;c.photo=editPh;c.trigger=cfCh.tri.slice();c.companion=cfCh.companion.slice();c.gacha=gacha;c.oshiCats=cfCh.cats.slice();}}
+  else{var no=String(CU.length+1).padStart(3,'0');CU.push({id:Date.now(),memberNo:no,name:name,look:document.getElementById('cf-look').value,pref:document.getElementById('cf-pref').value,alert:document.getElementById('cf-alert').value,birth:document.getElementById('cf-birth').value,photo:editPh,trigger:cfCh.tri.slice(),companion:cfCh.companion.slice(),gacha:gacha,oshiCats:cfCh.cats.slice(),visits:[],memos:[]});}
+  sv();var savedC=custId?CU.find(function(x){return x.id===custId;}):CU[CU.length-1];if(savedC)saveCustomerToSupa(savedC);cModal('m-cf');rCarte();toast(custId?'更新しました':'登録しました');
+}
+function delCust(id){var c=CU.find(function(x){return x.id===id;});if(!c||!confirm(c.name+' を削除しますか？'))return;CU=CU.filter(function(x){return x.id!==id;});sv();cModal('m-det');rCarte();toast('削除しました');}
+function oMemoModal(){document.getElementById('memo-txt').value='';oModal('m-memo');}
+function saveMemo(){var text=document.getElementById('memo-txt').value.trim();if(!text){toast('メモを入力してください',true);return;}var c=CU.find(function(x){return x.id===custId;});if(!c)return;if(!c.memos)c.memos=[];c.memos.push({id:Date.now(),date:td(),text:text});sv();cModal('m-memo');showCust(custId);toast('メモを追加しました 📝');}
+function oVisModal(){document.getElementById('v-d').value=td();document.getElementById('v-p').value=1;document.getElementById('v-pr').value=0;document.getElementById('v-m').value='';oModal('m-vis');}
+function saveVis(){var c=CU.find(function(x){return x.id===custId;});if(!c)return;if(!c.visits)c.visits=[];var prev=c.visits.length;c.visits.push({id:Date.now(),date:document.getElementById('v-d').value,ppl:parseInt(document.getElementById('v-p').value)||1,price:parseInt(document.getElementById('v-pr').value)||0,memo:document.getElementById('v-m').value});sv();cModal('m-vis');showCust(custId);if(isMSN(c.visits.length))toast('🎉 '+c.name+'さん '+msLbl(c.visits.length)+' 達成！');else toast('来店記録を追加しました 🐾');}
+
+// ===== STATS =====
+function rDay(){
+  var ds=fYMD(vD);document.getElementById('d-lbl').textContent=ds;
+  var dg=G.filter(function(g){return g.d===ds&&g.st==='done';});
+  var p=0;for(var i=0;i<dg.length;i++)p+=dg[i].a+dg[i].c;
+  var s=0;for(var j=0;j<dg.length;j++)s+=dg[j].pr;
+  var m=MS.find(function(x){return x.d===ds;});
+  document.getElementById('d-g').textContent=p;document.getElementById('d-s').textContent=(s+(m?m.total:0)).toLocaleString();
+  var me=document.getElementById('d-ms'),md=document.getElementById('d-md');
+  if(m&&m.i.some(function(i){return i.q>0;})){
+    me.style.display='block';var mh='';
+    for(var k=0;k<m.i.length;k++){if(m.i[k].q>0)mh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>'+m.i[k].n+' × '+m.i[k].q+'</span><span style="color:var(--ok);font-family:\'Kaisei Opti\',serif;">'+yn(m.i[k].q*m.i[k].p)+'</span></div>';}
+    mh+='<div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;font-size:12px;"><span>物販合計</span><span style="color:var(--ok);font-family:\'Kaisei Opti\',serif;">'+yn(m.total)+'</span></div>';
+    md.innerHTML=mh;
+  }else me.style.display='none';
+  var le=document.getElementById('d-list');
+  if(dg.length===0){le.innerHTML='<div class="empty"><div class="ei">📋</div>記録なし</div>';return;}
+  var dsStr=fYMD(vD);
+  var lh='<div style="margin-bottom:8px;"><button onclick="openDayAdd()" class="btn bp bsm">➕ 記録を追加</button></div>';
+  lh+='<table class="st"><thead><tr><th>区分</th><th>人数</th><th>入店</th><th>退店</th><th style="text-align:right;">料金</th><th></th></tr></thead><tbody>';
+  for(var l=0;l<dg.length;l++){
+    var g=dg[l];
+    lh+='<tr>';
+    lh+='<td>'+(g.tp==='new'?'新規':'リピ')+'</td>';
+    lh+='<td>'+g.a+(g.c>0?'+子'+g.c:'')+'</td>';
+    lh+='<td>'+g.ci+'</td>';
+    lh+='<td>'+(g.co||'-')+'</td>';
+    lh+='<td class="amt">'+yn(g.pr)+'</td>';
+    lh+='<td style="white-space:nowrap;">';
+    lh+='<button onclick="oGEdit(\''+String(g.id)+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:2px 7px;border-radius:8px;font-size:10px;cursor:pointer;margin-right:3px;">✏️</button>';
+    lh+='<button onclick="dayDelGuest(\''+String(g.id)+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:2px 7px;border-radius:8px;font-size:10px;cursor:pointer;">🗑</button>';
+    lh+='</td></tr>';
+  }
+  lh+='</tbody></table>';le.innerHTML=lh;
+}
+function rMon(){
+  var yr=vM.getFullYear(),mo=vM.getMonth();document.getElementById('m-lbl').textContent=yr+'/'+p2(mo+1);
+  var mg=G.filter(function(g){var d=new Date(g.d);return d.getFullYear()===yr&&d.getMonth()===mo&&g.st==='done';});
+  var p=0;for(var i=0;i<mg.length;i++)p+=mg[i].a+mg[i].c;
+  var sb=0;for(var j=0;j<mg.length;j++)sb+=mg[j].pr;
+  var mm=MS.filter(function(m){var d=new Date(m.d);return d.getFullYear()===yr&&d.getMonth()===mo;});
+  var sm=0;for(var k=0;k<mm.length;k++)sm+=mm[k].total;
+  document.getElementById('m-g').textContent=p;document.getElementById('m-s').textContent=(sb+sm).toLocaleString();
+  var bd={};
+  for(var l=0;l<mg.length;l++){var g=mg[l];if(!bd[g.d])bd[g.d]={c:0,s:0};bd[g.d].c+=g.a+g.c;bd[g.d].s+=g.pr;}
+  for(var n=0;n<mm.length;n++){var mx=mm[n];if(!bd[mx.d])bd[mx.d]={c:0,s:0};bd[mx.d].s+=mx.total;}
+  var dates=Object.keys(bd).sort();
+  var le=document.getElementById('m-list');
+  if(dates.length===0){le.innerHTML='<div class="empty"><div class="ei">📅</div>記録なし</div>';return;}
+  var lh='<table class="st"><thead><tr><th>日付</th><th>人数</th><th style="text-align:right;">売上</th></tr></thead><tbody>';
+  for(var q=0;q<dates.length;q++)lh+='<tr><td>'+dates[q]+'</td><td>'+bd[dates[q]].c+'名</td><td class="amt">'+yn(bd[dates[q]].s)+'</td></tr>';
+  lh+='</tbody></table>';le.innerHTML=lh;
+}
+function rAnket(){
+  var yr=aM.getFullYear(),mo=aM.getMonth();document.getElementById('am-lbl').textContent=yr+'/'+p2(mo+1);
+  var ag=G.filter(function(g){var d=new Date(g.d);return d.getFullYear()===yr&&d.getMonth()===mo&&g.aq;});
+  function mkChart(el,counts,cls){
+    var keys=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});var tot=0;for(var i=0;i<keys.length;i++)tot+=counts[keys[i]];
+    if(tot===0){el.innerHTML='<div style="color:var(--tx2);font-size:12px;">データなし</div>';return;}
+    var h='';for(var j=0;j<keys.length;j++){var pct=Math.round(counts[keys[j]]/tot*100);h+='<div class="cbar"><div class="cbar-l"><span>'+keys[j]+'</span><span>'+counts[keys[j]]+'件（'+pct+'%）</span></div><div class="cbar-bg"><div class="cbar-fill'+(cls?' '+cls:'')+'" style="width:'+pct+'%;"></div></div></div>';}
+    el.innerHTML=h;
+  }
+  var tc={},ec={},cc2={};
+  for(var i=0;i<ag.length;i++){var aq=ag[i].aq;if(aq.tri)for(var j=0;j<aq.tri.length;j++)tc[aq.tri[j]]=(tc[aq.tri[j]]||0)+1;if(aq.exp)ec[aq.exp]=(ec[aq.exp]||0)+1;if(aq.cats)for(var k=0;k<aq.cats.length;k++)cc2[aq.cats[k]]=(cc2[aq.cats[k]]||0)+1;}
+  mkChart(document.getElementById('ch-tri'),tc,'');mkChart(document.getElementById('ch-exp'),ec,'gr');mkChart(document.getElementById('ch-cat'),cc2,'pu');
+}
+function chD(d){vD.setDate(vD.getDate()+d);rDay();}
+function chM(d){vM.setMonth(vM.getMonth()+d);rMon();}
+function chAM(d){aM.setMonth(aM.getMonth()+d);rAnket();}
+function dayDelGuest(id){
+  if(!confirm('この記録を削除しますか？'))return;
+  G=G.filter(function(x){return String(x.id)!==String(id);});
+  sv();supaDelete('pos_guests',id);rDay();rGuests();toast('削除しました');
+}
+function openDayAdd(){
+  // 日別追加：ge-idを空にしてgeditモーダルを開く
+  document.getElementById('ge-id').value='';
+  document.getElementById('ge-tp').value='new';
+  document.getElementById('ge-pt').value='友人';
+  document.getElementById('ge-a').value=1;
+  document.getElementById('ge-c').value=0;
+  document.getElementById('ge-ci').value='12:00';
+  document.getElementById('ge-co').value='13:00';
+  document.getElementById('ge-pr').value='';
+  document.getElementById('ge-mo').value='';
+  // 日付をvDの日付にセット
+  document.getElementById('ge-id').setAttribute('data-date', fYMD(vD));
+  oModal('m-gedit');
+}
+function stab(t){
+  var tabs={d:'ts-d',m:'ts-m',a:'ts-a',p:'ts-p',e:'ts-e',z:'ts-z'};var divs={d:'s-d',m:'s-m',a:'s-a',p:'s-p',e:'s-e',z:'s-z'};
+  for(var k in tabs){document.getElementById(tabs[k]).classList.toggle('active',k===t);document.getElementById(divs[k]).style.display=k===t?'block':'none';}
+  if(t==='p')rPastData();
+  if(t==='e'){rESummary2();}
+}
+
+// ===== CASH =====
+// 持ち帰りメンバー管理
+var CarryMembers = JSON.parse(localStorage.getItem('wc_carry_members') || '["オーナー","田染"]');
+function saveCarryMembers(){ localStorage.setItem('wc_carry_members', JSON.stringify(CarryMembers)); }
+function buildCarrySelect(){
+  var sel = document.getElementById('k-carry-name');
+  if(!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">— 氏名を選択 —</option>';
+  for(var i=0; i<CarryMembers.length; i++){
+    var opt = document.createElement('option');
+    opt.value = CarryMembers[i];
+    opt.textContent = CarryMembers[i];
+    if(CarryMembers[i] === cur) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+function addCarryMember(){
+  var name = prompt('追加する氏名を入力してください');
+  if(!name || !name.trim()) return;
+  name = name.trim();
+  if(CarryMembers.indexOf(name) >= 0){ toast('すでに登録されています', true); return; }
+  CarryMembers.push(name);
+  saveCarryMembers();
+  buildCarrySelect();
+  document.getElementById('k-carry-name').value = name;
+  toast(name + ' を追加しました');
+}
+
+var BILLS=[{id:'b10k',l:'1万円',v:10000},{id:'b5k',l:'5千円',v:5000},{id:'b2k',l:'2千円',v:2000},{id:'b1k',l:'千円',v:1000},{id:'b500',l:'500円',v:500}];
+var COINS=[{id:'c100',l:'100円',v:100},{id:'c50',l:'50円',v:50},{id:'c10',l:'10円',v:10},{id:'c5',l:'5円',v:5},{id:'c1',l:'1円',v:1}];
+var AD=BILLS.concat(COINS);var CQ={};
+function buildDenomRows(){
+  function mkR(d){return '<div class="drow"><div class="dlbl">'+d.l+'</div><div class="dprev" id="pv-'+d.id+'">—</div><div class="dctrl"><button class="dbtn" onclick="chDQ(\''+d.id+'\',-1)">－</button><div class="dqty" id="dq-'+d.id+'">0</div><button class="dbtn" onclick="chDQ(\''+d.id+'\',1)">＋</button></div><div class="dsub" id="ds-'+d.id+'">—</div></div>';}
+  var bh='',ch='';for(var i=0;i<BILLS.length;i++)bh+=mkR(BILLS[i]);for(var j=0;j<COINS.length;j++)ch+=mkR(COINS[j]);
+  document.getElementById('d-bills').innerHTML=bh;document.getElementById('d-coins').innerHTML=ch;
+}
+function oCash(){
+  for(var i=0;i<AD.length;i++)CQ[AD[i].id]=0;
+  document.getElementById('k-d').value=td();document.getElementById('k-sup').value=0;document.getElementById('k-carry').value=0;document.getElementById('k-mo').value='';
+  buildCarrySelect();
+  loadPrev();oModal('m-cash');
+}
+function loadPrev(){
+  var date=document.getElementById('k-d').value;
+  var sorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
+  var prev=sorted.length?sorted[0]:null;
+  for(var i=0;i<AD.length;i++){var d=AD[i];var pq=prev?(prev[d.id]||0):0;var pvEl=document.getElementById('pv-'+d.id);var dqEl=document.getElementById('dq-'+d.id);var dsEl=document.getElementById('ds-'+d.id);if(pvEl)pvEl.textContent=pq>0?pq:'—';CQ[d.id]=pq;if(dqEl)dqEl.textContent=pq;if(dsEl)dsEl.textContent=pq>0?yn(pq*d.v):'—';}
+  rcCash();
+}
+function chDQ(id,delta){
+  CQ[id]=Math.max(0,(CQ[id]||0)+delta);var d=null;for(var i=0;i<AD.length;i++){if(AD[i].id===id){d=AD[i];break;}}if(!d)return;
+  var dqEl=document.getElementById('dq-'+id);var dsEl=document.getElementById('ds-'+id);
+  if(dqEl)dqEl.textContent=CQ[id];if(dsEl)dsEl.textContent=CQ[id]>0?yn(CQ[id]*d.v):'—';rcCash();
+}
+function rcCash(){
+  var date=document.getElementById('k-d').value||td();var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
+  var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
+  var grand=dt+sup,net=grand-carry;
+  var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
+  var mr=MS.find(function(m){return m.d===date;});var tot=gs+(mr?mr.total:0);var diff=net-tot;
+  var ch=document.getElementById('k-carry-h');if(ch)ch.textContent=carry>0?('金種合計 '+yn(grand)+' から '+yn(carry)+' を回収'):'金種合計から引かれます';
+  var dc=diff>0?'ov2':diff<0?'un':'';var dl=diff>0?('+'+yn(diff)+' 超過'):diff<0?(yn(diff)+' 不足'):'ぴったり ✓';
+  var h='<div class="csb tot full"><div class="csl">金種合計（回収前）</div><div class="csv">'+yn(grand)+'</div></div>';
+  if(carry>0)h+='<div class="csb car full"><div class="csl">🏦 回収額</div><div class="csv">'+yn(carry)+'</div></div>';
+  h+='<div class="csb net"><div class="csl">レジ残高</div><div class="csv">'+yn(net)+'</div></div>';
+  h+='<div class="csb '+dc+'"><div class="csl">売上との過不足</div><div class="csv" style="font-size:16px;">'+dl+'</div></div>';
+  h+='<div class="csb full"><div class="csl">本日の売上</div><div class="csv" style="color:var(--ok);">'+yn(tot)+'</div></div>';
+  document.getElementById('k-sum').innerHTML=h;
+}
+function saveCash(){
+  var date=document.getElementById('k-d').value;var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
+  var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
+  var grand=dt+sup,net=grand-carry;
+  var carryName=document.getElementById('k-carry-name')?document.getElementById('k-carry-name').value:'';
+  var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,grand:grand,net:net,id:Date.now()};
+  for(var j=0;j<AD.length;j++)data[AD[j].id]=CQ[AD[j].id]||0;
+  CR=CR.filter(function(r){return r.d!==date;});CR.push(data);sv();saveCashToSupa(data);cModal('m-cash');rCash();toast('金種登録しました 💴');
+}
+function chKM(d){kM.setMonth(kM.getMonth()+d);rCash();}
+function rCash(){
+  var yr=kM.getFullYear(),mo=kM.getMonth();document.getElementById('k-lbl').textContent=yr+'/'+p2(mo+1);
+  var recs=CR.filter(function(r){var d=new Date(r.d);return d.getFullYear()===yr&&d.getMonth()===mo;}).sort(function(a,b){return a.d.localeCompare(b.d);});
+  var el=document.getElementById('k-list');
+  if(recs.length===0){el.innerHTML='<div class="empty"><div class="ei">💴</div>金種記録なし</div>';return;}
+  var h='';
+  for(var i=0;i<recs.length;i++){
+    var r=recs[i];
+    // 前日比で過不足を計算
+    var prevRec=i>0?recs[i-1]:null;
+    var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
+    var todayNet=r.net||r.grand;
+    // 本日の売上
+    var dg=G.filter(function(g){return g.d===r.d&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
+    var mr=MS.find(function(m){return m.d===r.d;});var daySales=gs+(mr?mr.total:0);
+    // 前日比過不足 = 本日残高 - 前日残高 - 本日売上
+    var diff=prevRec?(todayNet-prevNet-daySales):0;
+    var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)):diff<0?yn(diff):'±0';
+    h+='<div class="card" style="margin-bottom:8px;">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+'</div><div style="font-family:\'Kaisei Opti\',serif;font-size:20px;color:var(--ac);">'+yn(r.net||r.grand)+'</div></div>';
+    h+='<div style="display:flex;gap:5px;flex-wrap:wrap;">';
+    if(r.carry>0)h+='<span style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1px solid var(--wn);color:var(--wn);font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;">🏦 '+(r.carryName||'回収')+' '+yn(r.carry)+'</span>';
+    var diffStyle=dc==='plus'?'background:#f0f8ee;border:1px solid var(--ac2);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);';
+    h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">過不足 '+dl+'</span>';
+    if(r.memo)h+='<span class="tag">'+r.memo+'</span>';
+    h+='</div></div>';
+  }
+  el.innerHTML=h;
+}
+
+// ===== EXPORT/IMPORT =====
+function expData(){
+  var data=JSON.stringify({G:G,CR:CR,MS:MS,MI:MI,CU:CU,Cats:Cats,Tris:Tris,BCs:BCs,ESales:ESales},null,2);
+  var blob=new Blob([data],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='wecats_'+td()+'.json';a.click();cModal('m-menu');
+}
+function impData(e){
+  var f=e.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    try{var d=JSON.parse(ev.target.result);if(d.G)G=d.G;if(d.CR)CR=d.CR;if(d.MS)MS=d.MS;if(d.MI)MI=d.MI;if(d.CU)CU=d.CU;if(d.Cats)Cats=d.Cats;if(d.Tris)Tris=d.Tris;if(d.BCs)BCs=d.BCs;if(d.ESales)ESales=d.ESales;sv();rfAll();cModal('m-menu');toast('インポートしました！');}
+    catch(err){toast('インポートエラー',true);}
+  };r.readAsText(f);
+}
+
+// ===== GUEST EDIT =====
+function oGEdit(id){
+  var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;cModal('m-det');
+  document.getElementById('ge-id').value=id;document.getElementById('ge-tp').value=g.tp;document.getElementById('ge-pt').value=g.pt;
+  document.getElementById('ge-a').value=g.a;document.getElementById('ge-c').value=g.c;document.getElementById('ge-ci').value=g.ci;
+  document.getElementById('ge-co').value=g.co||'';document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
+  oModal('m-gedit');
+}
+function saveGEdit(){
+  var id=document.getElementById('ge-id').value;
+  // idが空なら新規追加
+  if(!id){
+    var dateAttr=document.getElementById('ge-id').getAttribute('data-date')||td();
+    var newId=String(Date.now());
+    var a=parseInt(document.getElementById('ge-a').value)||1;
+    var c=parseInt(document.getElementById('ge-c').value)||0;
+    var ci=document.getElementById('ge-ci').value;
+    var co=document.getElementById('ge-co').value;
+    var prInput=document.getElementById('ge-pr').value;
+    var pr=prInput!==''?parseInt(prInput):0;
+    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,false);pr=r.t;}
+    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,a:a,c:c,ci:ci,co:co||null,pr:pr,mo:document.getElementById('ge-mo').value,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{}};
+    G.push(newG);sv();saveGuestToSupa(newG);cModal('m-gedit');rfAll();toast('記録を追加しました ✅');return;
+  }
+  var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
+  var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
+  var ci=document.getElementById('ge-ci').value;var co=document.getElementById('ge-co').value;
+  var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
+  if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,g.fn);pr=r.t;}
+  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=document.getElementById('ge-mo').value;g.st=co?'done':'stay';
+  sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
+}
+function delGuest(){var id=document.getElementById('ge-id').value;if(!confirm('この記録を削除しますか？'))return;G=G.filter(function(x){return String(x.id)!==String(id);});sv();supaDelete('pos_guests',id);cModal('m-gedit');rfAll();toast('削除しました');}
+
+// ===== PAST DATA =====
+function addPastData(){
+  var yr=parseInt(document.getElementById('pd-yr').value);var mo=parseInt(document.getElementById('pd-mo').value);
+  var ppl=parseInt(document.getElementById('pd-ppl').value)||0;var sales=parseInt(document.getElementById('pd-sales').value)||0;
+  var key=yr+'-'+String(mo).padStart(2,'0');
+  PastData=PastData.filter(function(d){return d.key!==key;});PastData.push({key:key,yr:yr,mo:mo,ppl:ppl,sales:sales});
+  PastData.sort(function(a,b){return a.key.localeCompare(b.key);});sv();rPastData();toast('追加しました');
+}
+function editPastData(key){
+  var d=PastData.find(function(x){return x.key===key;});if(!d)return;
+  document.getElementById('pd-yr').value=d.yr;
+  document.getElementById('pd-mo').value=d.mo;
+  document.getElementById('pd-ppl').value=d.ppl;
+  document.getElementById('pd-sales').value=d.sales;
+  // 既存データを削除（再入力で上書き）
+  PastData=PastData.filter(function(x){return x.key!==key;});
+  sv();rPastData();
+  toast(d.yr+'年'+d.mo+'月のデータを編集フォームに読み込みました');
+}
+function delPastData(key){PastData=PastData.filter(function(d){return d.key!==key;});sv();rPastData();toast('削除しました');}
+function rPastData(){
+  var el=document.getElementById('pd-list');if(!el)return;
+  if(PastData.length===0){el.innerHTML='<div class="empty"><div class="ei">📅</div>データなし</div>';return;}
+  var h='<div class="card"><div class="ct">登録済み過去データ</div><table class="st"><thead><tr><th>年月</th><th>人数</th><th style="text-align:right;">売上</th><th></th></tr></thead><tbody>';
+  for(var i=0;i<PastData.length;i++){
+    var d=PastData[i];
+    var k=d.key;
+    h+='<tr><td>'+d.yr+'/'+String(d.mo).padStart(2,'0')+'</td>';
+    h+='<td>'+d.ppl+'名</td>';
+    h+='<td class="amt">¥'+d.sales.toLocaleString()+'</td>';
+    h+='<td style="display:flex;gap:4px;">';
+    h+='<button onclick="editPastData(\'' + k + '\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:3px 8px;border-radius:12px;font-size:10px;cursor:pointer;">編集</button>';
+    h+='<button onclick="delPastData(\'' + k + '\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:3px 8px;border-radius:12px;font-size:10px;cursor:pointer;">削除</button>';
+    h+='</td></tr>';
+  }
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+}
+
+function etab(t){
+  var tabs=['te-1','te-2','te-3'];var ids=['sum','inp','exp'];
+  var tMap={sum:0,inp:1,exp:2};
+  for(var i=0;i<tabs.length;i++){document.getElementById(tabs[i]).classList.toggle('active',i===tMap[t]);document.getElementById('e-'+ids[i]).style.display=i===tMap[t]?'block':'none';}
+  if(t==='sum')rESummary();
+  if(t==='inp')rEMonthList();
+  if(t==='exp')rEExpense();
+}
+function chEY(d){eYear+=d;rESummary();}
+
+function getESalesData(yr,mo){
+  // ESalesに手入力データがあればそれを使う
+  var key=String(yr);
+  if(ESales[key]&&ESales[key][mo]){return ESales[key][mo];}
+  // PastDataに過去データがあればそれを使う
+  var pastKey=yr+'-'+String(mo).padStart(2,'0');
+  var pastItem=PastData.find(function(p){return p.key===pastKey;});
+  if(pastItem){return {sales:pastItem.sales,visitors:pastItem.ppl};}
+  // なければPOSのGデータから集計
+  var gVisitors=0,gSales=0;
+  for(var i=0;i<G.length;i++){
+    var g=G[i];if(g.st!=='done')continue;
+    var d=new Date(g.d);
+    if(d.getFullYear()===yr&&(d.getMonth()+1)===mo){gVisitors+=g.a+g.c;gSales+=g.pr;}
+  }
+  // 物販も加算
+  for(var j=0;j<MS.length;j++){
+    var md=new Date(MS[j].d);
+    if(md.getFullYear()===yr&&(md.getMonth()+1)===mo){gSales+=MS[j].total;}
+  }
+  return {sales:gSales,visitors:gVisitors};
+}
+
+function rESummary(){
+  rESummary2();return;
+  document.getElementById('e-yr-lbl').textContent=eYear+'年';
+  var MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var totalSales=0,totalVisitors=0;
+  var salesData=[],visitorsData=[];
+  for(var m=1;m<=12;m++){
+    var d=getESalesData(eYear,m);
+    totalSales+=d.sales;totalVisitors+=d.visitors;
+    salesData.push(d.sales);visitorsData.push(d.visitors);
+  }
+  document.getElementById('e-annual').textContent=yn(totalSales);
+  document.getElementById('e-annual-sub').textContent='年間来店 '+totalVisitors.toLocaleString()+'人';
+  document.getElementById('e-tot-v').textContent=totalVisitors.toLocaleString();
+  var avg=totalVisitors>0?Math.round(totalSales/totalVisitors):0;
+  document.getElementById('e-avg').textContent=avg>0?yn(avg):'¥—';
+
+  var now=new Date();var thisM=eYear===now.getFullYear()?(now.getMonth()+1):null;
+
+  // 売上グラフ
+  var ctx1=document.getElementById('e-chart-s').getContext('2d');
+  if(eChartS)eChartS.destroy();
+  eChartS=new Chart(ctx1,{
+    type:'bar',
+    data:{labels:MONTHS,datasets:[{data:salesData,backgroundColor:salesData.map(function(_,i){return(i+1)===thisM?'rgba(42,157,143,0.9)':'rgba(42,157,143,0.35)';}),borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10},callback:function(v){return v>=10000?(v/10000)+'万':v;}}}}}
+  });
+
+  // 来店グラフ
+  var ctx2=document.getElementById('e-chart-v').getContext('2d');
+  if(eChartV)eChartV.destroy();
+  eChartV=new Chart(ctx2,{
+    type:'line',
+    data:{labels:MONTHS,datasets:[{data:visitorsData,borderColor:'rgba(233,196,106,0.9)',backgroundColor:'rgba(233,196,106,0.15)',borderWidth:2,pointBackgroundColor:visitorsData.map(function(_,i){return(i+1)===thisM?'#e9c46a':'rgba(233,196,106,0.5)';}),pointRadius:4,fill:true,tension:0.4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10}}}}}
+  });
+}
+
+function saveEData(){
+  saveEData2();return;
+  var month=document.getElementById('ei-month').value;
+  var sales=parseInt(document.getElementById('ei-sales').value)||0;
+  var visitors=parseInt(document.getElementById('ei-visitors').value)||0;
+  if(!sales&&!visitors){toast('金額または人数を入力してください',true);return;}
+  var yr=String(eYear);
+  if(!ESales[yr])ESales[yr]={};
+  ESales[yr][month]={sales:sales,visitors:visitors};
+  sv();document.getElementById('ei-sales').value='';document.getElementById('ei-visitors').value='';
+  rEMonthList();rESummary();toast(month+'月のデータを保存しました！');
+}
+
+function rEMonthList(){
+  rEMonthList2();return;
+  var yr=String(eYear);var data=ESales[yr]||{};
+  var el=document.getElementById('e-month-list');
+  var entries=Object.keys(data).sort(function(a,b){return parseInt(b)-parseInt(a);});
+  if(entries.length===0){el.innerHTML='<div class="empty"><div class="ei">📋</div>データがまだありません</div>';return;}
+  var h='';
+  for(var i=0;i<entries.length;i++){
+    var m=entries[i];var d=data[m];
+    h+='<div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sh);">';
+    h+='<div style="font-size:14px;color:var(--tx2);">'+eYear+'年'+m+'月</div>';
+    h+='<div style="text-align:right;"><div style="font-family:\'Kaisei Opti\',serif;font-size:18px;color:var(--ac);">'+yn(d.sales||0)+'</div><div style="font-size:11px;color:var(--tx2);">'+(d.visitors||0)+'人来店</div></div>';
+    h+='<button onclick="openEEdit('+m+')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">編集</button>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function openEEdit(m){
+  var yr=String(eYear);var d=(ESales[yr]||{})[m]||{};
+  document.getElementById('medit-tit').textContent=eYear+'年'+m+'月 編集';
+  document.getElementById('medit-sales').value=d.sales||'';
+  document.getElementById('medit-visitors').value=d.visitors||'';
+  document.getElementById('medit-month').value=m;
+  oModal('m-medit');
+}
+function saveEEdit(){
+  var m=document.getElementById('medit-month').value;var yr=String(eYear);
+  if(!ESales[yr])ESales[yr]={};
+  ESales[yr][m]={sales:parseInt(document.getElementById('medit-sales').value)||0,visitors:parseInt(document.getElementById('medit-visitors').value)||0};
+  sv();cModal('m-medit');rEMonthList();rESummary();toast('更新しました');
+}
+
+// 経費
+function eCharge(){
+  xCharge();return;
+  var amount=parseInt(document.getElementById('e-ch-amt').value)||0;if(!amount){toast('金額を入力してください',true);return;}
+  var memo=document.getElementById('e-ch-memo').value||'チャージ';
+  var base=loadExpBase();base.balance+=amount;base.history.unshift({type:'charge',amount:amount,memo:memo,date:new Date().toLocaleDateString('ja-JP')});
+  saveExpBase(base);document.getElementById('e-ch-amt').value='';document.getElementById('e-ch-memo').value='';rEExpense();toast('残高を追加しました！');
+}
+function eOpenRcpt(){
+  xOpenRcpt();return;
+  var desc=document.getElementById('e-ex-desc').value;var amt=document.getElementById('e-ex-amt').value;
+  if(!desc||!amt){toast('内容と金額を入力してください',true);return;}
+  eCurrentRcpt=null;document.getElementById('e-rcpt-prev').classList.remove('show');document.getElementById('e-rcpt-in').value='';
+  document.getElementById('m-ercpt').setAttribute('data-mode','e');
+  oModal('m-ercpt');
+}
+function ePreviewRcpt(input){
+  var f=input.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(e){eCurrentRcpt=e.target.result;var img=document.getElementById('e-rcpt-prev');img.src=eCurrentRcpt;img.classList.add('show');};
+  r.readAsDataURL(f);
+}
+function eSaveExpWithRcpt(){
+  var mode=document.getElementById('m-ercpt').getAttribute('data-mode')||'e';
+  if(mode==='x'){xSaveExp(eCurrentRcpt);}else{eSaveExp(eCurrentRcpt);}
+  cModal('m-ercpt');
+}
+function eSaveExp(rcpt){
+  xSaveExp(rcpt);return;
+  var desc=document.getElementById('e-ex-desc').value;var amount=parseInt(document.getElementById('e-ex-amt').value)||0;
+  var cat=document.getElementById('e-ex-cat').value;var memo=document.getElementById('e-ex-memo').value;
+  if(!desc||!amount){toast('内容と金額を入力してください',true);return;}
+  var base=loadExpBase();base.balance-=amount;
+  base.history.unshift({id:Date.now(),type:'expense',desc:desc,amount:amount,cat:cat,memo:memo,date:new Date().toLocaleDateString('ja-JP'),receipt:rcpt||null});
+  saveExpBase(base);
+  document.getElementById('e-ex-desc').value='';document.getElementById('e-ex-amt').value='';document.getElementById('e-ex-memo').value='';
+  eCurrentRcpt=null;rEExpense();toast('支出を記録しました');
+}
+function eDelExp(id){
+  if(!confirm('削除しますか？'))return;
+  var base=loadExpBase();var item=base.history.find(function(h){return h.id===id;});
+  if(item){base.balance+=item.amount;base.history=base.history.filter(function(h){return h.id!==id;});}
+  saveExpBase(base);rEExpense();toast('削除しました');
+}
+function rEExpense(){
+  rXExpense();return;
+  var base=loadExpBase();var balance=base.balance;var threshold=50000;
+  var balEl=document.getElementById('e-bal-val');var balBox=document.getElementById('e-bal-box');
+  var alarm=document.getElementById('e-alarm');var fill=document.getElementById('e-bar-fill');
+  balEl.textContent=yn(balance);
+  if(balance<threshold){balEl.className='exp-bal-val warn';balBox.classList.add('warn');alarm.classList.add('show');}
+  else{balEl.className='exp-bal-val safe';balBox.classList.remove('warn');alarm.classList.remove('show');}
+  var pct=Math.max(0,Math.min(100,(balance/200000)*100));
+  fill.style.width=pct+'%';fill.style.background=balance<threshold?'#e76f51':balance<80000?'#e9c46a':'#2a9d8f';
+  document.getElementById('e-bal-sub').textContent=balance<0?'⚠️ 残高がマイナスです':balance<threshold?('残り '+yn(balance)+' — 補充してください'):('残り '+yn(balance));
+  var expenses=base.history.filter(function(h){return h.type==='expense';});
+  var el=document.getElementById('e-exp-list');
+  if(expenses.length===0){el.innerHTML='<div class="empty"><div class="ei">💴</div>支出記録がまだありません</div>';return;}
+  var h='';
+  for(var i=0;i<expenses.length;i++){
+    var e=expenses[i];
+    h+='<div class="exp-item">';
+    h+='<div class="exp-top"><div><div style="font-size:14px;">'+e.desc+'</div>'+(e.memo?'<div style="font-size:11px;color:var(--tx2);margin-top:2px;">'+e.memo+'</div>':'')+'</div>';
+    h+='<div style="display:flex;align-items:center;gap:6px;"><div class="exp-amt">-'+yn(e.amount)+'</div><button onclick="eDelExp('+e.id+')" style="background:none;border:none;color:var(--tx2);cursor:pointer;font-size:16px;">🗑</button></div></div>';
+    h+='<div class="exp-bottom"><span class="exp-cat-badge">'+e.cat+'</span><span style="font-size:11px;color:var(--tx2);">'+e.date+'</span>'+(e.receipt?'<span style="font-size:11px;color:var(--ac);cursor:pointer;" onclick="eViewRcpt('+e.id+')">📷 レシート</span>':'')+'</div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function eViewRcpt(id){
+  var base=loadExpBase();var item=base.history.find(function(h){return h.id===id;});
+  if(item&&item.receipt){var w=window.open('','_blank');w.document.write('<html><body style="margin:0;background:#000"><img src="'+item.receipt+'" style="max-width:100%;display:block"></body></html>');}
+}
+
+// ===== 経費タブ独立レンダリング =====
+var xChartS2=null,xChartV2=null;
+
+function rESummary2(){
+  document.getElementById('e-yr-lbl2').textContent=eYear+'年';
+  var MONTHS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  var totalSales=0,totalVisitors=0;
+  var salesData=[],visitorsData=[];
+  for(var m=1;m<=12;m++){
+    var d=getESalesData(eYear,m);
+    totalSales+=d.sales;totalVisitors+=d.visitors;
+    salesData.push(d.sales);visitorsData.push(d.visitors);
+  }
+  document.getElementById('e-annual2').textContent=yn(totalSales);
+  document.getElementById('e-annual-sub2').textContent='年間来店 '+totalVisitors.toLocaleString()+'人';
+  document.getElementById('e-tot-v2').textContent=totalVisitors.toLocaleString();
+  var avg=totalVisitors>0?Math.round(totalSales/totalVisitors):0;
+  document.getElementById('e-avg2').textContent=avg>0?yn(avg):'¥—';
+  var now=new Date();var thisM=eYear===now.getFullYear()?(now.getMonth()+1):null;
+  var ctx1=document.getElementById('e-chart-s2').getContext('2d');
+  if(xChartS2)xChartS2.destroy();
+  xChartS2=new Chart(ctx1,{type:'bar',data:{labels:MONTHS,datasets:[{data:salesData,backgroundColor:salesData.map(function(_,i){return(i+1)===thisM?'rgba(42,157,143,0.9)':'rgba(42,157,143,0.35)';}),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10},callback:function(v){return v>=10000?(v/10000)+'万':v;}}}}}});
+  var ctx2=document.getElementById('e-chart-v2').getContext('2d');
+  if(xChartV2)xChartV2.destroy();
+  xChartV2=new Chart(ctx2,{type:'line',data:{labels:MONTHS,datasets:[{data:visitorsData,borderColor:'rgba(233,196,106,0.9)',backgroundColor:'rgba(233,196,106,0.15)',borderWidth:2,pointBackgroundColor:visitorsData.map(function(_,i){return(i+1)===thisM?'#e9c46a':'rgba(233,196,106,0.5)';}),pointRadius:4,fill:true,tension:0.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10}}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#5a8a8a',font:{size:10}}}}}});
+  // 入力済みリスト
+  rEMonthList2();
+}
+function saveEData2(){
+  var month=document.getElementById('ei-month2').value;
+  var sales=parseInt(document.getElementById('ei-sales2').value)||0;
+  var visitors=parseInt(document.getElementById('ei-visitors2').value)||0;
+  if(!sales&&!visitors){toast('金額または人数を入力してください',true);return;}
+  var yr=String(eYear);
+  if(!ESales[yr])ESales[yr]={};
+  ESales[yr][month]={sales:sales,visitors:visitors};
+  sv();document.getElementById('ei-sales2').value='';document.getElementById('ei-visitors2').value='';
+  rEMonthList2();rESummary2();toast(month+'月のデータを保存しました！');
+}
+function rEMonthList2(){
+  var yr=String(eYear);var data=ESales[yr]||{};
+  var el=document.getElementById('e-month-list2');if(!el)return;
+  var entries=Object.keys(data).sort(function(a,b){return parseInt(b)-parseInt(a);});
+  if(entries.length===0){el.innerHTML='<div class="empty"><div class="ei">📋</div>データがまだありません</div>';return;}
+  var h='';
+  for(var i=0;i<entries.length;i++){
+    var m=entries[i];var d=data[m];
+    h+='<div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sh);">';
+    h+='<div style="font-size:14px;color:var(--tx2);">'+eYear+'年'+m+'月</div>';
+    h+='<div style="text-align:right;"><div style="font-family:\'Kaisei Opti\',serif;font-size:18px;color:var(--ac);">'+yn(d.sales||0)+'</div><div style="font-size:11px;color:var(--tx2);">'+(d.visitors||0)+'人来店</div></div>';
+    h+='<button onclick="openEEdit('+m+')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">編集</button>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+
+function rXExpense(){
+  var el=document.getElementById('x-exp-list');if(!el)return;
+  var base=loadExpBase();var balance=base.balance;var threshold=50000;
+  var balEl=document.getElementById('x-bal-val');
+  var balBox=document.getElementById('x-bal-box');
+  var alarm=document.getElementById('x-alarm');
+  var fill=document.getElementById('x-bar-fill');
+  if(!balEl)return;
+  balEl.textContent=yn(balance);
+  if(balance<threshold){balEl.className='exp-bal-val warn';balBox.classList.add('warn');alarm.classList.add('show');}
+  else{balEl.className='exp-bal-val safe';balBox.classList.remove('warn');alarm.classList.remove('show');}
+  var pct=Math.max(0,Math.min(100,(balance/200000)*100));
+  fill.style.width=pct+'%';fill.style.background=balance<threshold?'#e76f51':balance<80000?'#e9c46a':'#2a9d8f';
+  document.getElementById('x-bal-sub').textContent=balance<0?'⚠️ 残高がマイナスです':balance<threshold?('残り '+yn(balance)+' — 補充してください'):('残り '+yn(balance));
+  var expenses=base.history.filter(function(h){return h.type==='expense';});
+  var el=document.getElementById('x-exp-list');if(!el)return;
+  if(expenses.length===0){el.innerHTML='<div class="empty"><div class="ei">💴</div>支出記録がまだありません</div>';return;}
+  var h='';
+  for(var i=0;i<expenses.length;i++){
+    var e=expenses[i];
+    h+='<div class="exp-item">';
+    h+='<div class="exp-top"><div><div style="font-size:14px;">'+e.desc+'</div>'+(e.memo?'<div style="font-size:11px;color:var(--tx2);margin-top:2px;">'+e.memo+'</div>':'')+'</div>';
+    h+='<div style="display:flex;align-items:center;gap:6px;"><div class="exp-amt">-'+yn(e.amount)+'</div><button onclick="xDelExp('+e.id+')" style="background:none;border:none;color:var(--tx2);cursor:pointer;font-size:16px;">🗑</button></div></div>';
+    h+='<div class="exp-bottom"><span class="exp-cat-badge">'+e.cat+'</span><span style="font-size:11px;color:var(--tx2);">'+e.date+'</span>'+(e.receipt?'<span style="font-size:11px;color:var(--ac);cursor:pointer;" onclick="eViewRcpt('+e.id+')">📷 レシート</span>':'')+'</div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function xCharge(){
+  var el=document.getElementById('x-ch-amt');if(!el)return;
+  var amount=parseInt(el.value)||0;if(!amount){toast('金額を入力してください',true);return;}
+  var memo=document.getElementById('x-ch-memo').value||'チャージ';
+  var base=loadExpBase();base.balance+=amount;base.history.unshift({type:'charge',amount:amount,memo:memo,date:new Date().toLocaleDateString('ja-JP')});
+  saveExpBase(base);document.getElementById('x-ch-amt').value='';document.getElementById('x-ch-memo').value='';
+  rXExpense();
+  toast('残高を追加しました！');
+}
+function xOpenRcpt(){
+  var el=document.getElementById('x-ex-desc');if(!el)return;
+  var desc=el.value;var amt=document.getElementById('x-ex-amt').value;
+  if(!desc||!amt){toast('内容と金額を入力してください',true);return;}
+  eCurrentRcpt=null;document.getElementById('e-rcpt-prev').classList.remove('show');document.getElementById('e-rcpt-in').value='';
+  oModal('m-ercpt');
+  // レシートモーダルの保存ボタンをx用に
+  document.getElementById('m-ercpt').setAttribute('data-mode','x');
+}
+function xSaveExp(rcpt){
+  var el=document.getElementById('x-ex-desc');if(!el)return;
+  var desc=el.value;var amount=parseInt(document.getElementById('x-ex-amt').value)||0;
+  var cat=document.getElementById('x-ex-cat').value;var memo=document.getElementById('x-ex-memo').value;
+  if(!desc||!amount){toast('内容と金額を入力してください',true);return;}
+  var base=loadExpBase();base.balance-=amount;
+  base.history.unshift({id:Date.now(),type:'expense',desc:desc,amount:amount,cat:cat,memo:memo,date:new Date().toLocaleDateString('ja-JP'),receipt:rcpt||null});
+  saveExpBase(base);
+  document.getElementById('x-ex-desc').value='';document.getElementById('x-ex-amt').value='';document.getElementById('x-ex-memo').value='';
+  eCurrentRcpt=null;
+  rXExpense();
+  toast('支出を記録しました');
+}
+function xDelExp(id){
+  if(!confirm('削除しますか？'))return;
+  var base=loadExpBase();var item=base.history.find(function(h){return h.id===id;});
+  if(item){base.balance+=item.amount;base.history=base.history.filter(function(h){return h.id!==id;});}
+  saveExpBase(base);rXExpense();toast('削除しました');
+}
+
+// ===== MONTH EDIT MODAL (売上タブ用) =====
+// m-meditは上のHTMLに定義済み
+
+// ===== MAIN RENDER =====
+// ===== 分析タブ =====
+var zD=new Date(), zM=new Date(), zMode='d';
+
+var zY=new Date();
+function ztab(t){
+  zMode=t;
+  document.getElementById('tz-d').classList.toggle('active',t==='d');
+  document.getElementById('tz-m').classList.toggle('active',t==='m');
+  document.getElementById('tz-y').classList.toggle('active',t==='y');
+  document.getElementById('z-d').style.display=t==='d'?'block':'none';
+  document.getElementById('z-m').style.display=t==='m'?'block':'none';
+  document.getElementById('z-y').style.display=t==='y'?'block':'none';
+  rZAnalysis();
+}
+function chZD(d){zD.setDate(zD.getDate()+d);rZAnalysis();}
+function chZM(d){zM.setMonth(zM.getMonth()+d);rZAnalysis();}
+function chZY(d){zY.setFullYear(zY.getFullYear()+d);rZAnalysis();}
+
+function mkBar(el,counts,cls){
+  var keys=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+  var tot=0;for(var i=0;i<keys.length;i++)tot+=counts[keys[i]];
+  if(tot===0){el.innerHTML='<div style="color:var(--tx2);font-size:12px;text-align:center;padding:12px;">データなし</div>';return;}
+  var h='';
+  for(var j=0;j<keys.length;j++){
+    var pct=Math.round(counts[keys[j]]/tot*100);
+    var color=cls==='gr'?'linear-gradient(90deg,var(--ok),#90c880)':cls==='pu'?'linear-gradient(90deg,#c090e0,#a060c0)':cls==='wn'?'linear-gradient(90deg,var(--wn),#f0a830)':'linear-gradient(90deg,var(--ac),#e09080)';
+    h+='<div class="cbar"><div class="cbar-l"><span>'+keys[j]+'</span><span>'+counts[keys[j]]+'件（'+pct+'%）</span></div>';
+    h+='<div class="cbar-bg"><div class="cbar-fill" style="width:'+pct+'%;background:'+color+';"></div></div></div>';
+  }
+  el.innerHTML=h;
+}
+
+function rZAnalysis(){
+  var gs, ms, ds;
+  if(zMode==='d'){
+    ds=fYMD(zD);
+    document.getElementById('z-d-lbl').textContent=ds;
+    gs=G.filter(function(g){return g.d===ds&&g.st==='done';});
+    var msItem=MS.find(function(m){return m.d===ds;});
+    ms=msItem?msItem.i:[];
+  } else {
+    var yr=zM.getFullYear(),mo=zM.getMonth();
+    document.getElementById('z-m-lbl').textContent=yr+'/'+p2(mo+1);
+    gs=G.filter(function(g){var d=new Date(g.d);return d.getFullYear()===yr&&d.getMonth()===mo&&g.st==='done';});
+    // 月間物販をまとめる
+    var msMap={};
+    MS.filter(function(m){var d=new Date(m.d);return d.getFullYear()===yr&&d.getMonth()===mo;})
+      .forEach(function(m){m.i.forEach(function(item){if(item.q>0){msMap[item.n]=(msMap[item.n]||0)+item.q;}});});
+    ms=Object.keys(msMap).map(function(n){return {n:n,q:msMap[n],p:0};});
+  }
+
+  var sfx=zMode==='d'?'d':zMode==='m'?'m':'y';
+
+  // 年別の場合
+  if(zMode==='y') {
+    var yr=zY.getFullYear();
+    document.getElementById('z-y-lbl').textContent=yr+'年';
+    gs=G.filter(function(g){var d=new Date(g.d);return d.getFullYear()===yr&&g.st==='done';});
+    var msMap2={};
+    MS.filter(function(m){var d=new Date(m.d);return d.getFullYear()===yr;})
+      .forEach(function(m){m.i.forEach(function(item){if(item.q>0){msMap2[item.n]=(msMap2[item.n]||0)+item.q;}});});
+    ms=Object.keys(msMap2).map(function(n){return {n:n,q:msMap2[n],p:0};});
+    // 月別来店数
+    var monthCount={};
+    for(var mi=1;mi<=12;mi++) monthCount[mi+'月']=0;
+    gs.forEach(function(g){var mo=(new Date(g.d).getMonth()+1)+'月';monthCount[mo]=(monthCount[mo]||0)+1;});
+    mkBarSorted(document.getElementById('z-y-monthly'),monthCount,'gr');
+  }
+
+  // 新規/リピーター
+  var typeCount={'新規':0,'リピーター':0};
+  gs.forEach(function(g){typeCount[g.tp==='new'?'新規':'リピーター']++;});
+  mkBar(document.getElementById('z-'+sfx+'-type'),typeCount,'gr');
+
+  // 来店パターン
+  var patCount={};
+  gs.forEach(function(g){patCount[g.pt]=(patCount[g.pt]||0)+1;});
+  mkBar(document.getElementById('z-'+sfx+'-pattern'),patCount,'pu');
+
+  // 時間帯別
+  var timeCount={};
+  gs.forEach(function(g){
+    if(g.ci){
+      var h=g.ci.split(':')[0]+'時台';
+      timeCount[h]=(timeCount[h]||0)+1;
+    }
+  });
+  mkBar(document.getElementById('z-'+sfx+'-time'),timeCount,'wn');
+
+  // 物販商品別
+  var merchCount={};
+  ms.forEach(function(item){if(item.q>0)merchCount[item.n]=(merchCount[item.n]||0)+item.q;});
+  mkBar(document.getElementById('z-'+sfx+'-merch'),merchCount,'');
+}
+
+// 月順で固定表示するバー
+function mkBarSorted(el,counts,cls){
+  var keys=Object.keys(counts);
+  var tot=0;for(var i=0;i<keys.length;i++)tot+=counts[keys[i]];
+  if(tot===0){el.innerHTML='<div style="color:var(--tx2);font-size:12px;text-align:center;padding:12px;">データなし</div>';return;}
+  var h='';
+  for(var j=0;j<keys.length;j++){
+    var pct=tot>0?Math.round(counts[keys[j]]/Math.max.apply(null,Object.values(counts))*100):0;
+    var color='linear-gradient(90deg,var(--ok),#90c880)';
+    h+='<div class="cbar"><div class="cbar-l"><span>'+keys[j]+'</span><span>'+counts[keys[j]]+'件</span></div>';
+    h+='<div class="cbar-bg"><div class="cbar-fill" style="width:'+pct+'%;background:'+color+';"></div></div></div>';
+  }
+  el.innerHTML=h;
+}
+
+function openOwnerLogin(){
+  document.getElementById('owner-pw').value='';
+  document.getElementById('owner-content').style.display='block';
+  document.getElementById('owner-logs').style.display='none';
+  oModal('m-owner');
+}
+function checkOwnerPw(){
+  var pw=document.getElementById('owner-pw').value;
+  if(pw===OWNER_PW){
+    isOwnerMode=true;
+    document.getElementById('owner-content').style.display='none';
+    document.getElementById('owner-logs').style.display='block';
+    loadOwnerLogs();
+  } else {
+    toast('パスワードが違います',true);
+  }
+}
+function ownerLogout(){
+  isOwnerMode=false;
+  cModal('m-owner');
+}
+async function loadOwnerLogs(){
+  var el=document.getElementById('log-list');
+  el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">読み込み中...</div>';
+  var data=await supaLoad('pos_logs');
+  if(!data||data.length===0){el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">履歴なし</div>';return;}
+  data.sort(function(a,b){return b.ts.localeCompare(a.ts);});
+  var h='';
+  for(var i=0;i<Math.min(data.length,50);i++){
+    var log=data[i];
+    h+='<div style="border-bottom:1px solid var(--bd);padding:8px 0;">';
+    h+='<div style="display:flex;justify-content:space-between;margin-bottom:3px;">';
+    h+='<span style="font-size:12px;font-weight:700;color:var(--ac);">'+log.action+'</span>';
+    h+='<span style="font-size:10px;color:var(--tx2);">'+log.ts+'</span></div>';
+    h+='<div style="font-size:11px;color:var(--tx2);">'+log.detail+'</div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+
+function rfAll(){
+  try{rGuests();}catch(e){}
+  try{rMerch();}catch(e){}
+  try{rCarte();}catch(e){}
+  try{rDay();}catch(e){}
+  try{rMon();}catch(e){}
+  try{rAnket();}catch(e){}
+  try{rCash();}catch(e){}
+  try{ppCalc();}catch(e){}
+  try{rESummary2();}catch(e){}
+}
+
+function init(){
+  clk();setInterval(clk,1000);setInterval(rGuests,60000);
+  var rt=document.getElementById('r-time');if(rt)rt.value=ft(new Date());
+  try{document.getElementById('ei-month').value=new Date().getMonth()+1;}catch(e){}
+  try{document.getElementById('merch-date').value=td();}catch(e){}
+  try{document.getElementById('ei-month2').value=new Date().getMonth()+1;}catch(e){}
+  var allOvs=document.querySelectorAll('.ov');
+  for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
+  var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
+  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();
+  // Supabaseからデータロード
+  loadFromSupabase();
+}
+init();
+</script>
+</body>
+</html>
