@@ -464,6 +464,29 @@ select.fc{cursor:pointer;}
 
 <!-- ===== REGISTER ===== -->
 <div class="pg" id="p-r">
+  <!-- 会員選択バナー -->
+  <div id="member-banner" style="background:linear-gradient(135deg,#e8f5f3,#d4ede9);border:1.5px solid var(--ac);border-radius:14px;padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:13px;font-weight:700;color:var(--ac);text-align:center;">🪪 会員様ですか？</div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="openMemberSearch()" style="flex:1;padding:11px;background:var(--ac);color:#fff;border:none;border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">✅ 会員です</button>
+      <button onclick="closeMemberBanner()" style="flex:1;padding:11px;background:var(--sf2);color:var(--tx2);border:1.5px solid var(--bd);border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;cursor:pointer;">— 非会員</button>
+    </div>
+  </div>
+  <!-- 会員情報表示エリア（選択後に表示） -->
+  <div id="member-info-bar" style="display:none;background:linear-gradient(135deg,#fff9e6,#fff3cc);border:1.5px solid var(--wn);border-radius:14px;padding:12px;margin-bottom:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-size:15px;font-weight:700;" id="mib-name">—</div>
+        <div style="font-size:11px;color:var(--tx2);margin-top:3px;" id="mib-sub">—</div>
+      </div>
+      <button onclick="clearMember()" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:'Zen Maru Gothic',sans-serif;">✕ 解除</button>
+    </div>
+    <div id="mib-alert" style="display:none;margin-top:8px;background:#fff0f0;border:1px solid var(--pk);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--ng);"></div>
+  </div>
+  <!-- 非会員選択後の戻るバー -->
+  <div id="member-back-bar" style="display:none;margin-bottom:12px;text-align:center;">
+    <button onclick="showMemberBanner()" style="background:var(--sf2);border:1.5px solid var(--bd);color:var(--tx2);padding:8px 20px;border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:12px;cursor:pointer;">← 会員選択に戻る</button>
+  </div>
   <div class="card">
     <div class="ct">🐾 新規入店登録</div>
     <div class="fg"><label class="fl">お客様区分</label>
@@ -812,6 +835,15 @@ select.fc{cursor:pointer;}
   <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-vis')">キャンセル</button><button class="btn bsu" style="flex:2;" onclick="saveVis()">追加</button></div>
 </div></div>
 
+<!-- 会員検索モーダル -->
+<div class="ov" id="m-msearch"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🪪 会員検索</span><button class="mc" onclick="cModal('m-msearch')">✕</button></div>
+  <div class="fg" style="margin-bottom:8px;">
+    <input type="text" class="fc" id="msearch-q" placeholder="名前 または 会員番号" oninput="doMemberSearch()" style="font-size:15px;">
+  </div>
+  <div id="msearch-results" style="max-height:280px;overflow-y:auto;"></div>
+</div></div>
+
 <!-- CASH -->
 <div class="ov" id="m-cash"><div class="modal"><span class="mh"></span>
   <div class="mt"><span>💴 金種登録</span><button class="mc" onclick="cModal('m-cash')">✕</button></div>
@@ -1109,6 +1141,76 @@ function togFN(){
   ppCalc();
 }
 
+// ===== MEMBER SEARCH =====
+var selectedMemberId = null;
+function openMemberSearch(){
+  document.getElementById('msearch-q').value='';
+  document.getElementById('msearch-results').innerHTML='';
+  oModal('m-msearch');
+  setTimeout(function(){document.getElementById('msearch-q').focus();},300);
+}
+function doMemberSearch(){
+  var q=document.getElementById('msearch-q').value.trim().toLowerCase();
+  var el=document.getElementById('msearch-results');
+  if(!q){el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">名前か会員番号を入力してください</div>';return;}
+  var res=CU.filter(function(c){
+    return (c.name&&c.name.toLowerCase().indexOf(q)>=0)||(c.memberNo&&c.memberNo.indexOf(q)>=0);
+  });
+  if(res.length===0){el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">見つかりませんでした</div>';return;}
+  var h='';
+  for(var i=0;i<res.length;i++){
+    var c=res[i];
+    var vis=c.visits||[];var tot=vis.length;
+    var lastDate=tot>0?vis.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0].date:'—';
+    var cats=c.oshiCats&&c.oshiCats.length?c.oshiCats.map(function(x){return '🐱'+x;}).join(' '):'';
+    var alertBadge=c.alert?'<span style="color:var(--ng);font-size:11px;margin-left:4px;">⚠️</span>':'';
+    h+='<div onclick="selectMember('+c.id+')" style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer;border-radius:10px;margin-bottom:4px;background:var(--sf);">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+    h+='<div style="font-size:15px;font-weight:700;">'+c.name+alertBadge+'</div>';
+    h+='<div style="font-size:11px;color:var(--tx2);">No.'+c.memberNo+'</div>';
+    h+='</div>';
+    h+='<div style="font-size:11px;color:var(--tx2);margin-top:4px;">累計 '+tot+'回　前回 '+lastDate+'</div>';
+    if(cats)h+='<div style="font-size:11px;color:var(--ac);margin-top:3px;">'+cats+'</div>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
+function selectMember(id){
+  var c=CU.find(function(x){return String(x.id)===String(id);});if(!c)return;
+  selectedMemberId=id;
+  // 表示更新
+  var vis=c.visits||[];var tot=vis.length;
+  var lastDate=tot>0?vis.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0].date:'なし';
+  var cats=c.oshiCats&&c.oshiCats.length?'推し猫：'+c.oshiCats.join('・'):'';
+  document.getElementById('mib-name').textContent=c.name+' 様　No.'+c.memberNo;
+  document.getElementById('mib-sub').textContent='累計 '+tot+'回　前回来店：'+lastDate+(cats?'　'+cats:'');
+  var alertEl=document.getElementById('mib-alert');
+  if(c.alert){alertEl.textContent='⚠️ '+c.alert;alertEl.style.display='block';}
+  else{alertEl.style.display='none';}
+  // バナー切り替え
+  document.getElementById('member-banner').style.display='none';
+  document.getElementById('member-info-bar').style.display='block';
+  // リピーターに自動セット
+  document.getElementById('r-tp').value='rep';
+  cModal('m-msearch');
+  toast('👋 '+c.name+'さん おかえりなさい！');
+}
+function clearMember(){
+  selectedMemberId=null;
+  document.getElementById('member-banner').style.display='flex';
+  document.getElementById('member-info-bar').style.display='none';
+}
+function closeMemberBanner(){
+  selectedMemberId=null;
+  document.getElementById('member-banner').style.display='none';
+  document.getElementById('member-info-bar').style.display='none';
+  document.getElementById('member-back-bar').style.display='block';
+}
+function showMemberBanner(){
+  document.getElementById('member-back-bar').style.display='none';
+  document.getElementById('member-banner').style.display='flex';
+}
+
 // ===== BINDER =====
 function buildBCChips(){
   var el=document.getElementById('bc-chips');if(!el)return;
@@ -1170,6 +1272,11 @@ function regGuest(){
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
   var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
   G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
+  // 会員バナーリセット
+  selectedMemberId=null;
+  document.getElementById('member-banner').style.display='flex';
+  document.getElementById('member-info-bar').style.display='none';
+  document.getElementById('member-back-bar').style.display='none';
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
   document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
@@ -1486,7 +1593,7 @@ function rCarte(){
   document.getElementById('cl').innerHTML=h;
 }
 function showCust(id){
-  custId=id;var c=CU.find(function(x){return String(x.id)===String(id);});if(!c)return;
+  custId=id;var c=CU.find(function(x){return x.id===id;});if(!c)return;
   var vis=(c.visits||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
   var tot=vis.length,thisM=getThisM(c);
   var ts=0;for(var i=0;i<vis.length;i++)ts+=vis[i].price||0;
@@ -1548,7 +1655,7 @@ function resetCf(){
 }
 function oNewCust(){custId=null;resetCf();document.getElementById('cf-tit').textContent='👤 新規登録';oModal('m-cf');}
 function oEditCust(id){
-  var c=CU.find(function(x){return String(x.id)===String(id);});if(!c)return;custId=id;resetCf();
+  var c=CU.find(function(x){return x.id===id;});if(!c)return;custId=id;resetCf();
   document.getElementById('cf-tit').textContent='✏️ 編集';
   document.getElementById('cf-n').value=c.name||'';document.getElementById('cf-look').value=c.look||'';
   document.getElementById('cf-pref').value=c.pref||'';document.getElementById('cf-alert').value=c.alert||'';
