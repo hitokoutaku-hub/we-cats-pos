@@ -454,6 +454,9 @@ select.fc{cursor:pointer;}
     <div class="sc pk"><div class="sl">本日の来店</div><div class="sv" id="sg">0</div><div class="su">名</div></div>
     <div class="sc gr"><div class="sl">本日の売上</div><div class="sv g" id="ss">0</div><div class="su">円</div></div>
   </div>
+  <div style="margin-bottom:10px;">
+    <button onclick="openPastAdd()" style="width:100%;padding:10px;background:var(--sf2);border:1.5px dashed var(--bd);border-radius:12px;color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:13px;cursor:pointer;">📅 過去の来店記録を追加</button>
+  </div>
   <div class="tabs">
     <div class="tab active" id="ts1" onclick="gtab('stay')">滞在中 <span class="badge" id="bs">0</span></div>
     <div class="tab" id="ts2" onclick="gtab('done')">退店済 <span class="badge" id="bd2">0</span></div>
@@ -916,6 +919,7 @@ select.fc{cursor:pointer;}
 <div class="ov" id="m-gedit"><div class="modal"><span class="mh"></span>
   <div class="mt"><span>✏️ 来店記録を編集</span><button class="mc" onclick="cModal('m-gedit')">✕</button></div>
   <input type="hidden" id="ge-id">
+  <div class="fg"><label class="fl">日付</label><input type="date" class="fc" id="ge-date"></div>
   <div class="fg"><label class="fl">お客様区分</label>
     <select class="fc" id="ge-tp"><option value="new">ご新規様</option><option value="rep">リピーター様</option></select>
   </div>
@@ -1803,6 +1807,26 @@ function dayDelGuest(id){
   G=G.filter(function(x){return String(x.id)!==String(id);});
   sv();supaDelete('pos_guests',id);rDay();rGuests();toast('削除しました');
 }
+function openPastAdd(){
+  // 昨日の日付をデフォルトにセット
+  var yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  var yStr=yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+  document.getElementById('ge-id').value='';
+  document.getElementById('ge-tp').value='new';
+  document.getElementById('ge-pt').value='友人';
+  document.getElementById('ge-a').value=1;
+  document.getElementById('ge-c').value=0;
+  document.getElementById('ge-ci').value='12:00';
+  document.getElementById('ge-co').value='13:00';
+  document.getElementById('ge-pr').value='';
+  document.getElementById('ge-mo').value='';
+  document.getElementById('ge-id').setAttribute('data-date', yStr);
+  // 日付フィールドがあれば昨日にセット
+  var dateEl=document.getElementById('ge-date');
+  if(dateEl)dateEl.value=yStr;
+  oModal('m-gedit');
+}
+
 function openDayAdd(){
   // 日別追加：ge-idを空にしてgeditモーダルを開く
   document.getElementById('ge-id').value='';
@@ -1816,6 +1840,8 @@ function openDayAdd(){
   document.getElementById('ge-mo').value='';
   // 日付をvDの日付にセット
   document.getElementById('ge-id').setAttribute('data-date', fYMD(vD));
+  var dateEl2=document.getElementById('ge-date');
+  if(dateEl2)dateEl2.value=fYMD(vD);
   oModal('m-gedit');
 }
 function stab(t){
@@ -1961,7 +1987,7 @@ function saveGEdit(){
   var id=document.getElementById('ge-id').value;
   // idが空なら新規追加
   if(!id){
-    var dateAttr=document.getElementById('ge-id').getAttribute('data-date')||td();
+    var dateAttr=document.getElementById('ge-date').value||document.getElementById('ge-id').getAttribute('data-date')||td();
     var newId=String(Date.now());
     var a=parseInt(document.getElementById('ge-a').value)||1;
     var c=parseInt(document.getElementById('ge-c').value)||0;
