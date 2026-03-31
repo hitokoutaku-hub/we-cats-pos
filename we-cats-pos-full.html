@@ -1363,7 +1363,7 @@ function rcCO(){
   document.getElementById('co-bd').textContent=parts.join('　');
 }
 function confCO(){
-  var g=G.find(function(x){return x.id===coId;});if(!g)return;
+  var g=G.find(function(x){return String(x.id)===String(coId);});if(!g)return;
   var ci=document.getElementById('co-ci').value||g.ci;
   var co=document.getElementById('co-co').value;
   var cup=parseInt(document.getElementById('co-cup').value)||0;
@@ -1374,7 +1374,7 @@ function confCO(){
   sv();saveGuestToSupa(g);logAction('退店登録','料金:'+yn(g.pr)+' 退店'+g.co);cModal('m-co');rfAll();toast('退店登録しました ✅');
 }
 function showRcpt(){
-  var g=G.find(function(x){return x.id===coId;});if(!g)return;
+  var g=G.find(function(x){return String(x.id)===String(coId);});if(!g)return;
   var ci=document.getElementById('co-ci').value||g.ci;
   var co=document.getElementById('co-co').value;
   var cup=parseInt(document.getElementById('co-cup').value)||0;
@@ -1719,15 +1719,15 @@ function oEditCust(id){
 function saveCust(){
   var name=document.getElementById('cf-n').value.trim();if(!name){toast('名前を入力してください',true);return;}
   var gEl=document.querySelector('#cf-gach .chip.on');var gacha=gEl?gEl.getAttribute('data-v'):'';
-  if(custId){var c=CU.find(function(x){return x.id===custId;});if(c){c.name=name;c.look=document.getElementById('cf-look').value;c.pref=document.getElementById('cf-pref').value;c.alert=document.getElementById('cf-alert').value;c.birth=document.getElementById('cf-birth').value;c.photo=editPh;c.trigger=cfCh.tri.slice();c.companion=cfCh.companion.slice();c.gacha=gacha;c.oshiCats=cfCh.cats.slice();}}
+  if(custId){var c=CU.find(function(x){return String(x.id)===String(custId);});if(c){c.name=name;c.look=document.getElementById('cf-look').value;c.pref=document.getElementById('cf-pref').value;c.alert=document.getElementById('cf-alert').value;c.birth=document.getElementById('cf-birth').value;c.photo=editPh;c.trigger=cfCh.tri.slice();c.companion=cfCh.companion.slice();c.gacha=gacha;c.oshiCats=cfCh.cats.slice();}}
   else{var no=String(CU.length+1).padStart(3,'0');CU.push({id:Date.now(),memberNo:no,name:name,look:document.getElementById('cf-look').value,pref:document.getElementById('cf-pref').value,alert:document.getElementById('cf-alert').value,birth:document.getElementById('cf-birth').value,photo:editPh,trigger:cfCh.tri.slice(),companion:cfCh.companion.slice(),gacha:gacha,oshiCats:cfCh.cats.slice(),visits:[],memos:[]});}
-  sv();var savedC=custId?CU.find(function(x){return x.id===custId;}):CU[CU.length-1];if(savedC)saveCustomerToSupa(savedC);cModal('m-cf');rCarte();toast(custId?'更新しました':'登録しました');
+  sv();var savedC=custId?CU.find(function(x){return String(x.id)===String(custId);}):CU[CU.length-1];if(savedC)saveCustomerToSupa(savedC);cModal('m-cf');rCarte();toast(custId?'更新しました':'登録しました');
 }
 function delCust(id){var c=CU.find(function(x){return x.id===id;});if(!c||!confirm(c.name+' を削除しますか？'))return;CU=CU.filter(function(x){return x.id!==id;});sv();cModal('m-det');rCarte();toast('削除しました');}
 function oMemoModal(){document.getElementById('memo-txt').value='';oModal('m-memo');}
-function saveMemo(){var text=document.getElementById('memo-txt').value.trim();if(!text){toast('メモを入力してください',true);return;}var c=CU.find(function(x){return x.id===custId;});if(!c)return;if(!c.memos)c.memos=[];c.memos.push({id:Date.now(),date:td(),text:text});sv();cModal('m-memo');showCust(custId);toast('メモを追加しました 📝');}
+function saveMemo(){var text=document.getElementById('memo-txt').value.trim();if(!text){toast('メモを入力してください',true);return;}var c=CU.find(function(x){return String(x.id)===String(custId);});if(!c)return;if(!c.memos)c.memos=[];c.memos.push({id:Date.now(),date:td(),text:text});sv();cModal('m-memo');showCust(custId);toast('メモを追加しました 📝');}
 function oVisModal(){document.getElementById('v-d').value=td();document.getElementById('v-p').value=1;document.getElementById('v-pr').value=0;document.getElementById('v-m').value='';oModal('m-vis');}
-function saveVis(){var c=CU.find(function(x){return x.id===custId;});if(!c)return;if(!c.visits)c.visits=[];var prev=c.visits.length;c.visits.push({id:Date.now(),date:document.getElementById('v-d').value,ppl:parseInt(document.getElementById('v-p').value)||1,price:parseInt(document.getElementById('v-pr').value)||0,memo:document.getElementById('v-m').value});sv();cModal('m-vis');showCust(custId);if(isMSN(c.visits.length))toast('🎉 '+c.name+'さん '+msLbl(c.visits.length)+' 達成！');else toast('来店記録を追加しました 🐾');}
+function saveVis(){var c=CU.find(function(x){return String(x.id)===String(custId);});if(!c)return;if(!c.visits)c.visits=[];var prev=c.visits.length;c.visits.push({id:Date.now(),date:document.getElementById('v-d').value,ppl:parseInt(document.getElementById('v-p').value)||1,price:parseInt(document.getElementById('v-pr').value)||0,memo:document.getElementById('v-m').value});sv();cModal('m-vis');showCust(custId);if(isMSN(c.visits.length))toast('🎉 '+c.name+'さん '+msLbl(c.visits.length)+' 達成！');else toast('来店記録を追加しました 🐾');}
 
 // ===== STATS =====
 function rDay(){
