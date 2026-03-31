@@ -1047,16 +1047,12 @@ function fYMD(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate(
 function td(){return fYMD(new Date());}
 function yn(n){return '¥'+Number(n).toLocaleString();}
 function sv(){
-  localStorage.setItem('wc_g',JSON.stringify(G));
-  localStorage.setItem('wc_cr',JSON.stringify(CR));
-  localStorage.setItem('wc_ms',JSON.stringify(MS));
-  localStorage.setItem('wc_mi',JSON.stringify(MI));
-  localStorage.setItem('wc_cu',JSON.stringify(CU));
-  localStorage.setItem('wc_cats',JSON.stringify(Cats));
-  localStorage.setItem('wc_tris',JSON.stringify(Tris));
-  localStorage.setItem('wc_bcs',JSON.stringify(BCs));
-  localStorage.setItem('wc_past',JSON.stringify(PastData));
-  localStorage.setItem('wc_esales',JSON.stringify(ESales));
+  // Supabaseに設定系を保存
+  saveSettingToSupa('cats', Cats);
+  saveSettingToSupa('triggers', Tris);
+  saveSettingToSupa('binder_colors', BCs);
+  saveSettingToSupa('past_data', PastData);
+  saveSettingToSupa('esales', ESales);
 }
 function toast(msg,err){
   var t=document.getElementById('toast');
