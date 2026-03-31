@@ -1176,7 +1176,7 @@ function doMemberSearch(){
     var lastDate=tot>0?vis.slice().sort(function(a,b){return b.date.localeCompare(a.date);})[0].date:'—';
     var cats=c.oshiCats&&c.oshiCats.length?c.oshiCats.map(function(x){return '🐱'+x;}).join(' '):'';
     var alertBadge=c.alert?'<span style="color:var(--ng);font-size:11px;margin-left:4px;">⚠️</span>':'';
-    h+='<div onclick="selectMember('+c.id+')" style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer;border-radius:10px;margin-bottom:4px;background:var(--sf);">';
+    h+='<div onclick="selectMember('\''+c.id+'\'')" style="padding:12px;border-bottom:1px solid var(--bd);cursor:pointer;border-radius:10px;margin-bottom:4px;background:var(--sf);">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
     h+='<div style="font-size:15px;font-weight:700;">'+c.name+alertBadge+'</div>';
     h+='<div style="font-size:11px;color:var(--tx2);">No.'+c.memberNo+'</div>';
@@ -1251,7 +1251,7 @@ function showMemberBanner(){
 function buildBCChips(){
   var el=document.getElementById('bc-chips');if(!el)return;
   var h='';
-  for(var i=0;i<BCs.length;i++){var bc=BCs[i];var on=selBC_id===bc.id?' on':'';h+='<div class="bc'+on+'" data-id="'+bc.id+'" style="background:'+bc.c+';" title="'+bc.n+'" onclick="selBc('+bc.id+')"></div>';}
+  for(var i=0;i<BCs.length;i++){var bc=BCs[i];var on=selBC_id===bc.id?' on':'';h+='<div class="bc'+on+'" data-id="'+bc.id+'" style="background:'+bc.c+';" title="'+bc.n+'" onclick="selBc('\''+bc.id+'\'')"></div>';}
   el.innerHTML=h;
 }
 function selBc(id){selBC_id=(selBC_id===id)?null:id;buildBCChips();}
@@ -1264,13 +1264,13 @@ function rBCList(){
     h+='<div style="width:28px;height:28px;border-radius:50%;background:'+bc.c+';flex-shrink:0;border:1px solid rgba(0,0,0,.1);"></div>';
     h+='<input type="text" value="'+bc.n+'" onchange="updBCN('+bc.id+',this.value)" style="flex:1;background:var(--sf2);border:1.5px solid var(--bd);color:var(--tx);padding:5px 8px;border-radius:8px;font-size:13px;font-family:\'Zen Maru Gothic\',sans-serif;outline:none;">';
     h+='<input type="color" value="'+bc.c+'" onchange="updBCC('+bc.id+',this.value)" style="width:36px;height:36px;border-radius:8px;border:1px solid var(--bd);cursor:pointer;padding:1px;">';
-    h+='<button onclick="delBC('+bc.id+')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:18px;font-size:11px;cursor:pointer;">削除</button>';
+    h+='<button onclick="delBC('\''+bc.id+'\'')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:18px;font-size:11px;cursor:pointer;">削除</button>';
     h+='</div>';
   }
   el.innerHTML=h;
 }
-function updBCN(id,n){var bc=BCs.find(function(x){return x.id===id;});if(bc&&n.trim())bc.n=n.trim();sv();buildBCChips();}
-function updBCC(id,c){var bc=BCs.find(function(x){return x.id===id;});if(bc){bc.c=c;sv();buildBCChips();rBCList();}}
+function updBCN(id,n){var bc=BCs.find(function(x){return String(x.id)===String(id);});if(bc&&n.trim())bc.n=n.trim();sv();buildBCChips();}
+function updBCC(id,c){var bc=BCs.find(function(x){return String(x.id)===String(id);});if(bc){bc.c=c;sv();buildBCChips();rBCList();}}
 function delBC(id){if(BCs.length<=2){toast('最低2色は必要です',true);return;}BCs=BCs.filter(function(x){return x.id!==id;});if(selBC_id===id)selBC_id=null;sv();buildBCChips();rBCList();}
 function addBC(){
   var n=document.getElementById('bc-n').value.trim();var c=document.getElementById('bc-c').value;
@@ -1417,8 +1417,8 @@ function oDet(id){
   h+='</table>';
   document.getElementById('det-body').innerHTML=h;
   document.getElementById('det-act').innerHTML=st
-    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="oGEdit('+id+')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO('+id+')">退店処理</button>'
-    :'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bp" style="flex:1;" onclick="oGEdit('+id+')">✏️ 編集・削除</button>';
+    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="oGEdit('\''+id+'\'')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO('+id+')">退店処理</button>'
+    :'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bp" style="flex:1;" onclick="oGEdit('\''+id+'\'')">✏️ 編集・削除</button>';
   oModal('m-det');
 }
 
@@ -1631,7 +1631,7 @@ function rCarte(){
     var tags='';if(c.trigger&&c.trigger.length)tags+='<span class="tag ac">'+c.trigger[0]+'</span>';
     if(c.oshiCats&&c.oshiCats.length)tags+='<span class="tag gr">🐱 '+c.oshiCats.slice(0,2).join('・')+'</span>';
     if(ml)tags+='<span class="tag gd">'+ml+'</span>';
-    h+='<div class="cc'+(isMSN(tot)?' ms':'')+'" onclick="showCust('+c.id+')">';
+    h+='<div class="cc'+(isMSN(tot)?' ms':'')+'" onclick="showCust(\''+c.id+'\')">';
     h+=av;
     h+='<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;margin-bottom:3px;">'+c.name+(c.memberNo?' <span style="font-size:10px;color:var(--tx2);">No.'+c.memberNo+'</span>':'')+'</div>';
     if(c.look)h+='<div style="font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">'+c.look+'</div>';
@@ -1642,7 +1642,7 @@ function rCarte(){
   document.getElementById('cl').innerHTML=h;
 }
 function showCust(id){
-  custId=id;var c=CU.find(function(x){return x.id===id;});if(!c)return;
+  custId=id;var c=CU.find(function(x){return String(x.id)===String(id);});if(!c)return;
   var vis=(c.visits||[]).slice().sort(function(a,b){return b.date.localeCompare(a.date);});
   var tot=vis.length,thisM=getThisM(c);
   var ts=0;for(var i=0;i<vis.length;i++)ts+=vis[i].price||0;
@@ -1676,7 +1676,7 @@ function showCust(id){
   h+='</div>';
   h+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><div class="ct" style="margin-bottom:0;">📅 タイムライン</div><div style="display:flex;gap:5px;"><button class="btn bso bsm" onclick="oVisModal()">＋ 来店</button><button onclick="oMemoModal()" style="background:#f4eef8;border:1.5px solid var(--lp);color:#9060b0;padding:6px 12px;border-radius:22px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">📝 メモ</button></div></div>'+tlh+'</div>';
   document.getElementById('det-body').innerHTML=h;
-  document.getElementById('det-act').innerHTML='<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso" style="flex:1;" onclick="cModal(\'m-det\');oEditCust('+id+')">✏️ 編集</button><button onclick="delCust('+id+')" style="background:#fef0ec;border:1.5px solid var(--pk);color:var(--ng);padding:6px 12px;border-radius:22px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">削除</button>';
+  document.getElementById('det-act').innerHTML='<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso" style="flex:1;" onclick="cModal(\'m-det\');oEditCust(\''+id+'\')">✏️ 編集</button><button onclick="delCust(\''+id+'\')" style="background:#fef0ec;border:1.5px solid var(--pk);color:var(--ng);padding:6px 12px;border-radius:22px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">削除</button>';
   oModal('m-det');
 }
 function buildCfTri(){
@@ -1704,7 +1704,7 @@ function resetCf(){
 }
 function oNewCust(){custId=null;resetCf();document.getElementById('cf-tit').textContent='👤 新規登録';oModal('m-cf');}
 function oEditCust(id){
-  var c=CU.find(function(x){return x.id===id;});if(!c)return;custId=id;resetCf();
+  var c=CU.find(function(x){return String(x.id)===String(id);});if(!c)return;custId=id;resetCf();
   document.getElementById('cf-tit').textContent='✏️ 編集';
   document.getElementById('cf-n').value=c.name||'';document.getElementById('cf-look').value=c.look||'';
   document.getElementById('cf-pref').value=c.pref||'';document.getElementById('cf-alert').value=c.alert||'';
@@ -1723,7 +1723,7 @@ function saveCust(){
   else{var no=String(CU.length+1).padStart(3,'0');CU.push({id:Date.now(),memberNo:no,name:name,look:document.getElementById('cf-look').value,pref:document.getElementById('cf-pref').value,alert:document.getElementById('cf-alert').value,birth:document.getElementById('cf-birth').value,photo:editPh,trigger:cfCh.tri.slice(),companion:cfCh.companion.slice(),gacha:gacha,oshiCats:cfCh.cats.slice(),visits:[],memos:[]});}
   sv();var savedC=custId?CU.find(function(x){return String(x.id)===String(custId);}):CU[CU.length-1];if(savedC)saveCustomerToSupa(savedC);cModal('m-cf');rCarte();toast(custId?'更新しました':'登録しました');
 }
-function delCust(id){var c=CU.find(function(x){return x.id===id;});if(!c||!confirm(c.name+' を削除しますか？'))return;CU=CU.filter(function(x){return x.id!==id;});sv();cModal('m-det');rCarte();toast('削除しました');}
+function delCust(id){var c=CU.find(function(x){return String(x.id)===String(id);});if(!c||!confirm(c.name+' を削除しますか？'))return;CU=CU.filter(function(x){return x.id!==id;});sv();cModal('m-det');rCarte();toast('削除しました');}
 function oMemoModal(){document.getElementById('memo-txt').value='';oModal('m-memo');}
 function saveMemo(){var text=document.getElementById('memo-txt').value.trim();if(!text){toast('メモを入力してください',true);return;}var c=CU.find(function(x){return String(x.id)===String(custId);});if(!c)return;if(!c.memos)c.memos=[];c.memos.push({id:Date.now(),date:td(),text:text});sv();cModal('m-memo');showCust(custId);toast('メモを追加しました 📝');}
 function oVisModal(){document.getElementById('v-d').value=td();document.getElementById('v-p').value=1;document.getElementById('v-pr').value=0;document.getElementById('v-m').value='';oModal('m-vis');}
@@ -2140,7 +2140,7 @@ function rEMonthList(){
     h+='<div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sh);">';
     h+='<div style="font-size:14px;color:var(--tx2);">'+eYear+'年'+m+'月</div>';
     h+='<div style="text-align:right;"><div style="font-family:\'Kaisei Opti\',serif;font-size:18px;color:var(--ac);">'+yn(d.sales||0)+'</div><div style="font-size:11px;color:var(--tx2);">'+(d.visitors||0)+'人来店</div></div>';
-    h+='<button onclick="openEEdit('+m+')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">編集</button>';
+    h+='<button onclick="openEEdit('\''+m+'\'')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">編集</button>';
     h+='</div>';
   }
   el.innerHTML=h;
@@ -2223,8 +2223,8 @@ function rEExpense(){
     var e=expenses[i];
     h+='<div class="exp-item">';
     h+='<div class="exp-top"><div><div style="font-size:14px;">'+e.desc+'</div>'+(e.memo?'<div style="font-size:11px;color:var(--tx2);margin-top:2px;">'+e.memo+'</div>':'')+'</div>';
-    h+='<div style="display:flex;align-items:center;gap:6px;"><div class="exp-amt">-'+yn(e.amount)+'</div><button onclick="eDelExp('+e.id+')" style="background:none;border:none;color:var(--tx2);cursor:pointer;font-size:16px;">🗑</button></div></div>';
-    h+='<div class="exp-bottom"><span class="exp-cat-badge">'+e.cat+'</span><span style="font-size:11px;color:var(--tx2);">'+e.date+'</span>'+(e.receipt?'<span style="font-size:11px;color:var(--ac);cursor:pointer;" onclick="eViewRcpt('+e.id+')">📷 レシート</span>':'')+'</div>';
+    h+='<div style="display:flex;align-items:center;gap:6px;"><div class="exp-amt">-'+yn(e.amount)+'</div><button onclick="eDelExp('\''+e.id+'\'')" style="background:none;border:none;color:var(--tx2);cursor:pointer;font-size:16px;">🗑</button></div></div>';
+    h+='<div class="exp-bottom"><span class="exp-cat-badge">'+e.cat+'</span><span style="font-size:11px;color:var(--tx2);">'+e.date+'</span>'+(e.receipt?'<span style="font-size:11px;color:var(--ac);cursor:pointer;" onclick="eViewRcpt('\''+e.id+'\'')">📷 レシート</span>':'')+'</div>';
     h+='</div>';
   }
   el.innerHTML=h;
@@ -2284,7 +2284,7 @@ function rEMonthList2(){
     h+='<div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sh);">';
     h+='<div style="font-size:14px;color:var(--tx2);">'+eYear+'年'+m+'月</div>';
     h+='<div style="text-align:right;"><div style="font-family:\'Kaisei Opti\',serif;font-size:18px;color:var(--ac);">'+yn(d.sales||0)+'</div><div style="font-size:11px;color:var(--tx2);">'+(d.visitors||0)+'人来店</div></div>';
-    h+='<button onclick="openEEdit('+m+')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">編集</button>';
+    h+='<button onclick="openEEdit('\''+m+'\'')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">編集</button>';
     h+='</div>';
   }
   el.innerHTML=h;
@@ -2312,8 +2312,8 @@ function rXExpense(){
     var e=expenses[i];
     h+='<div class="exp-item">';
     h+='<div class="exp-top"><div><div style="font-size:14px;">'+e.desc+'</div>'+(e.memo?'<div style="font-size:11px;color:var(--tx2);margin-top:2px;">'+e.memo+'</div>':'')+'</div>';
-    h+='<div style="display:flex;align-items:center;gap:6px;"><div class="exp-amt">-'+yn(e.amount)+'</div><button onclick="xDelExp('+e.id+')" style="background:none;border:none;color:var(--tx2);cursor:pointer;font-size:16px;">🗑</button></div></div>';
-    h+='<div class="exp-bottom"><span class="exp-cat-badge">'+e.cat+'</span><span style="font-size:11px;color:var(--tx2);">'+e.date+'</span>'+(e.receipt?'<span style="font-size:11px;color:var(--ac);cursor:pointer;" onclick="eViewRcpt('+e.id+')">📷 レシート</span>':'')+'</div>';
+    h+='<div style="display:flex;align-items:center;gap:6px;"><div class="exp-amt">-'+yn(e.amount)+'</div><button onclick="xDelExp('\''+e.id+'\'')" style="background:none;border:none;color:var(--tx2);cursor:pointer;font-size:16px;">🗑</button></div></div>';
+    h+='<div class="exp-bottom"><span class="exp-cat-badge">'+e.cat+'</span><span style="font-size:11px;color:var(--tx2);">'+e.date+'</span>'+(e.receipt?'<span style="font-size:11px;color:var(--ac);cursor:pointer;" onclick="eViewRcpt('\''+e.id+'\'')">📷 レシート</span>':'')+'</div>';
     h+='</div>';
   }
   el.innerHTML=h;
