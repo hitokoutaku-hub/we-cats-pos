@@ -1417,7 +1417,7 @@ function oDet(id){
   h+='</table>';
   document.getElementById('det-body').innerHTML=h;
   document.getElementById('det-act').innerHTML=st
-    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="oGEdit('\''+id+'\'')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO('+id+')">退店処理</button>'
+    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="oGEdit('\''+id+'\'')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO(\''+id+'\')">退店処理</button>'
     :'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bp" style="flex:1;" onclick="oGEdit('\''+id+'\'')">✏️ 編集・削除</button>';
   oModal('m-det');
 }
