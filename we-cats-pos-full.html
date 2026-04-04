@@ -1918,7 +1918,13 @@ function rcCash(){
   var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
   var grand=dt+sup,net=grand-carry;
   var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
-  var mr=MS.find(function(m){return m.d===date;});var tot=gs+(mr?mr.total:0);var diff=net-tot;
+  var mr=MS.find(function(m){return m.d===date;});var tot=gs+(mr?mr.total:0);
+  // 前日残高を取得
+  var prevCR=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
+  var prevNet=prevCR.length>0?(prevCR[0].net||prevCR[0].grand):0;
+  // 正しい過不足: レジ残高 - (前日残高 + 今日売上 - 持ち帰り)
+  var expectedNet=prevNet+tot-carry;
+  var diff=net-expectedNet;
   var ch=document.getElementById('k-carry-h');if(ch)ch.textContent=carry>0?('金種合計 '+yn(grand)+' から '+yn(carry)+' を回収'):'金種合計から引かれます';
   var dc=diff>0?'ov2':diff<0?'un':'';var dl=diff>0?('+'+yn(diff)+' 超過'):diff<0?(yn(diff)+' 不足'):'ぴったり ✓';
   var h='<div class="csb tot full"><div class="csl">金種合計（回収前）</div><div class="csv">'+yn(grand)+'</div></div>';
