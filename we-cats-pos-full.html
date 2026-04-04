@@ -574,6 +574,9 @@ select.fc{cursor:pointer;}
     <button class="btn bp bf" onclick="saveMerch()">💾 保存</button>
   </div>
   <div id="ml-saved" style="margin-top:12px;"></div>
+<div class="sep" style="margin-top:14px;"></div>
+<div style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:1px;margin-bottom:8px;">📅 過去の物販履歴</div>
+<div id="ml-history"></div>
 </div>
 
 <!-- ===== CARTE ===== -->
@@ -1564,7 +1567,9 @@ function saveMerch(){
   for(var i=0;i<MI.length;i++)items.push({id:MI[i].id,n:MI[i].n,p:MI[i].p,q:MQ[MI[i].id]||0});
   var total=0;for(var j=0;j<items.length;j++)total+=items[j].q*items[j].p;
   MS=MS.filter(function(m){return m.d!==t;});MS.push({d:t,i:items,total:total});
-  sv();saveMerchToSupa(MS.find(function(m){return m.d===t;}));logAction('物販保存','日付:'+t+' 合計:'+yn(total));rMerch();rGuests();toast('物販を保存しました 🛍️');
+  sv();saveMerchToSupa(MS.find(function(m){return m.d===t;}));logAction('物販保存','日付:'+t+' 合計:'+yn(total));
+  for(var key in MQ)MQ[key]=0;
+  rMerch();rGuests();toast('物販を保存しました 🛍️');
 }
 function oMF(id){
   document.getElementById('mf-id').value=id||'';
