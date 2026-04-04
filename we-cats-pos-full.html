@@ -158,7 +158,8 @@ function saveCustomerToSupa(c) {
   });
 }
 function saveCashToSupa(r) {
-  supaUpsert('pos_cash',{id:String(r.id||r.d),date:r.d,data:r});
+  // idをdateにすることで同じ日付は上書きされる
+  supaUpsert('pos_cash',{id:String(r.d),date:r.d,data:r});
 }
 function saveSettingToSupa(key,value) {
   supaUpsert('pos_settings',{key:key,value:value,updated_at:new Date().toISOString()});
@@ -1929,7 +1930,7 @@ function rcCash(){
   var dc=diff>0?'ov2':diff<0?'un':'';var dl=diff>0?('+'+yn(diff)+' 超過'):diff<0?(yn(diff)+' 不足'):'ぴったり ✓';
   var h='<div class="csb tot full"><div class="csl">金種合計（回収前）</div><div class="csv">'+yn(grand)+'</div></div>';
   if(carry>0)h+='<div class="csb car full"><div class="csl">🏦 回収額</div><div class="csv">'+yn(carry)+'</div></div>';
-  h+='<div class="csb net"><div class="csl">レジ残高</div><div class="csv">'+yn(net)+'</div></div>';
+  h+='<div class="csb net"><div class="csl">レジ残高</div><div class="csv">'+yn(grand)+'</div></div>';
   h+='<div class="csb '+dc+'"><div class="csl">売上との過不足</div><div class="csv" style="font-size:16px;">'+dl+'</div></div>';
   h+='<div class="csb full"><div class="csl">本日の売上</div><div class="csv" style="color:var(--ok);">'+yn(tot)+'</div></div>';
   document.getElementById('k-sum').innerHTML=h;
@@ -1987,7 +1988,9 @@ function rCash(){
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+'</div><div style="font-family:\'Kaisei Opti\',serif;font-size:20px;color:var(--ac);">'+yn(r.net||r.grand)+'</div></div>';
     h+='<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">';
     if(r.carry>0)h+='<span style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1px solid var(--wn);color:var(--wn);font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;">🏦 '+(r.carryName||'回収')+' '+yn(r.carry)+'</span>';
-    h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">過不足 '+dl+'</span>';
+    if(carry===0){
+      h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">過不足 '+dl+'</span>';
+    }
     if(r.memo)h+='<span class="tag">'+r.memo+'</span>';
     h+='<span style="font-size:10px;color:var(--tx2);margin-left:auto;">▼ 詳細</span>';
     h+='</div></div>';
