@@ -1951,7 +1951,9 @@ function rCash(){
     var todayNet=r.net||r.grand;
     var dg=G.filter(function(g){return g.d===r.d&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
     var mr=MS.find(function(m){return m.d===r.d;});var daySales=gs+(mr?mr.total:0);
-    var diff=prevRec?(todayNet-prevNet-daySales):0;
+    var carry=r.carry||0;
+    // 正しい計算: 前日残高 + 今日の売上 - 持ち帰り = 理論残高
+    var diff=prevRec?(todayNet-(prevNet+daySales-carry)):0;
     var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)):diff<0?yn(diff):'±0';
     var diffStyle=dc==='plus'?'background:#f0f8ee;border:1px solid var(--ac2);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);';
     // 金種明細HTML
