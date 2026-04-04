@@ -1946,26 +1946,80 @@ function rCash(){
   var h='';
   for(var i=0;i<recs.length;i++){
     var r=recs[i];
-    // 前日比で過不足を計算
     var prevRec=i>0?recs[i-1]:null;
     var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
     var todayNet=r.net||r.grand;
-    // 本日の売上
     var dg=G.filter(function(g){return g.d===r.d&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
     var mr=MS.find(function(m){return m.d===r.d;});var daySales=gs+(mr?mr.total:0);
-    // 前日比過不足 = 本日残高 - 前日残高 - 本日売上
     var diff=prevRec?(todayNet-prevNet-daySales):0;
     var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)):diff<0?yn(diff):'±0';
-    h+='<div class="card" style="margin-bottom:8px;">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+'</div><div style="font-family:\'Kaisei Opti\',serif;font-size:20px;color:var(--ac);">'+yn(r.net||r.grand)+'</div></div>';
-    h+='<div style="display:flex;gap:5px;flex-wrap:wrap;">';
-    if(r.carry>0)h+='<span style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1px solid var(--wn);color:var(--wn);font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;">🏦 '+(r.carryName||'回収')+' '+yn(r.carry)+'</span>';
     var diffStyle=dc==='plus'?'background:#f0f8ee;border:1px solid var(--ac2);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);';
+    // 金種明細HTML
+    var detailId='cash-detail-'+r.d.replace(/-/g,'');
+    var detailHtml='<div id="'+detailId+'" style="display:none;margin-top:10px;border-top:1px solid var(--bd);padding-top:10px;">';
+    detailHtml+='<div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px;">金種内訳</div>';
+    var totalCheck=0;
+    for(var ai=0;ai<AD.length;ai++){
+      var d2=AD[ai];var qty=r[d2.id]||0;
+      if(qty>0){
+        totalCheck+=qty*d2.v;
+        detailHtml+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--bd);"><span>'+d2.l+' × '+qty+'枚</span><span style="font-family:\'Kaisei Opti\',serif;color:var(--ac);">'+yn(qty*d2.v)+'</span></div>';
+      }
+    }
+    if(r.sup>0)detailHtml+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid var(--bd);"><span>応援券等</span><span style="font-family:\'Kaisei Opti\',serif;color:var(--ac);">'+yn(r.sup)+'</span></div>';
+    detailHtml+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;font-weight:700;"><span>金種合計</span><span style="font-family:\'Kaisei Opti\',serif;color:var(--ac);">'+yn(totalCheck+(r.sup||0))+'</span></div>';
+    detailHtml+='<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;"><span>本日売上</span><span style="font-family:\'Kaisei Opti\',serif;color:var(--ok);">'+yn(daySales)+'</span></div>';
+    detailHtml+='<div style="margin-top:8px;display:flex;gap:6px;">';
+    detailHtml+='<button onclick="openCashEdit(\''+r.d+'\')" style="flex:1;padding:8px;background:var(--sf2);border:1.5px solid var(--bd);border-radius:10px;font-family:\'Zen Maru Gothic\',sans-serif;font-size:12px;color:var(--tx2);cursor:pointer;">✏️ 編集</button>';
+    detailHtml+='<button onclick="deleteCashRecord(\''+r.d+'\')" style="flex:1;padding:8px;background:#fef0ec;border:1.5px solid var(--pk);border-radius:10px;font-family:\'Zen Maru Gothic\',sans-serif;font-size:12px;color:var(--ng);cursor:pointer;">🗑 削除</button>';
+    detailHtml+='</div>';
+    detailHtml+='</div>';
+    h+='<div class="card" style="margin-bottom:8px;">';
+    h+='<div onclick="toggleCashDetail(\''+detailId+'\')" style="cursor:pointer;">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+'</div><div style="font-family:\'Kaisei Opti\',serif;font-size:20px;color:var(--ac);">'+yn(r.net||r.grand)+'</div></div>';
+    h+='<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">';
+    if(r.carry>0)h+='<span style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1px solid var(--wn);color:var(--wn);font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;">🏦 '+(r.carryName||'回収')+' '+yn(r.carry)+'</span>';
     h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">過不足 '+dl+'</span>';
     if(r.memo)h+='<span class="tag">'+r.memo+'</span>';
+    h+='<span style="font-size:10px;color:var(--tx2);margin-left:auto;">▼ 詳細</span>';
     h+='</div></div>';
+    h+=detailHtml;
+    h+='</div>';
   }
   el.innerHTML=h;
+}
+function toggleCashDetail(id){
+  var el=document.getElementById(id);if(!el)return;
+  var isOpen=el.style.display!=='none';
+  el.style.display=isOpen?'none':'block';
+  // 矢印を更新
+  var parentCard=el.parentElement;
+  var arrow=parentCard.querySelector('span[style*="margin-left:auto"]');
+  if(arrow)arrow.textContent=isOpen?'▼ 詳細':'▲ 閉じる';
+}
+function openCashEdit(date){
+  var r=CR.find(function(x){return x.d===date;});if(!r)return;
+  // 金種モーダルを開いてデータを読み込む
+  document.getElementById('k-d').value=date;
+  for(var i=0;i<AD.length;i++){
+    CQ[AD[i].id]=r[AD[i].id]||0;
+    var dqEl=document.getElementById('dq-'+AD[i].id);
+    var dsEl=document.getElementById('ds-'+AD[i].id);
+    if(dqEl)dqEl.textContent=CQ[AD[i].id];
+    if(dsEl)dsEl.textContent=CQ[AD[i].id]>0?yn(CQ[AD[i].id]*AD[i].v):'—';
+  }
+  document.getElementById('k-sup').value=r.sup||0;
+  document.getElementById('k-carry').value=r.carry||0;
+  document.getElementById('k-mo').value=r.memo||'';
+  buildCarrySelect();
+  if(r.carryName){document.getElementById('k-carry-name').value=r.carryName;}
+  rcCash();
+  oModal('m-cash');
+}
+function deleteCashRecord(date){
+  if(!confirm(date+'の金種記録を削除しますか？'))return;
+  CR=CR.filter(function(r){return r.d!==date;});
+  sv();supaDelete('pos_cash',date);rCash();toast('削除しました');
 }
 
 // ===== EXPORT/IMPORT =====
