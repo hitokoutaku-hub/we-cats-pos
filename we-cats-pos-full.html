@@ -1985,7 +1985,7 @@ function rCash(){
     detailHtml+='</div>';
     h+='<div class="card" style="margin-bottom:8px;">';
     h+='<div onclick="toggleCashDetail(\''+detailId+'\')" style="cursor:pointer;">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+'</div><div style="font-family:\'Kaisei Opti\',serif;font-size:20px;color:var(--ac);">'+yn(r.net||r.grand)+'</div></div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+'</div><div style="font-family:\'Kaisei Opti\',serif;font-size:20px;color:var(--ac);">'+yn(r.grand)+'</div></div>';
     h+='<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">';
     if(r.carry>0)h+='<span style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1px solid var(--wn);color:var(--wn);font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;">🏦 '+(r.carryName||'回収')+' '+yn(r.carry)+'</span>';
     if(carry===0){
