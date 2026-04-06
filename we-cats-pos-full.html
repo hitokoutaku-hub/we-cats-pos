@@ -503,6 +503,10 @@ select.fc{cursor:pointer;}
       <label class="fl">フリーにゃんタイム</label>
       <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
     </div>
+    <div class="fg">
+      <label class="fl">キッズディ（土曜・小学生以下半額）</label>
+      <button id="kd-btn" onclick="togKD()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:14px;cursor:pointer;">👧 キッズディ　OFF</button>
+    </div>
 
     <div class="sep"></div>
     <div class="stit">人数</div>
@@ -1035,7 +1039,7 @@ function loadExpBase(){return JSON.parse(localStorage.getItem('wc_expense')||'{"
 function saveExpBase(d){localStorage.setItem('wc_expense',JSON.stringify(d));}
 
 var coId=null,custId=null,editPh=null;
-var aC=1,cC=0,isFN=false;
+var aC=1,cC=0,isFN=false,isKD=isSat();
 var selBC_id=null;
 var cfCh={tri:[],companion:[],gacha:'',cats:[]};
 var aqCh={tri:[],exp:'',cats:[]};
@@ -1128,31 +1132,31 @@ function isSat(ds){return new Date(ds||td()).getDay()===6;}
 function calcP(a,c,ci,co,dt,fn){
   var ds=dt||td();
   if(fn){return {t:Price.fn*(a+c),bd:'フリーにゃんタイム ¥'+Price.fn+'×'+(a+c)+'名',dur:'〜4時間',m:0};}
-  var hol=isHol(ds),sat=isSat(ds);
+  var hol=isHol(ds);
   var ciArr=ci.split(':');var ih=parseInt(ciArr[0]),im=parseInt(ciArr[1]);
   var m=0;
   if(co){var coArr=co.split(':');var oh=parseInt(coArr[0]),om=parseInt(coArr[1]);m=(oh*60+om)-(ih*60+im);if(m<0)m+=1440;}
   var dur=co?(Math.floor(m/60)+'時間'+(m%60)+'分'):null;
   var mn=co?m:60;
-  function adultP(){if(mn<=30)return hol?Price.hd30:Price.wd30;if(mn<=60)return hol?Price.hd60:Price.wd60;var base=hol?Price.hd60:Price.wd60;var ext=hol?0:Price.wdext*Math.ceil((mn-60)/30);return base+ext;}
-  function childP(){if(!sat)return adultP();if(mn<=30)return Math.floor((hol?Price.hd30:Price.wd30)/2);if(mn<=60)return Math.floor((hol?Price.hd60:Price.wd60)/2);var base=Math.floor((hol?Price.hd60:Price.wd60)/2);var ext=hol?0:Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);return base+ext;}
+  function adultP(){if(mn<=30)return hol?Price.hd30:Price.wd30;if(mn<=60)return hol?Price.hd60:Price.wd60;var base=hol?Price.hd60:Price.wd60;var ext=Price.wdext*Math.ceil((mn-60)/30);return base+ext;}
+  function childP(){if(!isKD||mn<=60)return adultP();var base=Math.floor((hol?Price.hd60:Price.wd60)/2);var ext=Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);return base+ext;}
   var ap=adultP(),cp=childP();
   var t=ap*a+(c>0?cp*c:0);
   var bd='大人 '+yn(ap)+'×'+a+'名';
-  if(c>0)bd+=' + 子ども '+yn(cp)+'×'+c+'名'+(sat?' (半額)':'');
+  if(c>0)bd+=' + 子ども '+yn(cp)+'×'+c+'名'+(isKD?' (キッズディ半額)':'');
   return {t:t,bd:bd,dur:dur,m:m};
 }
 function ppCalc(){
   var ppEl=document.getElementById('pp');var pbEl=document.getElementById('pb');var tEl=document.getElementById('r-time');
   if(!ppEl||!pbEl||!tEl)return;
   var t=tEl.value;if(!t)return;
-  var ds=td(),hol=isHol(ds),sat=isSat(ds);
+  var ds=td(),hol=isHol(ds);
   if(isFN){ppEl.textContent=yn(2600*(aC+cC));pbEl.textContent='フリーにゃんタイム　¥2,600×'+(aC+cC)+'名';return;}
   var a30=hol?Price.hd30:Price.wd30,a60=hol?Price.hd60:Price.wd60;
-  var c30=sat?Math.floor(a30/2):a30,c60=sat?Math.floor(a60/2):a60;
+  var c30=a30,c60=a60;
   var p30=a30*aC+(cC>0?c30*cC:0),p60=a60*aC+(cC>0?c60*cC:0);
   var parts=['大人 '+yn(a60)+'×'+aC+'名'];
-  if(cC>0)parts.push('子ども '+yn(c60)+'×'+cC+'名'+(sat?' (半額)':''));
+  if(cC>0)parts.push('子ども '+yn(c60)+'×'+cC+'名'+(isKD?' (キッズディ半額)':''));
   ppEl.textContent=yn(p30)+'　/　'+yn(p60);
   pbEl.textContent='30分 / 1時間\n'+parts.join(' + ');
 }
@@ -1161,6 +1165,17 @@ function togFN(){
   if(isFN){btn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';btn.style.borderColor='var(--ac2)';btn.style.color='#5a8050';btn.textContent='🐱 フリーにゃん　ON ✓';}
   else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='🐱 フリーにゃん　OFF';}
   ppCalc();
+}
+function togKD(){
+  isKD=!isKD;var btn=document.getElementById('kd-btn');if(!btn)return;
+  if(isKD){btn.style.background='linear-gradient(135deg,#fff8e0,#fff0c0)';btn.style.borderColor='#d4a020';btn.style.color='#8a6000';btn.textContent='👧 キッズディ　ON ✓';}
+  else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='👧 キッズディ　OFF';}
+  ppCalc();
+}
+function initKDBtn(){
+  var btn=document.getElementById('kd-btn');if(!btn)return;
+  if(isKD){btn.style.background='linear-gradient(135deg,#fff8e0,#fff0c0)';btn.style.borderColor='#d4a020';btn.style.color='#8a6000';btn.textContent='👧 キッズディ　ON ✓';}
+  else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='👧 キッズディ　OFF';}
 }
 
 // ===== MEMBER SEARCH =====
@@ -1339,9 +1354,10 @@ function regGuest(){
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
   document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
-  isFN=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};
+  isFN=false;isKD=isSat();selBC_id=null;aqCh={tri:[],exp:'',cats:[]};
   var fnBtn=document.getElementById('fn-btn');
   if(fnBtn){fnBtn.style.background='var(--sf2)';fnBtn.style.borderColor='var(--bd)';fnBtn.style.color='var(--tx2)';fnBtn.textContent='🐱 フリーにゃん　OFF';}
+  initKDBtn();
   buildBCChips();buildAqChips();
   var chips=document.querySelectorAll('#aq-exp .chip');for(var i=0;i<chips.length;i++)chips[i].classList.remove('on');
   ppCalc();sp('p-g');
@@ -2610,7 +2626,7 @@ function rfAll(){
 }
 
 function init(){
-  clk();setInterval(clk,1000);setInterval(rGuests,60000);
+  clk();setInterval(clk,1000);setInterval(rGuests,60000);initKDBtn();
   var rt=document.getElementById('r-time');if(rt)rt.value=ft(new Date());
   try{document.getElementById('ei-month').value=new Date().getMonth()+1;}catch(e){}
   try{document.getElementById('merch-date').value=td();}catch(e){}
