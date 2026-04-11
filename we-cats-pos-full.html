@@ -1139,7 +1139,7 @@ function calcP(a,c,ci,co,dt,fn){
   var dur=co?(Math.floor(m/60)+'時間'+(m%60)+'分'):null;
   var mn=co?m:60;
   function adultP(){if(mn<=30)return hol?Price.hd30:Price.wd30;if(mn<=60)return hol?Price.hd60:Price.wd60;var base=hol?Price.hd60:Price.wd60;var ext=Price.wdext*Math.ceil((mn-60)/30);return base+ext;}
-  function childP(){if(!isKD||mn<=60)return adultP();var base=Math.floor((hol?Price.hd60:Price.wd60)/2);var ext=Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);return base+ext;}
+  function childP(){if(!isKD||mn<60)return adultP();if(mn<=60)return Math.floor((hol?Price.hd60:Price.wd60)/2);var base=Math.floor((hol?Price.hd60:Price.wd60)/2);var ext=Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);return base+ext;}
   var ap=adultP(),cp=childP();
   var t=ap*a+(c>0?cp*c:0);
   var bd='大人 '+yn(ap)+'×'+a+'名';
