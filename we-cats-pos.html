@@ -499,8 +499,14 @@ select.fc{cursor:pointer;}
       <select class="fc" id="r-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
     </div>
     <div class="fg">
-      <label class="fl">フリーにゃんタイム</label>
-      <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
+      <label class="fl">フリーにゃんタイム / 夜カフェ</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
+        <button id="nc-btn" onclick="togNC()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🌙 夜カフェ　OFF</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button id="kd-btn" onclick="togKD()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🧒 キッズデイ　OFF</button>
+      </div>
     </div>
 
     <div class="sep"></div>
