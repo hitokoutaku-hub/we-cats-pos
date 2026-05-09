@@ -499,11 +499,8 @@ select.fc{cursor:pointer;}
       <select class="fc" id="r-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
     </div>
     <div class="fg">
-      <label class="fl">フリーにゃんタイム / 夜カフェ</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
-        <button id="nc-btn" onclick="togNC()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🌙 夜カフェ　OFF</button>
-      </div>
+      <label class="fl">フリーにゃんタイム</label>
+      <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
     </div>
 
     <div class="sep"></div>
@@ -1159,7 +1156,6 @@ function ppCalc(){
 }
 function togFN(){
   isFN=!isFN;
-  // 夜カフェと排他
   if(isFN&&isNC){isNC=false;var ncBtn=document.getElementById('nc-btn');if(ncBtn){ncBtn.style.background='var(--sf2)';ncBtn.style.borderColor='var(--bd)';ncBtn.style.color='var(--tx2)';ncBtn.textContent='🌙 夜カフェ　OFF';}}
   var btn=document.getElementById('fn-btn');if(!btn)return;
   if(isFN){btn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';btn.style.borderColor='var(--ac2)';btn.style.color='#5a8050';btn.textContent='🐱 フリーにゃん　ON ✓';}
@@ -1168,7 +1164,6 @@ function togFN(){
 }
 function togNC(){
   isNC=!isNC;
-  // フリーにゃんと排他
   if(isNC&&isFN){isFN=false;var fnBtn=document.getElementById('fn-btn');if(fnBtn){fnBtn.style.background='var(--sf2)';fnBtn.style.borderColor='var(--bd)';fnBtn.style.color='var(--tx2)';fnBtn.textContent='🐱 フリーにゃん　OFF';}}
   var btn=document.getElementById('nc-btn');if(!btn)return;
   if(isNC){btn.style.background='linear-gradient(135deg,#1e1b4b,#2d2570)';btn.style.borderColor='#6d28d9';btn.style.color='#c4b5fd';btn.textContent='🌙 夜カフェ　ON ✓';}
