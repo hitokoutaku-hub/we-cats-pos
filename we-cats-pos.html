@@ -660,7 +660,8 @@ select.fc{cursor:pointer;}
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-m-type"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-m-pattern"></div></div>
       <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-m-time"></div></div>
-      <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-m-merch"></div></div>
+      <div class="card"><div class="ct">🛍️ 物販商品別（数量）</div><div id="z-m-merch"></div></div>
+      <div class="card"><div class="ct">💴 物販商品別（売上）</div><div id="z-m-merch-sales"></div><div id="z-m-merch-total" style="text-align:right;font-family:'Kaisei Opti',serif;font-size:18px;color:var(--ok);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd);"></div></div>
     </div>
     <div id="z-y" style="display:none;">
       <div class="mnav"><button class="mnbtn" onclick="chZY(-1)">＜前年</button><div class="mnlbl" id="z-y-lbl"></div><button class="mnbtn" onclick="chZY(1)">翌年＞</button></div>
@@ -1031,7 +1032,7 @@ function loadExpBase(){return JSON.parse(localStorage.getItem('wc_expense')||'{"
 function saveExpBase(d){localStorage.setItem('wc_expense',JSON.stringify(d));}
 
 var coId=null,custId=null,editPh=null;
-var aC=1,cC=0,isFN=false,isNC=false;
+var aC=1,cC=0,isFN=false,isNC=false,isKD=false;
 var selBC_id=null;
 var cfCh={tri:[],companion:[],gacha:'',cats:[]};
 var aqCh={tri:[],exp:'',cats:[]};
@@ -1132,7 +1133,15 @@ function calcP(a,c,ci,co,dt,fn){
   var dur=co?(Math.floor(m/60)+'時間'+(m%60)+'分'):null;
   var mn=co?m:60;
   function adultP(){if(mn<=30)return hol?Price.hd30:Price.wd30;if(mn<=60)return hol?Price.hd60:Price.wd60;var base=hol?Price.hd60:Price.wd60;var ext=hol?0:Price.wdext*Math.ceil((mn-60)/30);return base+ext;}
-  function childP(){if(!sat)return adultP();if(mn<=30)return Math.floor((hol?Price.hd30:Price.wd30)/2);if(mn<=60)return Math.floor((hol?Price.hd60:Price.wd60)/2);var base=Math.floor((hol?Price.hd60:Price.wd60)/2);var ext=hol?0:Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);return base+ext;}
+  function childP(){
+    var kidsDay=isKD||(sat&&typeof isKD!=='undefined'?isKD:sat);
+    if(!kidsDay)return adultP();
+    // キッズデイON：1時間以上で半額
+    if(mn<60)return adultP(); // 1時間未満は通常料金
+    var base=Math.floor((hol?Price.hd60:Price.wd60)/2);
+    var ext=hol?0:Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);
+    return base+ext;
+  }
   var ap=adultP(),cp=childP();
   var t=ap*a+(c>0?cp*c:0);
   var bd='大人 '+yn(ap)+'×'+a+'名';
@@ -1150,7 +1159,8 @@ function ppCalc(){
   var c30=sat?Math.floor(a30/2):a30,c60=sat?Math.floor(a60/2):a60;
   var p30=a30*aC+(cC>0?c30*cC:0),p60=a60*aC+(cC>0?c60*cC:0);
   var parts=['大人 '+yn(a60)+'×'+aC+'名'];
-  if(cC>0)parts.push('子ども '+yn(c60)+'×'+cC+'名'+(sat?' (半額)':''));
+  var kdActive=isKD;
+  if(cC>0)parts.push('子ども '+yn(c60)+'×'+cC+'名'+(kdActive?' (キッズデイ半額)':sat?' (半額)':''));
   ppEl.textContent=yn(p30)+'　/　'+yn(p60);
   pbEl.textContent='30分 / 1時間\n'+parts.join(' + ');
 }
@@ -1168,6 +1178,13 @@ function togNC(){
   var btn=document.getElementById('nc-btn');if(!btn)return;
   if(isNC){btn.style.background='linear-gradient(135deg,#1e1b4b,#2d2570)';btn.style.borderColor='#6d28d9';btn.style.color='#c4b5fd';btn.textContent='🌙 夜カフェ　ON ✓';}
   else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='🌙 夜カフェ　OFF';}
+  ppCalc();
+}
+function togKD(){
+  isKD=!isKD;
+  var btn=document.getElementById('kd-btn');if(!btn)return;
+  if(isKD){btn.style.background='linear-gradient(135deg,#fff8e8,#ffe0a0)';btn.style.borderColor='var(--wn)';btn.style.color='#a06010';btn.textContent='🧒 キッズデイ　ON ✓';}
+  else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='🧒 キッズデイ　OFF';}
   ppCalc();
 }
 
@@ -1324,7 +1341,7 @@ function regGuest(){
   var t=document.getElementById('r-time').value;if(!t){toast('入店時間を入力してください',true);return;}
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
-  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,nc:isNC,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
+  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,nc:isNC,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
   // 会員メモがあればカルテに保存
   if(selectedMemberId){
     var mc=CU.find(function(x){return String(x.id)===String(selectedMemberId);});
@@ -1347,11 +1364,13 @@ function regGuest(){
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
   document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
-  isFN=false;isNC=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};
+  isFN=false;isNC=false;isKD=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};
   var fnBtn=document.getElementById('fn-btn');
   if(fnBtn){fnBtn.style.background='var(--sf2)';fnBtn.style.borderColor='var(--bd)';fnBtn.style.color='var(--tx2)';fnBtn.textContent='🐱 フリーにゃん　OFF';}
   var ncBtn=document.getElementById('nc-btn');
   if(ncBtn){ncBtn.style.background='var(--sf2)';ncBtn.style.borderColor='var(--bd)';ncBtn.style.color='var(--tx2)';ncBtn.textContent='🌙 夜カフェ　OFF';}
+  var kdBtn=document.getElementById('kd-btn');
+  if(kdBtn){kdBtn.style.background='var(--sf2)';kdBtn.style.borderColor='var(--bd)';kdBtn.style.color='var(--tx2)';kdBtn.textContent='🧒 キッズデイ　OFF';}
   buildBCChips();buildAqChips();
   var chips=document.querySelectorAll('#aq-exp .chip');for(var i=0;i<chips.length;i++)chips[i].classList.remove('on');
   ppCalc();sp('p-g');
@@ -1375,7 +1394,7 @@ function rcCO(){
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var disc=cup+tkt+sup;
-  var r=calcP(g.a,g.c,ci,co,g.d,g.fn,g.nc);
+  var r=calcP(g.a,g.c,ci,co,g.d,g.fn,g.nc);isKD=g.kd||false;
   document.getElementById('co-dur').textContent=r.dur||'—';
   document.getElementById('co-det').textContent=r.bd;
   document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
@@ -1389,7 +1408,7 @@ function confCO(){
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
-  var r=calcP(g.a,g.c,ci,co,g.d,g.fn,g.nc);
+  var r=calcP(g.a,g.c,ci,co,g.d,g.fn,g.nc);isKD=g.kd||false;
   g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup);g.mo=document.getElementById('co-mo').value;g.st='done';
   sv();saveGuestToSupa(g);logAction('退店登録','料金:'+yn(g.pr)+' 退店'+g.co);cModal('m-co');rfAll();toast('退店登録しました ✅');
 }
@@ -1401,7 +1420,7 @@ function showRcpt(){
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var disc=cup+tkt+sup;
-  var r=calcP(g.a,g.c,ci,co,g.d,g.fn,g.nc);
+  var r=calcP(g.a,g.c,ci,co,g.d,g.fn,g.nc);isKD=g.kd||false;
   var tot=Math.max(0,r.t-disc);
   document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
   document.getElementById('rc-dur').textContent=r.dur||'—';
@@ -1431,6 +1450,7 @@ function oDet(id){
   if(g.pr)h+='<tr><td class="il">料金</td><td style="color:var(--ok);font-family:\'Kaisei Opti\',serif;font-size:18px;">'+yn(g.pr)+'</td></tr>';
   if(g.fn)h+='<tr><td class="il">コース</td><td><span class="tag gr">🐱 フリーにゃん</span></td></tr>';
   if(g.nc)h+='<tr><td class="il">コース</td><td><span class="tag" style="background:#ede9fe;color:#6d28d9;font-weight:700;">🌙 夜カフェ 2時間制</span></td></tr>';
+  if(g.kd)h+='<tr><td class="il">コース</td><td><span class="tag gd">🧒 キッズデイ（子ども1時間以上半額）</span></td></tr>';
   if(aq.tri&&aq.tri.length)h+='<tr><td class="il">きっかけ</td><td>'+aq.tri.join(' / ')+'</td></tr>';
   if(aq.exp)h+='<tr><td class="il">経験</td><td>'+aq.exp+'</td></tr>';
   if(aq.cats&&aq.cats.length)h+='<tr><td class="il">推し猫</td><td>'+aq.cats.join('・')+'</td></tr>';
@@ -2432,21 +2452,38 @@ function rZAnalysis(){
     gs=G.filter(function(g){return g.d===ds&&g.st==='done';});
     var msItem=MS.find(function(m){return m.d===ds;});
     ms=msItem?msItem.i:[];
-  } else {
+  } else if(zMode==='m'){
     var yr=zM.getFullYear(),mo=zM.getMonth();
     document.getElementById('z-m-lbl').textContent=yr+'/'+p2(mo+1);
     gs=G.filter(function(g){var d=new Date(g.d);return d.getFullYear()===yr&&d.getMonth()===mo&&g.st==='done';});
-    // 月間物販をまとめる
     var msMap={};
+    var msSalesMap={};
     MS.filter(function(m){var d=new Date(m.d);return d.getFullYear()===yr&&d.getMonth()===mo;})
-      .forEach(function(m){m.i.forEach(function(item){if(item.q>0){msMap[item.n]=(msMap[item.n]||0)+item.q;}});});
-    ms=Object.keys(msMap).map(function(n){return {n:n,q:msMap[n],p:0};});
-  }
-
-  var sfx=zMode==='d'?'d':zMode==='m'?'m':'y';
-
-  // 年別の場合
-  if(zMode==='y') {
+      .forEach(function(m){m.i.forEach(function(item){if(item.q>0){
+        msMap[item.n]=(msMap[item.n]||0)+item.q;
+        msSalesMap[item.n]=(msSalesMap[item.n]||0)+item.q*item.p;
+      }});});
+    ms=Object.keys(msMap).map(function(n){return {n:n,q:msMap[n],p:msSalesMap[n]?Math.round(msSalesMap[n]/msMap[n]):0};});
+    // 物販売上グラフ
+    var salesEl=document.getElementById('z-m-merch-sales');
+    var totalEl=document.getElementById('z-m-merch-total');
+    if(salesEl){
+      var salesKeys=Object.keys(msSalesMap).sort(function(a,b){return msSalesMap[b]-msSalesMap[a];});
+      var totalSales=0;for(var si=0;si<salesKeys.length;si++)totalSales+=msSalesMap[salesKeys[si]];
+      if(salesKeys.length===0){salesEl.innerHTML='<div style="color:var(--tx2);font-size:12px;text-align:center;padding:12px;">データなし</div>';}
+      else{
+        var sh='';
+        for(var sj=0;sj<salesKeys.length;sj++){
+          var sn=salesKeys[sj];var sv2=msSalesMap[sn];var sq=msMap[sn];
+          var pct=totalSales>0?Math.round(sv2/totalSales*100):0;
+          sh+='<div class="cbar"><div class="cbar-l"><span>'+sn+' × '+sq+'個</span><span>'+yn(sv2)+'（'+pct+'%）</span></div>';
+          sh+='<div class="cbar-bg"><div class="cbar-fill gr" style="width:'+pct+'%;background:linear-gradient(90deg,var(--ok),#90c880);"></div></div></div>';
+        }
+        salesEl.innerHTML=sh;
+        if(totalEl)totalEl.textContent='物販合計　'+yn(totalSales);
+      }
+    }
+  } else {
     var yr=zY.getFullYear();
     document.getElementById('z-y-lbl').textContent=yr+'年';
     gs=G.filter(function(g){var d=new Date(g.d);return d.getFullYear()===yr&&g.st==='done';});
@@ -2454,10 +2491,9 @@ function rZAnalysis(){
     MS.filter(function(m){var d=new Date(m.d);return d.getFullYear()===yr;})
       .forEach(function(m){m.i.forEach(function(item){if(item.q>0){msMap2[item.n]=(msMap2[item.n]||0)+item.q;}});});
     ms=Object.keys(msMap2).map(function(n){return {n:n,q:msMap2[n],p:0};});
-    // 月別来店数
     var monthCount={};
     for(var mi=1;mi<=12;mi++) monthCount[mi+'月']=0;
-    gs.forEach(function(g){var mo=(new Date(g.d).getMonth()+1)+'月';monthCount[mo]=(monthCount[mo]||0)+1;});
+    gs.forEach(function(g){var mo2=(new Date(g.d).getMonth()+1)+'月';monthCount[mo2]=(monthCount[mo2]||0)+1;});
     mkBarSorted(document.getElementById('z-y-monthly'),monthCount,'gr');
   }
 
