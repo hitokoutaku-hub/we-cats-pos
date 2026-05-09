@@ -1366,7 +1366,7 @@ function regGuest(){
 function oCO(id){
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
   coId=id;
-  document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱 フリーにゃん</span>':'')+(g.nc?'<span class="tag" style="background:#ede9fe;color:#6d28d9;font-weight:700;">🌙 夜カフェ</span>':'')+</div>';
+  document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱 フリーにゃん</span>':'')+(g.nc?'<span class="tag" style="background:#ede9fe;color:#6d28d9;font-weight:700;">🌙 夜カフェ</span>':'')+'</div>';
   document.getElementById('co-ci').value=g.ci;document.getElementById('co-co').value=ft(new Date());
   document.getElementById('co-cup').value=0;document.getElementById('co-tkt').value=0;document.getElementById('co-sup').value=0;
   document.getElementById('co-mo').value=g.mo||'';
