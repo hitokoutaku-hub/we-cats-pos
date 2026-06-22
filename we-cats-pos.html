@@ -99,6 +99,8 @@ function loadFromSupabase() {
       if(ts) Tris=ts.value;
       var cms=settings.find(function(s){return s.key==='carry_members';});
       if(cms) CarryMembers=cms.value;
+      var sls=settings.find(function(s){return s.key==='staff_list';});
+      if(sls){ StaffList=sls.value; localStorage.setItem('wc_staff',JSON.stringify(StaffList)); buildOperatorSelect(); }
     }
 
     if(cheki && cheki.length>0) {
@@ -174,17 +176,92 @@ function saveChekiToSupa(c) {
 // ===== 編集履歴ログ =====
 var OWNER_PW = '0103';
 var isOwnerMode = false;
+var StaffList = JSON.parse(localStorage.getItem('wc_staff') || '["吉村","高橋","土橋","冨部","松中","松本","よしむら","田染"]');
+var CurrentOperator = localStorage.getItem('wc_operator') || '';
 
 function logAction(action, detail) {
   var log = {
     id: String(Date.now()),
     action: action,
     detail: detail,
+    operator: CurrentOperator || '未選択',
     ts: new Date().toLocaleString('ja-JP'),
     ua: navigator.userAgent.substring(0,50)
   };
   supaUpsert('pos_logs', log);
 }
+
+// ===== 担当者選択 =====
+function buildOperatorSelect(){
+  var sel=document.getElementById('hdr-operator');
+  if(!sel)return;
+  sel.innerHTML='<option value="">👤 担当者を選択</option>';
+  for(var i=0;i<StaffList.length;i++){
+    var opt=document.createElement('option');
+    opt.value=StaffList[i];opt.textContent=StaffList[i];
+    if(StaffList[i]===CurrentOperator)opt.selected=true;
+    sel.appendChild(opt);
+  }
+}
+function setOperator(name){
+  CurrentOperator=name;
+  localStorage.setItem('wc_operator',name);
+}
+function saveStaffList(){ localStorage.setItem('wc_staff',JSON.stringify(StaffList)); saveSettingToSupa('staff_list',StaffList); }
+function rStaffList(){
+  var el=document.getElementById('staff-list');if(!el)return;
+  var h='';
+  for(var i=0;i<StaffList.length;i++){
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);">';
+    h+='<span style="flex:1;font-size:14px;">'+StaffList[i]+'</span>';
+    h+='<button onclick="delStaff('+i+')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:18px;font-size:11px;cursor:pointer;">削除</button>';
+    h+='</div>';
+  }
+  el.innerHTML=h||'<div style="color:var(--tx2);font-size:12px;padding:8px 0;">スタッフがいません</div>';
+}
+function addStaff(){
+  var input=document.getElementById('staff-add-name');
+  var n=input.value.trim();
+  if(!n){toast('名前を入力してください',true);return;}
+  if(StaffList.indexOf(n)>=0){toast('すでに登録されています',true);return;}
+  StaffList.push(n);saveStaffList();input.value='';rStaffList();buildOperatorSelect();toast(n+' を追加しました');
+}
+function delStaff(idx){
+  var n=StaffList[idx];
+  askConfirm(n+' を削除しますか？',function(){
+    StaffList.splice(idx,1);saveStaffList();rStaffList();buildOperatorSelect();
+    if(CurrentOperator===n){CurrentOperator='';localStorage.removeItem('wc_operator');}
+    toast('削除しました');
+  });
+}
+
+// ===== 猫の名前管理 =====
+function rCatList(){
+  var el=document.getElementById('cat-list');if(!el)return;
+  var h='';
+  for(var i=0;i<Cats.length;i++){
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);">';
+    h+='<span style="flex:1;font-size:14px;">'+Cats[i]+'</span>';
+    h+='<button onclick="delCat('+i+')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:18px;font-size:11px;cursor:pointer;">削除</button>';
+    h+='</div>';
+  }
+  el.innerHTML=h||'<div style="color:var(--tx2);font-size:12px;padding:8px 0;">猫が登録されていません</div>';
+}
+function addCat(){
+  var input=document.getElementById('cat-add-name');
+  var n=input.value.trim();
+  if(!n){toast('猫の名前を入力してください',true);return;}
+  if(Cats.indexOf(n)>=0){toast('すでに登録されています',true);return;}
+  Cats.push(n);sv();saveSettingToSupa('cats',Cats);input.value='';rCatList();buildAqChips();toast(n+' を追加しました');
+}
+function delCat(idx){
+  var n=Cats[idx];
+  askConfirm(n+' を削除しますか？',function(){
+    Cats.splice(idx,1);sv();saveSettingToSupa('cats',Cats);rCatList();buildAqChips();toast('削除しました');
+  });
+}
+function openStaffModal(){ rStaffList(); oModal('m-staff'); }
+function openCatModal(){ rCatList(); oModal('m-cat'); }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Kaisei+Opti:wght@400;700&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -196,17 +273,17 @@ function logAction(action, detail) {
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{background:#fff5f6;min-height:100%;}
-body{background:#fff5f6;min-height:100vh;color:var(--tx);font-family:\'Noto Sans JP\',\'Zen Maru Gothic\',sans-serif;font-size:14px;max-width:480px;margin:0 auto;box-shadow:0 0 24px rgba(0,0,0,.08);}
-.hdr{background:linear-gradient(135deg,#f4a4ad 0%,#e8838f 100%);border-bottom:none;padding:18px 16px 16px;height:auto;display:block;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(220,100,120,.25);}
+body{background:#fff5f6;min-height:100vh;color:var(--tx);font-family:\'Noto Sans JP\',\'Zen Maru Gothic\',sans-serif;font-size:14px;}
+.hdr{background:linear-gradient(135deg,#f4a4ad 0%,#e8838f 100%);border-bottom:none;padding:18px 16px 22px;height:auto;display:block;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(220,100,120,.2);max-width:820px;margin-left:auto;margin-right:auto;}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .logo{font-family:\'Noto Sans JP\',sans-serif;font-size:19px;color:#fff;letter-spacing:.5px;font-weight:800;display:flex;align-items:center;gap:6px;}
 .hdate{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;line-height:1.4;}
-.nav{background:#fff;border-bottom:none;display:flex;position:sticky;top:0;z-index:99;overflow-x:auto;scrollbar-width:none;box-shadow:0 6px 14px rgba(220,100,120,.18);margin:0 12px;border-radius:0 0 18px 18px;padding:8px 6px;gap:2px;}
+.nav{background:#fff;border-bottom:none;display:flex;position:sticky;top:0;z-index:99;overflow-x:auto;scrollbar-width:none;box-shadow:0 6px 18px rgba(220,100,120,.15);margin:-14px auto 0;border-radius:20px;padding:6px;gap:2px;max-width:796px;}
 .nav::-webkit-scrollbar{display:none;}
 .ni{flex:1;min-width:46px;padding:9px 4px 8px;text-align:center;font-size:10px;color:var(--tx2);cursor:pointer;border-radius:14px;white-space:nowrap;transition:all .2s;font-weight:700;}
 .ni.active{color:#fff;background:var(--ac);font-weight:700;}
 .ni i{font-size:16px;display:block;margin-bottom:1px;font-style:normal;}
-.pg{display:none;padding:14px;position:relative;background:#f3ead9;min-height:calc(100vh - 110px);}
+.pg{display:none;padding:14px;position:relative;background:#f3ead9;min-height:calc(100vh - 110px);max-width:820px;margin-left:auto;margin-right:auto;}
 .pg.active{display:block;}
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--sh);}
 .ct{font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.8px;margin-bottom:12px;}
@@ -446,6 +523,11 @@ select.fc{cursor:pointer;}
     <div class="logo">🐱 WE CATS POS</div>
     <button class="btn bso bsm" onclick="oModal('m-menu')" style="padding:7px 11px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;">⚙️</button>
   </div>
+  <div style="margin-bottom:6px;">
+    <select id="hdr-operator" onchange="setOperator(this.value)" style="background:rgba(255,255,255,.25);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:14px;padding:5px 10px;font-size:12px;font-family:'Zen Maru Gothic',sans-serif;outline:none;">
+      <option value="">👤 担当者を選択</option>
+    </select>
+  </div>
   <div class="hdate" id="hdate"></div>
 </div>
 
@@ -559,7 +641,15 @@ select.fc{cursor:pointer;}
         <button onclick="ncTktQty(1)" style="width:38px;height:38px;border-radius:50%;border:1.5px solid #6d28d9;background:#2d2570;color:#c4b5fd;font-size:18px;cursor:pointer;">＋</button>
       </div>
       <div style="text-align:center;color:#e0d4fc;font-size:12px;margin-bottom:12px;">単価 ¥3,000 ×<span id="nc-tkt-qty2">1</span>枚 ＝ <span id="nc-tkt-total" style="color:#fff;font-weight:700;font-size:15px;">¥3,000</span></div>
-      <button onclick="sellNCTicket()" style="width:100%;padding:13px;background:#fff;color:#2d2570;border:none;border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">🎫 チケットを販売する</button>
+      <button onclick="askNCTicket()" style="width:100%;padding:13px;background:#fff;color:#2d2570;border:none;border-radius:22px;font-family:'Zen Maru Gothic',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">🎫 チケットを販売する</button>
+      <div id="nc-confirm" style="display:none;margin-top:12px;background:rgba(255,255,255,.12);border:1.5px solid #6d28d9;border-radius:14px;padding:12px;">
+        <div style="color:#fff;font-size:13px;text-align:center;margin-bottom:4px;">夜カフェチケット <span id="nc-confirm-n">1</span>枚（<span id="nc-confirm-amt">¥3,000</span>）を販売しますか？</div>
+        <div style="color:#b9a8e8;font-size:10px;text-align:center;margin-bottom:10px;">※来店日のご予約は猫管理アプリのカレンダーに登録してください</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="cancelNCTicket()" style="flex:1;padding:10px;background:transparent;color:#c4b5fd;border:1.5px solid #6d28d9;border-radius:18px;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">キャンセル</button>
+          <button onclick="sellNCTicket()" style="flex:1;padding:10px;background:#c4b5fd;color:#2d2570;border:none;border-radius:18px;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">販売する</button>
+        </div>
+      </div>
       <div style="text-align:center;color:#b9a8e8;font-size:10px;margin-top:8px;">※来店日のご予約は猫管理アプリのカレンダーで管理してください</div>
     </div>
     <!-- チェキ販売 -->
@@ -728,6 +818,7 @@ select.fc{cursor:pointer;}
 <!-- ===== CASH ===== -->
 <div class="pg" id="p-k">
   <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div class="mnlbl" id="k-lbl"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
+  <div class="card"><div class="ct">📈 月内残高推移</div><div class="chart-wrap"><canvas id="k-chart"></canvas></div></div>
   <div id="k-list"></div>
   <button class="btn bp bf" onclick="oCash()" style="margin-top:8px;">＋ 金種登録</button>
 </div>
@@ -751,6 +842,8 @@ select.fc{cursor:pointer;}
       <div class="fg"><label class="fl">割引クーポン（金額）</label><input type="number" class="fc" id="co-cup" value="0" min="0" oninput="rcCO()"></div>
       <div class="fg"><label class="fl">地域振興券・商品券</label><input type="number" class="fc" id="co-tkt" value="0" min="0" oninput="rcCO()"></div>
       <div class="fg"><label class="fl">応援券</label><input type="number" class="fc" id="co-sup" value="0" min="0" oninput="rcCO()"></div>
+      <div class="fg"><label class="fl">その他の割引（名称）</label><input type="text" class="fc" id="co-othn" placeholder="例：推し猫ランキング1位" oninput="rcCO()"></div>
+      <div class="fg"><label class="fl">その他の割引（金額）</label><input type="number" class="fc" id="co-otha" value="0" min="0" oninput="rcCO()"></div>
       <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="co-mo"></div>
     </div>
   </div>
@@ -870,6 +963,8 @@ select.fc{cursor:pointer;}
   <div class="mt"><span>⚙️ メニュー</span><button class="mc" onclick="cModal('m-menu')">✕</button></div>
   <div style="display:flex;flex-direction:column;gap:8px;">
     <button class="btn bso bf" onclick="cModal('m-menu');oModal('m-price')">💴 料金設定</button>
+    <button class="btn bso bf" onclick="cModal('m-menu');openStaffModal()">👥 スタッフ管理</button>
+    <button class="btn bso bf" onclick="cModal('m-menu');openCatModal()">🐱 猫の名前管理</button>
     <button class="btn bso bf" onclick="cModal('m-menu');openOwnerLogin()">🔐 オーナーログイン</button>
     <button class="btn bso bf" onclick="expData()">📤 データエクスポート</button>
     <button class="btn bso bf" onclick="document.getElementById('imp-f').click()">📥 データインポート</button>
@@ -877,6 +972,34 @@ select.fc{cursor:pointer;}
     <div class="sep"></div>
     <div id="menu-price-view" style="font-size:11px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);"></div>
   </div>
+</div></div>
+
+<!-- STAFF MANAGE -->
+<div class="ov" id="m-staff"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>👥 スタッフ管理</span><button class="mc" onclick="cModal('m-staff')">✕</button></div>
+  <div id="staff-list"></div>
+  <div class="sep"></div>
+  <div class="fg"><label class="fl">新しいスタッフを追加</label>
+    <div style="display:flex;gap:8px;">
+      <input type="text" class="fc" id="staff-add-name" placeholder="例：山田" style="flex:1;">
+      <button class="btn bp bsm" onclick="addStaff()">追加</button>
+    </div>
+  </div>
+  <button class="btn bs bf" onclick="cModal('m-staff')">閉じる</button>
+</div></div>
+
+<!-- CAT MANAGE -->
+<div class="ov" id="m-cat"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🐱 猫の名前管理</span><button class="mc" onclick="cModal('m-cat')">✕</button></div>
+  <div id="cat-list"></div>
+  <div class="sep"></div>
+  <div class="fg"><label class="fl">新しい猫を追加</label>
+    <div style="display:flex;gap:8px;">
+      <input type="text" class="fc" id="cat-add-name" placeholder="例：ぷりん" style="flex:1;">
+      <button class="btn bp bsm" onclick="addCat()">追加</button>
+    </div>
+  </div>
+  <button class="btn bs bf" onclick="cModal('m-cat')">閉じる</button>
 </div></div>
 
 <!-- GUEST EDIT -->
@@ -976,6 +1099,13 @@ select.fc{cursor:pointer;}
 </div></div>
 
 <div class="toast" id="toast"></div>
+<div class="ov" id="m-confirm"><div class="modal" style="max-width:320px;">
+  <div id="confirm-msg" style="font-size:14px;text-align:center;padding:8px 4px 16px;line-height:1.6;"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn bs" style="flex:1;" onclick="closeConfirm()">キャンセル</button>
+    <button class="btn" id="confirm-yes" style="flex:1;background:linear-gradient(135deg,#fef0ec,#fbd5cb);border:1.5px solid var(--pk);color:var(--ng);">削除する</button>
+  </div>
+</div></div>
 
 <script>
 // ===== DATA =====
@@ -1033,6 +1163,19 @@ function toast(msg,err){
   var t=document.getElementById('toast');
   t.textContent=msg;t.className='toast'+(err?' err':'');
   t.classList.add('on');setTimeout(function(){t.classList.remove('on');},2500);
+}
+var _confirmCb=null;
+function askConfirm(msg,onYes,yesLabel){
+  document.getElementById('confirm-msg').textContent=msg;
+  var yb=document.getElementById('confirm-yes');
+  yb.textContent=yesLabel||'削除する';
+  _confirmCb=onYes;
+  document.getElementById('m-confirm').classList.add('on');
+  yb.onclick=function(){var cb=_confirmCb;closeConfirm();if(cb)cb();};
+}
+function closeConfirm(){
+  document.getElementById('m-confirm').classList.remove('on');
+  _confirmCb=null;
 }
 function oModal(id){document.getElementById(id).classList.add('on');if(id==='m-bc')rBCList();if(id==='m-price')loadPriceModal();}
 function cModal(id){document.getElementById(id).classList.remove('on');}
@@ -1231,6 +1374,7 @@ function oCO(id){
   document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱 フリーにゃん</span>':'')+'</div>';
   document.getElementById('co-ci').value=g.ci;document.getElementById('co-co').value=ft(new Date());
   document.getElementById('co-cup').value=0;document.getElementById('co-tkt').value=0;document.getElementById('co-sup').value=0;
+  document.getElementById('co-othn').value='';document.getElementById('co-otha').value=0;
   document.getElementById('co-mo').value=g.mo||'';
   rcCO();oModal('m-co');
 }
@@ -1241,40 +1385,55 @@ function rcCO(){
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
-  var disc=cup+tkt+sup;
+  var othn=document.getElementById('co-othn').value.trim();
+  var otha=parseInt(document.getElementById('co-otha').value)||0;
+  var disc=cup+tkt+sup+otha;
   var r=calcP(g.a,g.c,ci,co,g.d,g.fn);isKD=g.kd||false;
   document.getElementById('co-dur').textContent=r.dur||'—';
   document.getElementById('co-det').textContent=r.bd;
   document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
-  var parts=[];if(cup>0)parts.push('クーポン -'+yn(cup));if(tkt>0)parts.push('振興券 -'+yn(tkt));if(sup>0)parts.push('応援券 -'+yn(sup));
+  var parts=[];if(cup>0)parts.push('クーポン -'+yn(cup));if(tkt>0)parts.push('振興券 -'+yn(tkt));if(sup>0)parts.push('応援券 -'+yn(sup));if(otha>0)parts.push((othn||'その他割引')+' -'+yn(otha));
   document.getElementById('co-bd').textContent=parts.join('　');
 }
 function confCO(){
-  var g=G.find(function(x){return x.id===coId;});if(!g)return;
+  var g=G.find(function(x){return String(x.id)===String(coId);});
+  if(!g){toast('対象のお客様が見つかりません',true);return;}
   var ci=document.getElementById('co-ci').value||g.ci;
-  var co=document.getElementById('co-co').value;
+  var co=document.getElementById('co-co').value||ft(new Date());
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
+  var othn=document.getElementById('co-othn').value.trim();
+  var otha=parseInt(document.getElementById('co-otha').value)||0;
   var r=calcP(g.a,g.c,ci,co,g.d,g.fn);isKD=g.kd||false;
-  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup);g.mo=document.getElementById('co-mo').value;g.st='done';
-  sv();saveGuestToSupa(g);logAction('退店登録','料金:'+yn(g.pr)+' 退店'+g.co);cModal('m-co');rfAll();toast('退店登録しました ✅');
+  var mo=document.getElementById('co-mo').value;
+  if(otha>0)mo=(mo?mo+' ':'')+(othn||'その他割引')+' -¥'+otha.toLocaleString();
+  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup-otha);g.mo=mo;g.st='done';
+  sv();
+  cModal('m-co');
+  rfAll();
+  toast('退店登録しました ✅');
+  // Supabase保存とログは画面更新後に（失敗しても退店登録は完了済み）
+  try{ saveGuestToSupa(g); }catch(e){ console.log('supa save err',e); }
+  try{ logAction('退店登録','料金:'+yn(g.pr)+' 退店'+g.co); }catch(e){ console.log('log err',e); }
 }
 function showRcpt(){
-  var g=G.find(function(x){return x.id===coId;});if(!g)return;
+  var g=G.find(function(x){return String(x.id)===String(coId);});if(!g)return;
   var ci=document.getElementById('co-ci').value||g.ci;
   var co=document.getElementById('co-co').value;
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
-  var disc=cup+tkt+sup;
+  var othn=document.getElementById('co-othn').value.trim();
+  var otha=parseInt(document.getElementById('co-otha').value)||0;
+  var disc=cup+tkt+sup+otha;
   var r=calcP(g.a,g.c,ci,co,g.d,g.fn);isKD=g.kd||false;
   var tot=Math.max(0,r.t-disc);
   document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
   document.getElementById('rc-dur').textContent=r.dur||'—';
   document.getElementById('rc-tot').textContent=yn(tot);
   var bdParts=[r.bd];
-  if(cup>0)bdParts.push('割引クーポン　-'+yn(cup));if(tkt>0)bdParts.push('振興券　-'+yn(tkt));if(sup>0)bdParts.push('応援券　-'+yn(sup));
+  if(cup>0)bdParts.push('割引クーポン　-'+yn(cup));if(tkt>0)bdParts.push('振興券　-'+yn(tkt));if(sup>0)bdParts.push('応援券　-'+yn(sup));if(otha>0)bdParts.push((othn||'その他割引')+'　-'+yn(otha));
   var bdHtml='<div style="border-top:1px solid var(--bd);margin-top:12px;padding-top:12px;text-align:left;">';
   for(var bi=0;bi<bdParts.length;bi++)bdHtml+='<div style="font-size:13px;color:var(--tx2);padding:3px 0;">'+bdParts[bi]+'</div>';
   bdHtml+='</div>';
@@ -1371,9 +1530,21 @@ function ncTktQty(d){
   document.getElementById('nc-tkt-qty').textContent = ncTktN;
   document.getElementById('nc-tkt-qty2').textContent = ncTktN;
   document.getElementById('nc-tkt-total').textContent = yn(3000 * ncTktN);
+  var ce=document.getElementById('nc-confirm');
+  if(ce && ce.style.display!=='none'){
+    document.getElementById('nc-confirm-n').textContent=ncTktN;
+    document.getElementById('nc-confirm-amt').textContent=yn(3000*ncTktN);
+  }
+}
+function askNCTicket(){
+  document.getElementById('nc-confirm-n').textContent=ncTktN;
+  document.getElementById('nc-confirm-amt').textContent=yn(3000*ncTktN);
+  document.getElementById('nc-confirm').style.display='block';
+}
+function cancelNCTicket(){
+  document.getElementById('nc-confirm').style.display='none';
 }
 function sellNCTicket(){
-  if(!confirm('夜カフェチケット '+ncTktN+'枚（'+yn(3000*ncTktN)+'）を販売しますか？\n※来店日のご予約は猫管理アプリのカレンダーに登録してください'))return;
   var t=td();
   var tr=MS.find(function(m){return m.d===t;});
   var items = tr ? tr.i.slice() : [];
@@ -1386,6 +1557,7 @@ function sellNCTicket(){
   logAction('夜カフェチケット販売','枚数:'+ncTktN+' 金額:'+yn(3000*ncTktN));
   toast('🌙 夜カフェチケット '+ncTktN+'枚を販売しました！');
   ncTktN=1;document.getElementById('nc-tkt-qty').textContent='1';document.getElementById('nc-tkt-qty2').textContent='1';document.getElementById('nc-tkt-total').textContent=yn(3000);
+  document.getElementById('nc-confirm').style.display='none';
   rMerch();rGuests();
 }
 
@@ -1460,9 +1632,10 @@ function renderChekiToday(){
   el.innerHTML=h;
 }
 function delCheki(id){
-  if(!confirm('この記録を削除しますか？'))return;
-  Cheki=Cheki.filter(function(c){return c.id!==id;});sv();supaDelete('pos_cheki',id);
-  renderChekiToday();toast('削除しました');
+  askConfirm('この記録を削除しますか？',function(){
+    Cheki=Cheki.filter(function(c){return c.id!==id;});sv();supaDelete('pos_cheki',id);
+    renderChekiToday();toast('削除しました');
+  });
 }
 
 // ===== MERCH =====
@@ -1537,9 +1710,10 @@ function openMerchEdit(date){
   toast(date+'の物販を編集モードにしました。変更後「保存」を押してください');
 }
 function deleteMerchHistory(date){
-  if(!confirm(date+'の物販記録を削除しますか？'))return;
-  MS=MS.filter(function(m){return m.d!==date;});
-  sv();supaDelete('pos_merch',date);rMerch();rGuests();toast('削除しました');
+  askConfirm(date+'の物販記録を削除しますか？',function(){
+    MS=MS.filter(function(m){return m.d!==date;});
+    sv();supaDelete('pos_merch',date);rMerch();rGuests();toast('削除しました');
+  });
 }
 function chMQ(id,d){id=String(id);MQ[id]=(MQ[id]||0)+d;if(MQ[id]<0)MQ[id]=0;rMerch();}
 function saveMerch(){
@@ -1575,25 +1749,27 @@ function editMerch(){
   toast('編集モードにしました。変更後「保存」を押してください');
 }
 function delMI(id){
-  if(!confirm('削除しますか？'))return;
-  MI=MI.filter(function(x){return x.id!==id;});
-  delete MQ[id];
-  sv();
-  saveMerchItemsToSupa();
-  rMerch();
-  toast('削除しました');
+  askConfirm('削除しますか？',function(){
+    MI=MI.filter(function(x){return x.id!==id;});
+    delete MQ[id];
+    sv();
+    saveMerchItemsToSupa();
+    rMerch();
+    toast('削除しました');
+  });
 }
 function cancelMerch(){
-  if(!confirm('本日の物販記録を取り消しますか？'))return;
-  var t=td();
-  MS=MS.filter(function(m){return m.d!==t;});
-  for(var id in MQ) MQ[id]=0;
-  sv(); // localStorage全体を更新
-  // Supabaseから削除してから画面更新
-  supaDelete('pos_merch', t).then(function(){
-    rMerch();rGuests();
-    toast('物販記録を取り消しました');
-  });
+  askConfirm('本日の物販記録を取り消しますか？',function(){
+    var t=td();
+    MS=MS.filter(function(m){return m.d!==t;});
+    for(var id in MQ) MQ[id]=0;
+    sv(); // localStorage全体を更新
+    // Supabaseから削除してから画面更新
+    supaDelete('pos_merch', t).then(function(){
+      rMerch();rGuests();
+      toast('物販記録を取り消しました');
+    });
+  },'取り消す');
 }
 
 // ===== CARTE =====
@@ -1675,9 +1851,10 @@ function chD(d){vD.setDate(vD.getDate()+d);rDay();}
 function chM(d){vM.setMonth(vM.getMonth()+d);rMon();}
 function chAM(d){aM.setMonth(aM.getMonth()+d);rAnket();}
 function dayDelGuest(id){
-  if(!confirm('この記録を削除しますか？'))return;
-  G=G.filter(function(x){return String(x.id)!==String(id);});
-  sv();supaDelete('pos_guests',id);rDay();rGuests();toast('削除しました');
+  askConfirm('この記録を削除しますか？',function(){
+    G=G.filter(function(x){return String(x.id)!==String(id);});
+    sv();supaDelete('pos_guests',id);rDay();rGuests();toast('削除しました');
+  });
 }
 function openPastAdd(){
   // 昨日の日付をデフォルトにセット
@@ -1769,28 +1946,59 @@ function loadPrev(){
   var date=document.getElementById('k-d').value;
   var sorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
   var prev=sorted.length?sorted[0]:null;
-  for(var i=0;i<AD.length;i++){var d=AD[i];var pq=prev?(prev[d.id]||0):0;var pvEl=document.getElementById('pv-'+d.id);var dqEl=document.getElementById('dq-'+d.id);var dsEl=document.getElementById('ds-'+d.id);if(pvEl)pvEl.textContent=pq>0?pq:'—';CQ[d.id]=pq;if(dqEl)dqEl.textContent=pq;if(dsEl)dsEl.textContent=pq>0?yn(pq*d.v):'—';}
+  for(var i=0;i<AD.length;i++){var d=AD[i];var pq=prev?(prev[d.id]||0):0;var pvEl=document.getElementById('pv-'+d.id);var dqEl=document.getElementById('dq-'+d.id);var dsEl=document.getElementById('ds-'+d.id);if(pvEl){pvEl.textContent=pq>0?pq:'—';pvEl.setAttribute('data-prev',pq);pvEl.style.color='var(--tx2)';pvEl.style.fontWeight='normal';pvEl.title='';}CQ[d.id]=pq;if(dqEl)dqEl.textContent=pq;if(dsEl)dsEl.textContent=pq>0?yn(pq*d.v):'—';}
   rcCash();
 }
 function chDQ(id,delta){
   CQ[id]=Math.max(0,(CQ[id]||0)+delta);var d=null;for(var i=0;i<AD.length;i++){if(AD[i].id===id){d=AD[i];break;}}if(!d)return;
   var dqEl=document.getElementById('dq-'+id);var dsEl=document.getElementById('ds-'+id);
-  if(dqEl)dqEl.textContent=CQ[id];if(dsEl)dsEl.textContent=CQ[id]>0?yn(CQ[id]*d.v):'—';rcCash();
+  if(dqEl)dqEl.textContent=CQ[id];if(dsEl)dsEl.textContent=CQ[id]>0?yn(CQ[id]*d.v):'—';
+  var pvEl=document.getElementById('pv-'+id);
+  if(pvEl){
+    var prevVal=parseInt(pvEl.getAttribute('data-prev'))||0;
+    var diffQ=CQ[id]-prevVal;
+    if(diffQ>0){pvEl.style.color='var(--ok)';pvEl.style.fontWeight='700';pvEl.title='前日比 +'+diffQ;}
+    else if(diffQ<0){pvEl.style.color='var(--ng)';pvEl.style.fontWeight='700';pvEl.title='前日比 '+diffQ;}
+    else{pvEl.style.color='var(--tx2)';pvEl.style.fontWeight='normal';pvEl.title='';}
+  }
+  rcCash();
 }
 function rcCash(){
   var date=document.getElementById('k-d').value||td();var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
   var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
   var grand=dt+sup,net=grand-carry;
   var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
-  var mr=MS.find(function(m){return m.d===date;});var tot=gs+(mr?mr.total:0);var diff=net-tot;
+  var mr=MS.find(function(m){return m.d===date;});var tot=gs+(mr?mr.total:0);
+  // 前日のレジ残高を取得
+  var prevSorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
+  var prevRec=prevSorted.length?prevSorted[0]:null;
+  var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
+  // あるべき残高 = 前日残高 + 本日売上 − 回収額
+  var expected=prevNet+tot-carry;
+  // 過不足 = 実際のレジ残高 − あるべき残高
+  var diff=net-expected;
   var ch=document.getElementById('k-carry-h');if(ch)ch.textContent=carry>0?('金種合計 '+yn(grand)+' から '+yn(carry)+' を回収'):'金種合計から引かれます';
-  var dc=diff>0?'ov2':diff<0?'un':'';var dl=diff>0?('+'+yn(diff)+' 超過'):diff<0?(yn(diff)+' 不足'):'ぴったり ✓';
+  var dc=diff>0?'ov2':diff<0?'un':'';
+  var msg=diff>0?('⚠️ 現金が '+yn(Math.abs(diff))+' 多いです'):diff<0?('⚠️ 現金が '+yn(Math.abs(diff))+' 足りません'):'✅ ぴったりです';
   var h='<div class="csb tot full"><div class="csl">金種合計（回収前）</div><div class="csv">'+yn(grand)+'</div></div>';
   if(carry>0)h+='<div class="csb car full"><div class="csl">🏦 回収額</div><div class="csv">'+yn(carry)+'</div></div>';
-  h+='<div class="csb net"><div class="csl">レジ残高</div><div class="csv">'+yn(net)+'</div></div>';
-  h+='<div class="csb '+dc+'"><div class="csl">売上との過不足</div><div class="csv" style="font-size:16px;">'+dl+'</div></div>';
-  h+='<div class="csb full"><div class="csl">本日の売上</div><div class="csv" style="color:var(--ok);">'+yn(tot)+'</div></div>';
+  h+='<div class="csb net"><div class="csl">実際のレジ残高</div><div class="csv">'+yn(net)+'</div></div>';
+  h+='<div class="csb '+dc+' full"><div class="csl">判定</div><div class="csv" style="font-size:15px;">'+msg+'</div></div>';
+  // 内訳（どこで食い違ったか分かるように）
+  h+='<div class="csb full" style="background:var(--sf2);"><div style="width:100%;font-size:11px;color:var(--tx2);line-height:1.9;">';
+  h+='前日のレジ残高　<b style="color:var(--tx);float:right;">'+yn(prevNet)+'</b><br>';
+  h+='＋ 本日の売上　<b style="color:var(--ok);float:right;">'+yn(tot)+'</b><br>';
+  if(carry>0)h+='－ 回収額　<b style="color:var(--wn);float:right;">'+yn(carry)+'</b><br>';
+  h+='<span style="border-top:1px dashed var(--bd);display:block;margin-top:3px;padding-top:3px;">＝ あるべき残高　<b style="color:var(--tx);float:right;">'+yn(expected)+'</b></span>';
+  h+='実際のレジ残高　<b style="color:var(--ac);float:right;">'+yn(net)+'</b>';
+  h+='</div></div>';
   document.getElementById('k-sum').innerHTML=h;
+  var moEl=document.getElementById('k-mo');
+  if(moEl && diff!==0 && !moEl.value){
+    moEl.placeholder = diff>0 ? '例：チェキ売上の計上漏れ／つり銭多め' : '例：レジ打ち忘れ／釣銭間違い';
+  } else if(moEl && diff===0){
+    moEl.placeholder='';
+  }
 }
 function saveCash(){
   var date=document.getElementById('k-d').value;var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
@@ -1806,7 +2014,12 @@ function rCash(){
   var yr=kM.getFullYear(),mo=kM.getMonth();document.getElementById('k-lbl').textContent=yr+'/'+p2(mo+1);
   var recs=CR.filter(function(r){var d=new Date(r.d);return d.getFullYear()===yr&&d.getMonth()===mo;}).sort(function(a,b){return a.d.localeCompare(b.d);});
   var el=document.getElementById('k-list');
-  if(recs.length===0){el.innerHTML='<div class="empty"><div class="ei">💴</div>金種記録なし</div>';return;}
+  if(recs.length===0){
+    el.innerHTML='<div class="empty"><div class="ei">💴</div>金種記録なし</div>';
+    var kCtxEmpty=document.getElementById('k-chart');
+    if(kCtxEmpty && window.kChart){window.kChart.destroy();window.kChart=null;}
+    return;
+  }
   var h='';
   for(var i=0;i<recs.length;i++){
     var r=recs[i];
@@ -1817,19 +2030,50 @@ function rCash(){
     // 本日の売上
     var dg=G.filter(function(g){return g.d===r.d&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
     var mr=MS.find(function(m){return m.d===r.d;});var daySales=gs+(mr?mr.total:0);
-    // 前日比過不足 = 本日残高 - 前日残高 - 本日売上
-    var diff=prevRec?(todayNet-prevNet-daySales):0;
-    var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)):diff<0?yn(diff):'±0';
+    // 過不足 = 本日残高 −（前日残高 ＋ 本日売上 − 回収額）
+    var expected=prevNet+daySales-(r.carry||0);
+    var diff=prevRec?(todayNet-expected):0;
+    var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)+' 多い'):diff<0?(yn(Math.abs(diff))+' 不足'):'ぴったり';
     h+='<div class="card" style="margin-bottom:8px;">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+'</div><div style="font-family:\'Noto Sans JP\',sans-serif;font-size:20px;color:var(--ac);">'+yn(r.net||r.grand)+'</div></div>';
     h+='<div style="display:flex;gap:5px;flex-wrap:wrap;">';
     if(r.carry>0)h+='<span style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1px solid var(--wn);color:var(--wn);font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;">🏦 '+(r.carryName||'回収')+' '+yn(r.carry)+'</span>';
     var diffStyle=dc==='plus'?'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);';
-    h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">過不足 '+dl+'</span>';
+    h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">'+(prevRec?dl:'前日記録なし')+'</span>';
     if(r.memo)h+='<span class="tag">'+r.memo+'</span>';
     h+='</div></div>';
   }
+  // 持ち帰り月次集計
+  var carryByPerson={};
+  for(var ci=0;ci<recs.length;ci++){
+    var rc=recs[ci];
+    if(rc.carry>0){
+      var nm=rc.carryName||'不明';
+      carryByPerson[nm]=(carryByPerson[nm]||0)+rc.carry;
+    }
+  }
+  var ckeys=Object.keys(carryByPerson);
+  if(ckeys.length>0){
+    var ch='<div class="card" style="border-top:3px solid var(--wn);margin-bottom:10px;"><div class="ct">🏦 今月の持ち帰り集計</div>';
+    for(var ck=0;ck<ckeys.length;ck++){
+      ch+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13px;"><span>'+ckeys[ck]+'</span><span style="color:var(--wn);font-weight:700;">'+yn(carryByPerson[ckeys[ck]])+'</span></div>';
+    }
+    ch+='</div>';
+    h = ch + h;
+  }
   el.innerHTML=h;
+  // 月内残高推移グラフ
+  var kCtx=document.getElementById('k-chart');
+  if(kCtx){
+    if(window.kChart){window.kChart.destroy();}
+    var labels=recs.map(function(r){return r.d.slice(5);});
+    var vals=recs.map(function(r){return r.net||r.grand;});
+    window.kChart=new Chart(kCtx.getContext('2d'),{
+      type:'line',
+      data:{labels:labels,datasets:[{data:vals,borderColor:'#e8838f',backgroundColor:'rgba(232,131,143,.15)',borderWidth:2,pointRadius:3,fill:true,tension:.3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return v>=10000?(v/10000)+'万':v;}}}}}
+    });
+  }
 }
 
 // ===== EXPORT/IMPORT =====
@@ -1889,7 +2133,7 @@ function saveGEdit(){
   g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
-function delGuest(){var id=document.getElementById('ge-id').value;if(!confirm('この記録を削除しますか？'))return;G=G.filter(function(x){return String(x.id)!==String(id);});sv();supaDelete('pos_guests',id);cModal('m-gedit');rfAll();toast('削除しました');}
+function delGuest(){var id=document.getElementById('ge-id').value;askConfirm('この記録を削除しますか？',function(){G=G.filter(function(x){return String(x.id)!==String(id);});sv();supaDelete('pos_guests',id);cModal('m-gedit');rfAll();toast('削除しました');});}
 
 // ===== PAST DATA =====
 function addPastData(){
@@ -2085,10 +2329,11 @@ function eSaveExp(rcpt){
   eCurrentRcpt=null;rEExpense();toast('支出を記録しました');
 }
 function eDelExp(id){
-  if(!confirm('削除しますか？'))return;
-  var base=loadExpBase();var item=base.history.find(function(h){return h.id===id;});
-  if(item){base.balance+=item.amount;base.history=base.history.filter(function(h){return h.id!==id;});}
-  saveExpBase(base);rEExpense();toast('削除しました');
+  askConfirm('削除しますか？',function(){
+    var base=loadExpBase();var item=base.history.find(function(h){return h.id===id;});
+    if(item){base.balance+=item.amount;base.history=base.history.filter(function(h){return h.id!==id;});}
+    saveExpBase(base);rEExpense();toast('削除しました');
+  });
 }
 function rEExpense(){
   rXExpense();return;
@@ -2236,10 +2481,11 @@ function xSaveExp(rcpt){
   toast('支出を記録しました');
 }
 function xDelExp(id){
-  if(!confirm('削除しますか？'))return;
-  var base=loadExpBase();var item=base.history.find(function(h){return h.id===id;});
-  if(item){base.balance+=item.amount;base.history=base.history.filter(function(h){return h.id!==id;});}
-  saveExpBase(base);rXExpense();toast('削除しました');
+  askConfirm('削除しますか？',function(){
+    var base=loadExpBase();var item=base.history.find(function(h){return h.id===id;});
+    if(item){base.balance+=item.amount;base.history=base.history.filter(function(h){return h.id!==id;});}
+    saveExpBase(base);rXExpense();toast('削除しました');
+  });
 }
 
 // ===== MONTH EDIT MODAL (売上タブ用) =====
@@ -2293,6 +2539,7 @@ function mkBar(el,counts,cls){
 
 function rZAnalysis(){
   var gs, ms, ds;
+  var sfx = zMode;
   if(zMode==='d'){
     ds=fYMD(zD);
     document.getElementById('z-d-lbl').textContent=ds;
@@ -2411,13 +2658,25 @@ async function loadOwnerLogs(){
   el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">読み込み中...</div>';
   var data=await supaLoad('pos_logs');
   if(!data||data.length===0){el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">履歴なし</div>';return;}
+  // 7日より古いログを自動削除
+  var cutoff=Date.now()-7*24*60*60*1000;
+  var fresh=[],stale=[];
+  for(var d=0;d<data.length;d++){
+    var idNum=parseInt(data[d].id);
+    if(!isNaN(idNum)&&idNum<cutoff){stale.push(data[d]);}
+    else{fresh.push(data[d]);}
+  }
+  stale.forEach(function(log){supaDelete('pos_logs',log.id);});
+  data=fresh;
+  if(data.length===0){el.innerHTML='<div style="text-align:center;color:var(--tx2);font-size:12px;padding:16px;">履歴なし</div>';return;}
   data.sort(function(a,b){return b.ts.localeCompare(a.ts);});
   var h='';
+  if(stale.length>0)h+='<div style="text-align:center;color:var(--tx2);font-size:10px;padding:0 0 8px;">（7日より古い'+stale.length+'件を自動削除しました）</div>';
   for(var i=0;i<Math.min(data.length,50);i++){
     var log=data[i];
     h+='<div style="border-bottom:1px solid var(--bd);padding:8px 0;">';
     h+='<div style="display:flex;justify-content:space-between;margin-bottom:3px;">';
-    h+='<span style="font-size:12px;font-weight:700;color:var(--ac);">'+log.action+'</span>';
+    h+='<span style="font-size:12px;font-weight:700;color:var(--ac);">'+log.action+(log.operator&&log.operator!=='未選択'?' <span style="color:var(--tx2);font-weight:400;">／'+log.operator+'</span>':'')+'</span>';
     h+='<span style="font-size:10px;color:var(--tx2);">'+log.ts+'</span></div>';
     h+='<div style="font-size:11px;color:var(--tx2);">'+log.detail+'</div>';
     h+='</div>';
@@ -2446,7 +2705,7 @@ function init(){
   var allOvs=document.querySelectorAll('.ov');
   for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
-  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();
+  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();
   // Supabaseからデータロード
   loadFromSupabase();
 }
