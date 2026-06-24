@@ -571,7 +571,7 @@ select.fc{cursor:pointer;}
       <label class="fl">フリーにゃんタイム</label>
       <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
       <div style="margin-top:8px;">
-        <button id="kd-btn" onclick="togKD()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🧒 キッズデイ　OFF</button>
+        <div id="kd-info" style="width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:12px;text-align:center;">🧒 キッズデイ（土曜）は自動判定されます</div>
       </div>
     </div>
   </div>
@@ -1245,20 +1245,20 @@ function calcP(a,c,ci,co,dt,fn){
   if(co){var coArr=co.split(':');var oh=parseInt(coArr[0]),om=parseInt(coArr[1]);m=(oh*60+om)-(ih*60+im);if(m<0)m+=1440;}
   var dur=co?(Math.floor(m/60)+'時間'+(m%60)+'分'):null;
   var mn=co?m:60;
-  function adultP(){if(mn<=30)return hol?Price.hd30:Price.wd30;if(mn<=60)return hol?Price.hd60:Price.wd60;var base=hol?Price.hd60:Price.wd60;var ext=hol?0:Price.wdext*Math.ceil((mn-60)/30);return base+ext;}
+  function adultP(){if(mn<=30)return hol?Price.hd30:Price.wd30;if(mn<=60)return hol?Price.hd60:Price.wd60;var base=hol?Price.hd60:Price.wd60;var ext=Price.wdext*Math.ceil((mn-60)/30);return base+ext;}
   function childP(){
-    var kidsDay=isKD||(sat&&typeof isKD!=='undefined'?isKD:sat);
-    if(!kidsDay)return adultP();
-    // キッズデイON：1時間以上で半額
-    if(mn<60)return adultP(); // 1時間未満は通常料金
+    // キッズデイ＝土曜。1時間以上で小学生以下半額（料金表準拠）
+    if(!sat) return adultP();        // 土曜以外は大人と同額
+    if(mn<60) return adultP();       // 土曜でも1時間未満は通常料金
     var base=Math.floor((hol?Price.hd60:Price.wd60)/2);
-    var ext=hol?0:Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);
+    var ext=Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);
     return base+ext;
   }
+  var kidsHalf = sat && mn>=60;      // 表示用：実際に半額が適用されたか
   var ap=adultP(),cp=childP();
   var t=ap*a+(c>0?cp*c:0);
   var bd='大人 '+yn(ap)+'×'+a+'名';
-  if(c>0)bd+=' + 子ども '+yn(cp)+'×'+c+'名'+(sat?' (半額)':'');
+  if(c>0)bd+=' + 子ども '+yn(cp)+'×'+c+'名'+(kidsHalf?' (キッズデイ半額)':'');
   return {t:t,bd:bd,dur:dur,m:m};
 }
 function ppCalc(){
@@ -1268,11 +1268,11 @@ function ppCalc(){
   var ds=td(),hol=isHol(ds),sat=isSat(ds);
   if(isFN){ppEl.textContent=yn(2600*(aC+cC));pbEl.textContent='フリーにゃんタイム　¥2,600×'+(aC+cC)+'名';return;}
   var a30=hol?Price.hd30:Price.wd30,a60=hol?Price.hd60:Price.wd60;
-  var c30=sat?Math.floor(a30/2):a30,c60=sat?Math.floor(a60/2):a60;
+  // キッズデイ＝土曜。1時間以上で小学生以下半額（30分は対象外）
+  var c30=a30,c60=sat?Math.floor(a60/2):a60;
   var p30=a30*aC+(cC>0?c30*cC:0),p60=a60*aC+(cC>0?c60*cC:0);
   var parts=['大人 '+yn(a60)+'×'+aC+'名'];
-  var kdActive=isKD;
-  if(cC>0)parts.push('子ども '+yn(c60)+'×'+cC+'名'+(kdActive?' (キッズデイ半額)':sat?' (半額)':''));
+  if(cC>0)parts.push('子ども '+yn(c60)+'×'+cC+'名'+(sat?' (キッズデイ半額)':''));
   ppEl.textContent=yn(p30)+'　/　'+yn(p60);
   pbEl.textContent='30分 / 1時間\n'+parts.join(' + ');
 }
