@@ -2149,7 +2149,9 @@ function chDQ(id,delta){
 function rcCash(){
   var date=document.getElementById('k-d').value||td();var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
   var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
-  var grand=dt+sup,net=grand-carry;
+  var grand=dt+sup;
+  // 実際の金庫の金額 = 数えた金種合計そのもの（持ち帰りは「あるべき金額」の計算にだけ使う）
+  var net=grand;
   // 本日の売上：自動集計（来店料金＋物販）
   var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
   var mr=MS.find(function(m){return m.d===date;});var autoTot=gs+(mr?mr.total:0);
@@ -2162,9 +2164,9 @@ function rcCash(){
   var prevSorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
   var prevRec=prevSorted.length?prevSorted[0]:null;
   var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
-  // あるべき残高 = 前日残高 + 本日売上 − 回収額
+  // あるべき金額 = 前日残高 + 本日売上 − 持ち帰り
   var expected=prevNet+tot-carry;
-  // 過不足 = 実際のレジ残高 − あるべき残高
+  // 過不足 = 実際の金庫（数えた金種合計） − あるべき金額
   var diff=net-expected;
   var noPrev = !prevRec;
   var ch=document.getElementById('k-carry-h');if(ch)ch.textContent=carry>0?('金種合計 '+yn(grand)+' から '+yn(carry)+' を回収'):'金種合計から引かれます';
@@ -2235,7 +2237,7 @@ function doSaveCash(staffName){
   cModal('m-cash-staff');
   var date=document.getElementById('k-d').value;var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
   var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
-  var grand=dt+sup,net=grand-carry;
+  var grand=dt+sup,net=grand;
   var carryName=document.getElementById('k-carry-name')?document.getElementById('k-carry-name').value:'';
   var salesEl=document.getElementById('k-sales');var sales=salesEl&&salesEl.value!==''?parseInt(salesEl.value)||0:0;
   var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,sales:sales,grand:grand,net:net,staff:staffName||'',id:Date.now()};
@@ -2260,22 +2262,33 @@ function rCash(){
     // 前日比で過不足を計算（月をまたいでも全期間から直前の記録を探す）
     var prevAll=CR.filter(function(x){return x.d<r.d;}).sort(function(a,b){return b.d.localeCompare(a.d);});
     var prevRec=prevAll.length?prevAll[0]:null;
-    var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
-    var todayNet=r.net||r.grand;
+    // 前日・当日とも「数えた金種合計(grand)」を実際の金庫として使う
+    var prevNet=prevRec?(prevRec.grand||prevRec.net):0;
+    var todayNet=r.grand||r.net;
     // 本日の売上
     var dg=G.filter(function(g){return g.d===r.d&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
-    var mr=MS.find(function(m){return m.d===r.d;});var daySales=gs+(mr?mr.total:0);
-    // 過不足 = 本日残高 −（前日残高 ＋ 本日売上 − 回収額）
+    var mr=MS.find(function(m){return m.d===r.d;});var autoSales=gs+(mr?mr.total:0);
+    var daySales=(typeof r.sales==='number' && r.sales>0)?r.sales:autoSales;
+    // あるべき金額 = 前日残高 ＋ 本日売上 − 持ち帰り
     var expected=prevNet+daySales-(r.carry||0);
     var diff=prevRec?(todayNet-expected):0;
-    var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)+' 多い'):diff<0?(yn(Math.abs(diff))+' 不足'):'ぴったり';
+    var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)+' 多い'):diff<0?(yn(Math.abs(diff))+' 不足'):'✅ ぴったり';
     h+='<div class="card" style="margin-bottom:8px;">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><div style="font-size:13px;font-weight:700;">'+r.d+(r.staff?' <span style="font-size:11px;color:var(--tx2);font-weight:400;">／'+r.staff+'</span>':'')+'</div><div style="font-family:\'Noto Sans JP\',sans-serif;font-size:20px;color:var(--ac);">'+yn(r.net||r.grand)+'</div></div>';
-    h+='<div style="display:flex;gap:5px;flex-wrap:wrap;">';
-    if(r.carry>0)h+='<span style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1px solid var(--wn);color:var(--wn);font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;">🏦 '+(r.carryName||'回収')+' '+yn(r.carry)+'</span>';
-    var diffStyle=dc==='plus'?'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);';
-    h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">'+(prevRec?dl:'前日記録なし')+'</span>';
-    if(r.memo)h+='<span class="tag">'+r.memo+'</span>';
+    // 日付・担当者・実際の金庫
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">'+r.d+(r.staff?' <span style="font-size:11px;color:var(--tx2);font-weight:400;">／'+r.staff+'</span>':'')+'</div></div>';
+    // 内訳（前日＋売上−持ち帰り＝あるべき、実際）
+    h+='<div style="font-size:13px;line-height:2;background:var(--sf2);border-radius:10px;padding:10px 12px;margin-bottom:8px;">';
+    h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">前日の金庫</span><b>'+(prevRec?yn(prevNet):'記録なし')+'</b></div>';
+    h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">＋ 売上</span><b style="color:var(--ok);">'+yn(daySales)+'</b></div>';
+    if(r.carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">－ 持ち帰り（'+(r.carryName||'')+'）</span><b style="color:#a06010;">'+yn(r.carry)+'</b></div>';
+    h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:2px;padding-top:2px;"><span style="font-weight:700;">あるべき金額</span><b>'+(prevRec?yn(expected):'—')+'</b></div>';
+    h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金庫</span><b style="font-size:16px;color:var(--ac);">'+yn(todayNet)+'</b></div>';
+    h+='</div>';
+    // 判定
+    var diffStyle=dc==='plus'?'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);';
+    h+='<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">';
+    h+='<span style="font-size:12px;padding:3px 12px;border-radius:16px;font-weight:700;'+diffStyle+'">'+(prevRec?dl:'前日記録なし')+'</span>';
+    if(r.memo)h+='<span class="tag">📝 '+r.memo+'</span>';
     h+='</div>';
     h+='<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">';
     h+='<button onclick="editCash(\''+r.d+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">✏️ 編集</button>';
@@ -2307,7 +2320,7 @@ function rCash(){
   if(kCtx){
     if(window.kChart){window.kChart.destroy();}
     var labels=recs.map(function(r){return r.d.slice(5);});
-    var vals=recs.map(function(r){return r.net||r.grand;});
+    var vals=recs.map(function(r){return r.grand||r.net;});
     window.kChart=new Chart(kCtx.getContext('2d'),{
       type:'line',
       data:{labels:labels,datasets:[{data:vals,borderColor:'#e8838f',backgroundColor:'rgba(232,131,143,.15)',borderWidth:2,pointRadius:3,fill:true,tension:.3}]},
