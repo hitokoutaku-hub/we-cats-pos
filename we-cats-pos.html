@@ -391,6 +391,9 @@ select.fc{cursor:pointer;}
 .dbtn{width:28px;height:28px;border-radius:50%;background:var(--sf);border:1.5px solid var(--bd);color:var(--ac);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .dbtn:active{background:var(--ac);color:#fff;}
 .dqty{font-family:\'Noto Sans JP\',sans-serif;font-weight:800;font-size:18px;color:var(--tx);min-width:22px;text-align:center;}
+.dqin{font-family:\'Noto Sans JP\',sans-serif;font-weight:800;font-size:18px;color:var(--tx);width:52px;text-align:center;border:1.5px solid var(--bd);border-radius:8px;padding:4px 2px;background:#fff;outline:none;-moz-appearance:textfield;}
+.dqin:focus{border-color:var(--ac);}
+.dqin::-webkit-outer-spin-button,.dqin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .dsub{font-size:11px;color:var(--tx);text-align:right;}
 .csb{background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--r);padding:10px;text-align:center;box-shadow:var(--sh);}
 .csb.full{grid-column:1/-1;}
@@ -880,6 +883,33 @@ select.fc{cursor:pointer;}
   <div style="display:flex;gap:8px;margin-top:14px;" id="det-act"></div>
 </div></div>
 
+<!-- アンケート後編集モーダル -->
+<div class="ov" id="m-aqedit"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>📋 アンケート入力</span><button class="mc" onclick="cModal('m-aqedit')">✕</button></div>
+  <div style="background:var(--sf2);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:8px;">何を見てきましたか？</div>
+    <div class="chips" id="eaq-tri"></div>
+    <div style="margin-top:7px;display:flex;gap:6px;">
+      <input type="text" class="fc" id="eaq-tri-add" placeholder="追加する" style="flex:1;padding:6px 10px;font-size:12px;">
+      <button class="btn bso bsm" onclick="addEaqTri()">追加</button>
+    </div>
+  </div>
+  <div style="background:var(--sf2);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:8px;">猫カフェは初めてですか？</div>
+    <div class="chips" id="eaq-exp">
+      <div class="chip" data-v="初めて" onclick="selOne(this,'eaq-exp')">🐱 初めて</div>
+      <div class="chip" data-v="2〜3回目" onclick="selOne(this,'eaq-exp')">🔁 2〜3回目</div>
+      <div class="chip" data-v="よく来る" onclick="selOne(this,'eaq-exp')">⭐ よく来る</div>
+    </div>
+  </div>
+  <div style="background:var(--sf2);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:14px;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:8px;">推し猫はいますか？</div>
+    <div class="chips" id="eaq-cats"></div>
+  </div>
+  <input type="hidden" id="eaq-gid">
+  <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-aqedit')">キャンセル</button><button class="btn bp" style="flex:2;" onclick="saveAqEdit()">保存</button></div>
+</div></div>
+
 <!-- RECEIPT SCREEN -->
 <div class="ov" id="m-rcpt" style="align-items:stretch;">
   <div style="background:linear-gradient(160deg,#fdeef0 0%,#fff5f6 60%,#fdeef0 100%);width:100%;max-width:540px;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;position:relative;">
@@ -944,6 +974,10 @@ select.fc{cursor:pointer;}
   <div class="stit" style="margin-top:2px;">紙幣</div><div id="d-bills"></div>
   <div class="stit">硬貨</div><div id="d-coins"></div>
   <div class="sep"></div>
+  <div class="fg"><label class="fl">本日の売上（自動集計・訂正可）</label>
+    <input type="number" class="fc" id="k-sales" min="0" oninput="rcCash()" placeholder="自動集計されます" style="background:#f0f8ee;border-color:var(--ac2);font-size:16px;text-align:center;font-family:'Noto Sans JP',sans-serif;">
+    <div style="font-size:10px;color:var(--tx2);margin-top:3px;">来店料金＋物販から自動計算。違う場合は直接入力してください。</div>
+  </div>
   <div class="fg"><label class="fl">応援券など（金額）</label><input type="number" class="fc" id="k-sup" value="0" min="0" oninput="rcCash()"></div>
   <div class="carry">
     <div class="carry-l">🏦 持ち帰り</div>
@@ -1380,6 +1414,40 @@ function togAqTri(el){var v=el.getAttribute('data-v');var idx=aqCh.tri.indexOf(v
 function togAqCat(el){var v=el.getAttribute('data-v');var idx=aqCh.cats.indexOf(v);if(idx>=0){aqCh.cats.splice(idx,1);el.classList.remove('on2');}else{aqCh.cats.push(v);el.classList.add('on2');}}
 function addAqTri(){var v=document.getElementById('aq-tri-add').value.trim();if(!v)return;if(Tris.indexOf(v)<0)Tris.push(v);if(aqCh.tri.indexOf(v)<0)aqCh.tri.push(v);document.getElementById('aq-tri-add').value='';sv();buildAqChips();}
 function selOne(el,gid){var els=document.querySelectorAll('#'+gid+' .chip');for(var i=0;i<els.length;i++)els[i].classList.remove('on');el.classList.add('on');}
+// ===== アンケート後編集 =====
+var eaqCh={tri:[],exp:'',cats:[]};
+function openAqEdit(id){
+  var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
+  var aq=g.aq||{};
+  eaqCh={tri:(aq.tri||[]).slice(),exp:aq.exp||'',cats:(aq.cats||[]).slice()};
+  document.getElementById('eaq-gid').value=id;
+  buildEaqChips();
+  // 初めてか？の選択状態を反映
+  var exps=document.querySelectorAll('#eaq-exp .chip');
+  for(var i=0;i<exps.length;i++){exps[i].classList.remove('on');if(exps[i].getAttribute('data-v')===eaqCh.exp)exps[i].classList.add('on');}
+  cModal('m-det');
+  oModal('m-aqedit');
+}
+function buildEaqChips(){
+  var icons={'Google Maps':'📍','インスタ':'📸','TikTok':'🎵','友人紹介':'👥','X':'🐦','アメブロ':'📖','その他':'💬'};
+  var h='';
+  for(var i=0;i<Tris.length;i++){var t=Tris[i];var on=eaqCh.tri.indexOf(t)>=0?' on2':'';h+='<div class="chip'+on+'" data-v="'+t+'" onclick="togEaqTri(this)">'+(icons[t]||'💬')+' '+t+'</div>';}
+  document.getElementById('eaq-tri').innerHTML=h;
+  var ch='';
+  for(var j=0;j<Cats.length;j++){var cat=Cats[j];var on2=eaqCh.cats.indexOf(cat)>=0?' on2':'';ch+='<div class="chip'+on2+'" data-v="'+cat+'" onclick="togEaqCat(this)">'+cat+'</div>';}
+  document.getElementById('eaq-cats').innerHTML=ch;
+}
+function togEaqTri(el){var v=el.getAttribute('data-v');var idx=eaqCh.tri.indexOf(v);if(idx>=0){eaqCh.tri.splice(idx,1);el.classList.remove('on2');}else{eaqCh.tri.push(v);el.classList.add('on2');}}
+function togEaqCat(el){var v=el.getAttribute('data-v');var idx=eaqCh.cats.indexOf(v);if(idx>=0){eaqCh.cats.splice(idx,1);el.classList.remove('on2');}else{eaqCh.cats.push(v);el.classList.add('on2');}}
+function addEaqTri(){var v=document.getElementById('eaq-tri-add').value.trim();if(!v)return;if(Tris.indexOf(v)<0){Tris.push(v);sv();saveSettingToSupa('triggers',Tris);}if(eaqCh.tri.indexOf(v)<0)eaqCh.tri.push(v);document.getElementById('eaq-tri-add').value='';buildEaqChips();}
+function saveAqEdit(){
+  var id=document.getElementById('eaq-gid').value;
+  var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
+  var expEl=document.querySelector('#eaq-exp .chip.on');
+  var exp=expEl?expEl.getAttribute('data-v'):'';
+  g.aq={tri:eaqCh.tri.slice(),exp:exp,cats:eaqCh.cats.slice()};
+  sv();saveGuestToSupa(g);cModal('m-aqedit');rfAll();toast('アンケートを保存しました 📋');
+}
 
 // ===== REGISTER =====
 function regGuest(){
@@ -1498,8 +1566,8 @@ function oDet(id){
   h+='</table>';
   document.getElementById('det-body').innerHTML=h;
   document.getElementById('det-act').innerHTML=st
-    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="oGEdit('+id+')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO('+id+')">退店処理</button>'
-    :'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bp" style="flex:1;" onclick="oGEdit('+id+')">✏️ 編集・削除</button>';
+    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="openAqEdit('+id+')">📋</button><button class="btn bso bsm" onclick="oGEdit('+id+')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO('+id+')">退店処理</button>'
+    :'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="openAqEdit('+id+')">📋 アンケート</button><button class="btn bp" style="flex:1;" onclick="oGEdit('+id+')">✏️ 編集</button>';
   oModal('m-det');
 }
 
@@ -2003,42 +2071,93 @@ var BILLS=[{id:'b10k',l:'1万円',v:10000},{id:'b5k',l:'5千円',v:5000},{id:'b2
 var COINS=[{id:'c100',l:'100円',v:100},{id:'c50',l:'50円',v:50},{id:'c10',l:'10円',v:10},{id:'c5',l:'5円',v:5},{id:'c1',l:'1円',v:1}];
 var AD=BILLS.concat(COINS);var CQ={};
 function buildDenomRows(){
-  function mkR(d){return '<div class="drow"><div class="dlbl">'+d.l+'</div><div class="dprev" id="pv-'+d.id+'">—</div><div class="dctrl"><button class="dbtn" onclick="chDQ(\''+d.id+'\',-1)">－</button><div class="dqty" id="dq-'+d.id+'">0</div><button class="dbtn" onclick="chDQ(\''+d.id+'\',1)">＋</button></div><div class="dsub" id="ds-'+d.id+'">—</div></div>';}
+  function mkR(d){return '<div class="drow"><div class="dlbl">'+d.l+'</div><div class="dprev" id="pv-'+d.id+'">—</div><div class="dctrl"><button class="dbtn" onclick="chDQ(\''+d.id+'\',-1)">－</button><input type="number" inputmode="numeric" pattern="[0-9]*" class="dqin" id="dq-'+d.id+'" value="0" min="0" onchange="setDQ(\''+d.id+'\',this.value)" onfocus="this.select()"><button class="dbtn" onclick="chDQ(\''+d.id+'\',1)">＋</button></div><div class="dsub" id="ds-'+d.id+'">—</div></div>';}
   var bh='',ch='';for(var i=0;i<BILLS.length;i++)bh+=mkR(BILLS[i]);for(var j=0;j<COINS.length;j++)ch+=mkR(COINS[j]);
   document.getElementById('d-bills').innerHTML=bh;document.getElementById('d-coins').innerHTML=ch;
 }
-function oCash(){
-  document.getElementById('k-d').value=td();document.getElementById('k-sup').value=0;document.getElementById('k-carry').value=0;document.getElementById('k-mo').value='';
-  buildCarrySelect();
-  loadPrev();oModal('m-cash');
-}
-function loadPrev(){
-  var date=document.getElementById('k-d').value;
-  var sorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
-  var prev=sorted.length?sorted[0]:null;
-  for(var i=0;i<AD.length;i++){var d=AD[i];var pq=prev?(prev[d.id]||0):0;var pvEl=document.getElementById('pv-'+d.id);var dqEl=document.getElementById('dq-'+d.id);var dsEl=document.getElementById('ds-'+d.id);if(pvEl){pvEl.textContent=pq>0?pq:'—';pvEl.setAttribute('data-prev',pq);pvEl.style.color='var(--tx2)';pvEl.style.fontWeight='normal';pvEl.title='';}CQ[d.id]=pq;if(dqEl)dqEl.textContent=pq;if(dsEl)dsEl.textContent=pq>0?yn(pq*d.v):'—';}
-  rcCash();
-}
-function chDQ(id,delta){
-  CQ[id]=Math.max(0,(CQ[id]||0)+delta);var d=null;for(var i=0;i<AD.length;i++){if(AD[i].id===id){d=AD[i];break;}}if(!d)return;
-  var dqEl=document.getElementById('dq-'+id);var dsEl=document.getElementById('ds-'+id);
-  if(dqEl)dqEl.textContent=CQ[id];if(dsEl)dsEl.textContent=CQ[id]>0?yn(CQ[id]*d.v):'—';
+function setDQ(id,val){
+  var q=parseInt(val)||0;if(q<0)q=0;
+  CQ[id]=q;
+  var d=null;for(var i=0;i<AD.length;i++){if(AD[i].id===id){d=AD[i];break;}}if(!d)return;
+  var inEl=document.getElementById('dq-'+id);if(inEl)inEl.value=q;
+  var dsEl=document.getElementById('ds-'+id);if(dsEl)dsEl.textContent=q>0?yn(q*d.v):'—';
   var pvEl=document.getElementById('pv-'+id);
   if(pvEl){
-    var prevVal=parseInt(pvEl.getAttribute('data-prev'))||0;
-    var diffQ=CQ[id]-prevVal;
+    var prevVal=parseInt(pvEl.getAttribute('data-prev'))||0;var diffQ=q-prevVal;
     if(diffQ>0){pvEl.style.color='var(--ok)';pvEl.style.fontWeight='700';pvEl.title='前日比 +'+diffQ;}
     else if(diffQ<0){pvEl.style.color='var(--ng)';pvEl.style.fontWeight='700';pvEl.title='前日比 '+diffQ;}
     else{pvEl.style.color='var(--tx2)';pvEl.style.fontWeight='normal';pvEl.title='';}
   }
   rcCash();
 }
+function oCash(){
+  document.getElementById('k-d').value=td();document.getElementById('k-sup').value=0;document.getElementById('k-carry').value=0;document.getElementById('k-mo').value='';
+  var se=document.getElementById('k-sales');if(se)se.value='';
+  buildCarrySelect();
+  loadPrev();oModal('m-cash');
+}
+function editCash(date){
+  var rec=CR.find(function(r){return r.d===date;});
+  if(!rec)return;
+  document.getElementById('k-d').value=date;
+  document.getElementById('k-sup').value=rec.sup||0;
+  document.getElementById('k-carry').value=rec.carry||0;
+  document.getElementById('k-mo').value=rec.memo||'';
+  var se=document.getElementById('k-sales');if(se)se.value=(typeof rec.sales==='number')?rec.sales:'';
+  buildCarrySelect();
+  var cn=document.getElementById('k-carry-name');if(cn)cn.value=rec.carryName||'';
+  // 保存済みの各金種枚数を読み込む（前日ではなく実データ）
+  for(var i=0;i<AD.length;i++){
+    var d=AD[i];var q=rec[d.id]||0;
+    CQ[d.id]=q;
+    var dqEl=document.getElementById('dq-'+d.id);var dsEl=document.getElementById('ds-'+d.id);
+    if(dqEl)dqEl.value=q;if(dsEl)dsEl.textContent=q>0?yn(q*d.v):'—';
+    // 前日比の表示も更新
+    var prevSorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
+    var prev=prevSorted.length?prevSorted[0]:null;
+    var pq=prev?(prev[d.id]||0):0;
+    var pvEl=document.getElementById('pv-'+d.id);
+    if(pvEl){pvEl.textContent=pq>0?pq:'—';pvEl.setAttribute('data-prev',pq);
+      var diffQ=q-pq;
+      if(diffQ>0){pvEl.style.color='var(--ok)';pvEl.style.fontWeight='700';}
+      else if(diffQ<0){pvEl.style.color='var(--ng)';pvEl.style.fontWeight='700';}
+      else{pvEl.style.color='var(--tx2)';pvEl.style.fontWeight='normal';}
+    }
+  }
+  rcCash();
+  oModal('m-cash');
+}
+function delCash(date){
+  askConfirm(date+' の金種記録を削除しますか？',function(){
+    var rec=CR.find(function(r){return r.d===date;});
+    CR=CR.filter(function(r){return r.d!==date;});sv();
+    if(rec)supaDelete('pos_cash',String(rec.id||date));
+    rCash();toast('削除しました');
+  });
+}
+function loadPrev(){
+  var date=document.getElementById('k-d').value;
+  var sorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
+  var prev=sorted.length?sorted[0]:null;
+  for(var i=0;i<AD.length;i++){var d=AD[i];var pq=prev?(prev[d.id]||0):0;var pvEl=document.getElementById('pv-'+d.id);var dqEl=document.getElementById('dq-'+d.id);var dsEl=document.getElementById('ds-'+d.id);if(pvEl){pvEl.textContent=pq>0?pq:'—';pvEl.setAttribute('data-prev',pq);pvEl.style.color='var(--tx2)';pvEl.style.fontWeight='normal';pvEl.title='';}CQ[d.id]=pq;if(dqEl)dqEl.value=pq;if(dsEl)dsEl.textContent=pq>0?yn(pq*d.v):'—';}
+  rcCash();
+}
+function chDQ(id,delta){
+  var cur=parseInt(CQ[id])||0;
+  setDQ(id, Math.max(0,cur+delta));
+}
 function rcCash(){
   var date=document.getElementById('k-d').value||td();var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
   var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
   var grand=dt+sup,net=grand-carry;
+  // 本日の売上：自動集計（来店料金＋物販）
   var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
-  var mr=MS.find(function(m){return m.d===date;});var tot=gs+(mr?mr.total:0);
+  var mr=MS.find(function(m){return m.d===date;});var autoTot=gs+(mr?mr.total:0);
+  // 訂正欄に値があればそれを使う。空なら自動集計値を欄に反映
+  var salesEl=document.getElementById('k-sales');
+  var tot;
+  if(salesEl && salesEl.value!==''){ tot=parseInt(salesEl.value)||0; }
+  else { tot=autoTot; if(salesEl)salesEl.value=autoTot; }
   // 前日のレジ残高を取得
   var prevSorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
   var prevRec=prevSorted.length?prevSorted[0]:null;
@@ -2047,6 +2166,7 @@ function rcCash(){
   var expected=prevNet+tot-carry;
   // 過不足 = 実際のレジ残高 − あるべき残高
   var diff=net-expected;
+  var noPrev = !prevRec;
   var ch=document.getElementById('k-carry-h');if(ch)ch.textContent=carry>0?('金種合計 '+yn(grand)+' から '+yn(carry)+' を回収'):'金種合計から引かれます';
   var dc=diff>0?'ov2':diff<0?'un':'';
   var diffColor=diff>0?'var(--ok)':diff<0?'var(--ng)':'var(--tx2)';
@@ -2057,15 +2177,22 @@ function rcCash(){
   if(carry>0)h+='<div class="csb car full"><div class="csl">🏦 回収額</div><div class="csv">'+yn(carry)+'</div></div>';
   // わかりやすい内訳表（上から順に読める）
   h+='<div class="csb full" style="background:#fff;border:1.5px solid var(--bd);"><div style="width:100%;font-size:13px;line-height:2.2;">';
-  h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">前日の金庫</span><b>'+yn(prevNet)+'</b></div>';
+  h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">前日の金庫</span><b>'+(noPrev?'記録なし':yn(prevNet))+'</b></div>';
   h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">＋ 本日の売上</span><b style="color:var(--ok);">'+yn(tot)+'</b></div>';
-  if(carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">－ 回収額</span><b style="color:var(--wn);">'+yn(carry)+'</b></div>';
-  h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:4px;padding-top:4px;"><span style="font-weight:700;">＝ あるべき金額</span><b style="font-size:15px;">'+yn(expected)+'</b></div>';
+  if(carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">－ 持ち帰り</span><b style="color:var(--wn);">'+yn(carry)+'</b></div>';
+  h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:4px;padding-top:4px;"><span style="font-weight:700;">＝ あるべき金額</span><b style="font-size:15px;">'+(noPrev?'—':yn(expected))+'</b></div>';
   h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金額</span><b style="font-size:15px;color:var(--ac);">'+yn(net)+'</b></div>';
   h+='</div></div>';
   // 判定（大きく・差額を強調）
-  h+='<div class="csb '+dc+' full" style="text-align:center;padding:14px;"><div class="csl" style="margin-bottom:4px;">過不足の判定</div><div style="font-size:20px;font-weight:800;color:'+diffColor+';">'+msg+'</div></div>';
+  if(noPrev){
+    h+='<div class="csb full" style="text-align:center;padding:14px;background:var(--sf2);"><div style="font-size:13px;color:var(--tx2);">前日の記録がないため<br>過不足は判定できません</div></div>';
+  }else{
+    h+='<div class="csb '+dc+' full" style="text-align:center;padding:14px;"><div class="csl" style="margin-bottom:4px;">過不足の判定</div><div style="font-size:20px;font-weight:800;color:'+diffColor+';">'+msg+'</div></div>';
+  }
   document.getElementById('k-sum').innerHTML=h;
+  // 保存ボタン用に現在の差額を保持
+  window._cashDiff = noPrev ? 0 : diff;
+  window._cashNoPrev = noPrev;
   var moEl=document.getElementById('k-mo');
   if(moEl && diff!==0 && !moEl.value){
     moEl.placeholder = diff>0 ? '例：チェキ売上の計上漏れ／つり銭多め' : '例：レジ打ち忘れ／釣銭間違い';
@@ -2074,9 +2201,27 @@ function rcCash(){
   }
 }
 function saveCash(){
-  // 保存前に担当者を選ぶ
   var date=document.getElementById('k-d').value;
   if(!date){toast('日付を入力してください',true);return;}
+  // 過不足チェック（前日記録があってズレている場合は警告）
+  rcCash(); // 最新の差額を計算
+  var diff=window._cashDiff||0;
+  var noPrev=window._cashNoPrev;
+  var memo=document.getElementById('k-mo').value.trim();
+  if(!noPrev && diff!==0){
+    // ズレている → メモ必須
+    if(!memo){
+      var msg=diff<0?('現金が '+yn(Math.abs(diff))+' 足りません。'):('現金が '+yn(Math.abs(diff))+' 多いです。');
+      askConfirm(msg+'\n金庫を数え直してください。\nそれでも保存する場合は、メモに理由を書いてから保存してください。',function(){
+        document.getElementById('k-mo').focus();
+      },'メモを書く');
+      return;
+    }
+  }
+  // 担当者を選ぶ
+  openCashStaffPicker();
+}
+function openCashStaffPicker(){
   var el=document.getElementById('cash-staff-btns');
   var h='';
   for(var i=0;i<StaffList.length;i++){
@@ -2092,7 +2237,8 @@ function doSaveCash(staffName){
   var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
   var grand=dt+sup,net=grand-carry;
   var carryName=document.getElementById('k-carry-name')?document.getElementById('k-carry-name').value:'';
-  var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,grand:grand,net:net,staff:staffName||'',id:Date.now()};
+  var salesEl=document.getElementById('k-sales');var sales=salesEl&&salesEl.value!==''?parseInt(salesEl.value)||0:0;
+  var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,sales:sales,grand:grand,net:net,staff:staffName||'',id:Date.now()};
   for(var j=0;j<AD.length;j++)data[AD[j].id]=CQ[AD[j].id]||0;
   CR=CR.filter(function(r){return r.d!==date;});CR.push(data);sv();saveCashToSupa(data);cModal('m-cash');rCash();
   toast('金種登録しました 💴'+(staffName?'（'+staffName+'）':''));
@@ -2111,8 +2257,9 @@ function rCash(){
   var h='';
   for(var i=0;i<recs.length;i++){
     var r=recs[i];
-    // 前日比で過不足を計算
-    var prevRec=i>0?recs[i-1]:null;
+    // 前日比で過不足を計算（月をまたいでも全期間から直前の記録を探す）
+    var prevAll=CR.filter(function(x){return x.d<r.d;}).sort(function(a,b){return b.d.localeCompare(a.d);});
+    var prevRec=prevAll.length?prevAll[0]:null;
     var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
     var todayNet=r.net||r.grand;
     // 本日の売上
@@ -2129,7 +2276,12 @@ function rCash(){
     var diffStyle=dc==='plus'?'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);';
     h+='<span style="font-size:10px;padding:2px 8px;border-radius:16px;font-weight:700;'+diffStyle+'">'+(prevRec?dl:'前日記録なし')+'</span>';
     if(r.memo)h+='<span class="tag">'+r.memo+'</span>';
-    h+='</div></div>';
+    h+='</div>';
+    h+='<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">';
+    h+='<button onclick="editCash(\''+r.d+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">✏️ 編集</button>';
+    h+='<button onclick="delCash(\''+r.d+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🗑 削除</button>';
+    h+='</div>';
+    h+='</div>';
   }
   // 持ち帰り月次集計
   var carryByPerson={};
