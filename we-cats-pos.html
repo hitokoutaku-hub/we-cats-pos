@@ -1746,6 +1746,14 @@ function rMerch(){
   // 入力中の数量(MQ)から点数・売上を計算して表示（＋を押すと即反映）
   var cnt=0,sal=0;
   for(var i=0;i<MI.length;i++){var qq=parseInt(MQ[String(MI[i].id)])||0;cnt+=qq;sal+=qq*MI[i].p;}
+  // 保存済みデータのうち、商品リストにない項目（夜カフェチケットなど）も合算
+  if(tr){
+    for(var k=0;k<tr.i.length;k++){
+      var it=tr.i[k];
+      var inList=MI.some(function(m){return String(m.id)===String(it.id);});
+      if(!inList && it.q>0){cnt+=it.q;sal+=it.q*it.p;}
+    }
+  }
   document.getElementById('mc').textContent=cnt;document.getElementById('ms').textContent=sal.toLocaleString();
   // 編集モード表示バナー
   var banner=document.getElementById('merch-edit-banner');
