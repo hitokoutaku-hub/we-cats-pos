@@ -100,7 +100,7 @@ function loadFromSupabase() {
       var cms=settings.find(function(s){return s.key==='carry_members';});
       if(cms) CarryMembers=cms.value;
       var sls=settings.find(function(s){return s.key==='staff_list';});
-      if(sls){ StaffList=sls.value; localStorage.setItem('wc_staff',JSON.stringify(StaffList)); buildOperatorSelect(); }
+      if(sls && Array.isArray(sls.value) && sls.value.length>0){ StaffList=sls.value; localStorage.setItem('wc_staff',JSON.stringify(StaffList)); buildOperatorSelect(); }
     }
 
     if(cheki && cheki.length>0) {
@@ -177,6 +177,7 @@ function saveChekiToSupa(c) {
 var OWNER_PW = '0103';
 var isOwnerMode = false;
 var StaffList = JSON.parse(localStorage.getItem('wc_staff') || '["吉村","高橋","土橋","冨部","松中","松本","よしむら","田染"]');
+if(!Array.isArray(StaffList) || StaffList.length===0){ StaffList = ["吉村","高橋","土橋","冨部","松中","松本","よしむら","田染"]; localStorage.setItem('wc_staff',JSON.stringify(StaffList)); }
 var CurrentOperator = localStorage.getItem('wc_operator') || '';
 
 function logAction(action, detail) {
