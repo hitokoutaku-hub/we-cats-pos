@@ -106,6 +106,8 @@ function loadFromSupabase() {
       if(cs) Cats=cs.value;
       var ts=settings.find(function(s){return s.key==='triggers';});
       if(ts) Tris=ts.value;
+      var mbs=settings.find(function(s){return s.key==='members';});
+      if(mbs && Array.isArray(mbs.value)){ Members=mbs.value; localStorage.setItem('wc_members',JSON.stringify(Members)); buildMemberSelects(); }
       var cms=settings.find(function(s){return s.key==='carry_members';});
       if(cms) CarryMembers=cms.value;
       var sls=settings.find(function(s){return s.key==='staff_list';});
@@ -587,6 +589,12 @@ select.fc{cursor:pointer;}
     <div class="fg"><label class="fl">来店パターン</label>
       <select class="fc" id="r-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
     </div>
+    <div class="fg"><label class="fl">常連さん（会員のときだけ選択）</label>
+      <div style="display:flex;gap:8px;">
+        <select class="fc" id="r-member" style="flex:1;"><option value="">— 選択なし —</option></select>
+        <button class="btn bso bsm" onclick="addMemberPrompt('r-member')" style="flex-shrink:0;">＋追加</button>
+      </div>
+    </div>
     <div class="fg">
       <label class="fl">フリーにゃんタイム</label>
       <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
@@ -768,6 +776,7 @@ select.fc{cursor:pointer;}
     <div id="z-d">
       <div class="mnav"><button class="mnbtn" onclick="chZD(-1)">＜前日</button><div class="mnlbl" id="z-d-lbl"></div><button class="mnbtn" onclick="chZD(1)">翌日＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-d-type"></div></div>
+      <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-d-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-d-pattern"></div></div>
       <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-d-time"></div></div>
       <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-d-merch"></div></div>
@@ -775,6 +784,7 @@ select.fc{cursor:pointer;}
     <div id="z-m" style="display:none;">
       <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div class="mnlbl" id="z-m-lbl"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-m-type"></div></div>
+      <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-m-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-m-pattern"></div></div>
       <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-m-time"></div></div>
       <div class="card"><div class="ct">🛍️ 物販商品別（数量）</div><div id="z-m-merch"></div></div>
@@ -783,6 +793,7 @@ select.fc{cursor:pointer;}
     <div id="z-y" style="display:none;">
       <div class="mnav"><button class="mnbtn" onclick="chZY(-1)">＜前年</button><div class="mnlbl" id="z-y-lbl"></div><button class="mnbtn" onclick="chZY(1)">翌年＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-y-type"></div></div>
+      <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-y-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-y-pattern"></div></div>
       <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-y-time"></div></div>
       <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-y-merch"></div></div>
@@ -1069,6 +1080,12 @@ select.fc{cursor:pointer;}
   <div class="fg"><label class="fl">来店パターン</label>
     <select class="fc" id="ge-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
   </div>
+  <div class="fg"><label class="fl">常連さん（会員のときだけ選択）</label>
+    <div style="display:flex;gap:8px;">
+      <select class="fc" id="ge-member" style="flex:1;"><option value="">— 選択なし —</option></select>
+      <button class="btn bso bsm" onclick="addMemberPrompt('ge-member')" style="flex-shrink:0;">＋追加</button>
+    </div>
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
     <div class="fg"><label class="fl">大人</label><input type="number" class="fc" id="ge-a" min="0" value="1"></div>
     <div class="fg"><label class="fl">子ども</label><input type="number" class="fc" id="ge-c" min="0" value="0"></div>
@@ -1160,6 +1177,11 @@ select.fc{cursor:pointer;}
 </div></div>
 
 <div class="toast" id="toast"></div>
+<div class="ov" id="m-member-add"><div class="modal" style="max-width:340px;">
+  <div class="mt"><span>⭐ 常連さんを追加</span><button class="mc" onclick="cModal('m-member-add')">✕</button></div>
+  <div class="fg"><label class="fl">お名前</label><input type="text" class="fc" id="member-add-input" placeholder="例：田中さん"></div>
+  <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-member-add')">キャンセル</button><button class="btn bp" style="flex:2;" onclick="doAddMember()">追加する</button></div>
+</div></div>
 <div class="ov" id="m-cash-staff"><div class="modal" style="max-width:340px;">
   <div class="mt"><span>👤 金種を締めた担当者</span><button class="mc" onclick="cModal('m-cash-staff')">✕</button></div>
   <div style="font-size:12px;color:var(--tx2);margin-bottom:12px;">担当者を選んでください</div>
@@ -1186,6 +1208,32 @@ var chekiSel=[]; // 現在選択中の猫（1匹モード用）
 var chekiMulti=false; // 複数モードかどうか
 var chekiQty=1;
 var Tris=JSON.parse(localStorage.getItem('wc_tris')||'["Google Maps","インスタ","TikTok","友人紹介","X","アメブロ","その他"]');
+var Members=JSON.parse(localStorage.getItem('wc_members')||'[]');
+function saveMembers(){localStorage.setItem('wc_members',JSON.stringify(Members));saveSettingToSupa('members',Members);}
+function buildMemberSelects(){
+  var ids=['r-member','ge-member'];
+  for(var k=0;k<ids.length;k++){
+    var sel=document.getElementById(ids[k]);if(!sel)continue;
+    var cur=sel.value;
+    var h='<option value="">— 選択なし —</option>';
+    for(var i=0;i<Members.length;i++)h+='<option value="'+Members[i]+'">'+Members[i]+'</option>';
+    sel.innerHTML=h;sel.value=cur;
+  }
+}
+function addMemberPrompt(selId){
+  window._memberTargetSel=selId;
+  document.getElementById('member-add-input').value='';
+  oModal('m-member-add');
+  setTimeout(function(){try{document.getElementById('member-add-input').focus();}catch(e){}},100);
+}
+function doAddMember(){
+  var name=document.getElementById('member-add-input').value.trim();
+  if(!name){toast('お名前を入力してください',true);return;}
+  if(Members.indexOf(name)<0){Members.push(name);saveMembers();buildMemberSelects();}
+  var sel=document.getElementById(window._memberTargetSel);if(sel)sel.value=name;
+  cModal('m-member-add');
+  toast(name+' さんを追加しました');
+}
 var BCs=JSON.parse(localStorage.getItem('wc_bcs')||'[{"id":1,"n":"赤","c":"#f28b82"},{"id":2,"n":"オレンジ","c":"#f9b468"},{"id":3,"n":"黄","c":"#f7d86c"},{"id":4,"n":"緑","c":"#81c995"},{"id":5,"n":"青","c":"#76b9ed"},{"id":6,"n":"紫","c":"#b39ddb"},{"id":7,"n":"ピンク","c":"#f48fb1"},{"id":8,"n":"茶","c":"#a1887f"}]');
 var MQ={};
 var PastData=JSON.parse(localStorage.getItem('wc_past')||'[]');
@@ -1458,12 +1506,12 @@ function regGuest(){
   var t=document.getElementById('r-time').value;if(!t){toast('入店時間を入力してください',true);return;}
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
-  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
+  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,member:document.getElementById('r-member')?document.getElementById('r-member').value:'',a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
   G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
   document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
-  isFN=false;isKD=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};
+  isFN=false;isKD=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};var rm=document.getElementById('r-member');if(rm)rm.value='';
   var fnBtn=document.getElementById('fn-btn');
   if(fnBtn){fnBtn.style.background='var(--sf2)';fnBtn.style.borderColor='var(--bd)';fnBtn.style.color='var(--tx2)';fnBtn.textContent='🐱 フリーにゃん　OFF';}
   var kdBtn=document.getElementById('kd-btn');
@@ -2366,6 +2414,7 @@ function oGEdit(id){
   document.getElementById('ge-a').value=g.a;document.getElementById('ge-c').value=g.c;document.getElementById('ge-ci').value=g.ci;
   document.getElementById('ge-co').value=g.co||'';document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
   document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
+  buildMemberSelects();var gem=document.getElementById('ge-member');if(gem)gem.value=g.member||'';
   oModal('m-gedit');
 }
 function saveGEdit(){
@@ -2386,7 +2435,7 @@ function saveGEdit(){
     var discName2=document.getElementById('ge-disc-name').value.trim();
     var moVal2=document.getElementById('ge-mo').value;
     if(discName2&&discAmt2>0)moVal2=(moVal2?moVal2+' ':'')+discName2+' -¥'+discAmt2.toLocaleString();
-    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{}};
+    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{}};
     G.push(newG);sv();saveGuestToSupa(newG);cModal('m-gedit');rfAll();toast('記録を追加しました ✅');return;
   }
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
@@ -2399,7 +2448,7 @@ function saveGEdit(){
   var discName=document.getElementById('ge-disc-name').value.trim();
   var moVal=document.getElementById('ge-mo').value;
   if(discName&&discAmt>0)moVal=(moVal?moVal+' ':'')+discName+' -¥'+discAmt.toLocaleString();
-  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';
+  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
 function delGuest(){var id=document.getElementById('ge-id').value;askConfirm('この記録を削除しますか？',function(){G=G.filter(function(x){return String(x.id)!==String(id);});sv();supaDelete('pos_guests',id);cModal('m-gedit');rfAll();toast('削除しました');});}
@@ -2865,6 +2914,22 @@ function rZAnalysis(){
   gs.forEach(function(g){typeCount[g.tp==='new'?'新規':'リピーター']++;});
   mkBar(document.getElementById('z-'+sfx+'-type'),typeCount,'gr');
 
+  // 常連さん（会員）別の来店回数
+  var memberCount={};
+  gs.forEach(function(g){if(g.member){memberCount[g.member]=(memberCount[g.member]||0)+1;}});
+  var memEl=document.getElementById('z-'+sfx+'-member');
+  if(memEl){
+    var memKeys=Object.keys(memberCount).sort(function(a,b){return memberCount[b]-memberCount[a];});
+    if(memKeys.length===0){memEl.innerHTML='<div style="color:var(--tx2);font-size:12px;text-align:center;padding:12px;">常連さんの来店なし</div>';}
+    else{
+      var mh='';
+      for(var mk=0;mk<memKeys.length;mk++){
+        mh+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid var(--bd);"><span style="font-weight:700;">⭐ '+memKeys[mk]+'</span><span style="font-family:\'Noto Sans JP\',sans-serif;color:var(--ac);font-weight:700;">'+memberCount[memKeys[mk]]+' 回</span></div>';
+      }
+      memEl.innerHTML=mh;
+    }
+  }
+
   // 来店パターン
   var patCount={};
   gs.forEach(function(g){patCount[g.pt]=(patCount[g.pt]||0)+1;});
@@ -2993,7 +3058,7 @@ function init(){
   var allOvs=document.querySelectorAll('.ov');
   for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
-  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();
+  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();buildMemberSelects();
   // Supabaseからデータロード
   loadFromSupabase();
 }
