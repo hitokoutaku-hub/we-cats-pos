@@ -1191,6 +1191,12 @@ function sp(id){
   document.getElementById(id).classList.add('active');
   var map={'p-g':'n-g','p-r':'n-r','p-m':'n-m','p-s':'n-s','p-k':'n-k'};
   if(map[id])document.getElementById(map[id]).classList.add('active');
+  // 物販タブを開いたとき、編集モードでなければ数量を今日基準にリセット
+  if(id==='p-m' && !window._editMerchDate){
+    var t2=td(),tr2=MS.find(function(m){return m.d===t2;});
+    var tq={};if(tr2){for(var z=0;z<tr2.i.length;z++)tq[String(tr2.i[z].id)]=tr2.i[z].q;}
+    for(var y=0;y<MI.length;y++)MQ[String(MI[y].id)]=tq[String(MI[y].id)]||0;
+  }
   rfAll();
 }
 
@@ -1643,15 +1649,9 @@ function delCheki(id){
 // ===== MERCH =====
 function rMerch(){
   var t=td(),tr=MS.find(function(m){return m.d===t;});
-  // 編集モードでない通常表示のときは、MQを「今日の保存済み数量」に同期
-  // （過去日の編集で残った数量が新規入力欄に残るのを防ぐ）
-  if(!window._editMerchDate){
-    var todayQ={};
-    if(tr){for(var ti=0;ti<tr.i.length;ti++)todayQ[String(tr.i[ti].id)]=tr.i[ti].q;}
-    for(var mi=0;mi<MI.length;mi++){MQ[String(MI[mi].id)]=todayQ[String(MI[mi].id)]||0;}
-  }
+  // 入力中の数量(MQ)から点数・売上を計算して表示（＋を押すと即反映）
   var cnt=0,sal=0;
-  if(tr){for(var i=0;i<tr.i.length;i++){cnt+=tr.i[i].q;sal+=tr.i[i].q*tr.i[i].p;}}
+  for(var i=0;i<MI.length;i++){var qq=parseInt(MQ[String(MI[i].id)])||0;cnt+=qq;sal+=qq*MI[i].p;}
   document.getElementById('mc').textContent=cnt;document.getElementById('ms').textContent=sal.toLocaleString();
   // 編集モード表示バナー
   var banner=document.getElementById('merch-edit-banner');
@@ -1744,16 +1744,7 @@ function exitMerchEdit(){
   rMerch();rGuests();
   toast('編集をやめて通常モードに戻りました');
 }
-function chMQ(id,d){id=String(id);MQ[id]=(parseInt(MQ[id])||0)+d;if(MQ[id]<0)MQ[id]=0;
-  // 数量表示だけ更新（全再描画せず確実に反映）
-  var qEl=document.getElementById('mq-'+id);
-  if(qEl)qEl.textContent=MQ[id];
-  var subEl=document.getElementById('msub-'+id);
-  var item=MI.find(function(x){return String(x.id)===id;});
-  if(subEl&&item){var sub=MQ[id]*item.p;subEl.textContent=sub>0?yn(sub):'';}
-  // 上部の点数・売上サマリは再計算
-  updateMerchSummary();
-}
+function chMQ(id,d){id=String(id);MQ[id]=(parseInt(MQ[id])||0)+d;if(MQ[id]<0)MQ[id]=0;rMerch();}
 function updateMerchSummary(){
   var cnt=0,sal=0;
   for(var i=0;i<MI.length;i++){var q=parseInt(MQ[String(MI[i].id)])||0;cnt+=q;sal+=q*MI[i].p;}
