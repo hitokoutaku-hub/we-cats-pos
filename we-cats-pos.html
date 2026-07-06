@@ -1648,7 +1648,7 @@ function rMerch(){
   if(!window._editMerchDate){
     var todayQ={};
     if(tr){for(var ti=0;ti<tr.i.length;ti++)todayQ[String(tr.i[ti].id)]=tr.i[ti].q;}
-    for(var mi=0;mi<MI.length;mi++){MQ[MI[mi].id]=todayQ[String(MI[mi].id)]||0;}
+    for(var mi=0;mi<MI.length;mi++){MQ[String(MI[mi].id)]=todayQ[String(MI[mi].id)]||0;}
   }
   var cnt=0,sal=0;
   if(tr){for(var i=0;i<tr.i.length;i++){cnt+=tr.i[i].q;sal+=tr.i[i].q*tr.i[i].p;}}
@@ -1665,14 +1665,14 @@ function rMerch(){
   }
   var h='';
   for(var j=0;j<MI.length;j++){
-    var item=MI[j];var q=MQ[item.id]||0,sub=q*item.p;
+    var item=MI[j];var iid=String(item.id);var q=parseInt(MQ[iid])||0,sub=q*item.p;
     h+='<div class="mi"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">';
     h+='<div><div style="font-size:14px;font-weight:500;">'+item.n+'</div><div style="font-size:11px;color:var(--tx2);">'+yn(item.p)+'/個</div></div>';
-    h+='<div style="display:flex;gap:5px;align-items:center;">'+(sub>0?'<span style="font-family:\'Noto Sans JP\',sans-serif;font-size:16px;color:var(--ok);">'+yn(sub)+'</span>':'');
-    h+='<button onclick="oMF(\''+item.id+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:5px 10px;border-radius:16px;font-size:11px;cursor:pointer;">✏️</button>';
-    h+='<button onclick="delMI(\''+item.id+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:16px;font-size:11px;cursor:pointer;">削除</button>';
+    h+='<div style="display:flex;gap:5px;align-items:center;"><span id="msub-'+iid+'" style="font-family:\'Noto Sans JP\',sans-serif;font-size:16px;color:var(--ok);">'+(sub>0?yn(sub):'')+'</span>';
+    h+='<button onclick="oMF(\''+iid+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:5px 10px;border-radius:16px;font-size:11px;cursor:pointer;">✏️</button>';
+    h+='<button onclick="delMI(\''+iid+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:5px 10px;border-radius:16px;font-size:11px;cursor:pointer;">削除</button>';
     h+='</div></div>';
-    h+='<div style="display:flex;align-items:center;gap:10px;"><button class="cb" onclick="chMQ('+item.id+',-1)">－</button><div style="font-family:\'Noto Sans JP\',sans-serif;font-size:24px;color:var(--ac);min-width:32px;text-align:center;">'+q+'</div><button class="cb" onclick="chMQ('+item.id+',1)">＋</button></div>';
+    h+='<div style="display:flex;align-items:center;gap:10px;"><button class="cb" onclick="chMQ(\''+iid+'\',-1)">－</button><div id="mq-'+iid+'" style="font-family:\'Noto Sans JP\',sans-serif;font-size:24px;color:var(--ac);min-width:32px;text-align:center;">'+q+'</div><button class="cb" onclick="chMQ(\''+iid+'\',1)">＋</button></div>';
     h+='</div>';
   }
   document.getElementById('ml').innerHTML=h;
@@ -1740,21 +1740,39 @@ function deleteMerchHistory(date){
 }
 function exitMerchEdit(){
   window._editMerchDate=null;
-  for(var i=0;i<MI.length;i++)MQ[MI[i].id]=0;
+  for(var i=0;i<MI.length;i++)MQ[String(MI[i].id)]=0;
   rMerch();rGuests();
   toast('編集をやめて通常モードに戻りました');
 }
-function chMQ(id,d){id=String(id);MQ[id]=(MQ[id]||0)+d;if(MQ[id]<0)MQ[id]=0;rMerch();}
+function chMQ(id,d){id=String(id);MQ[id]=(parseInt(MQ[id])||0)+d;if(MQ[id]<0)MQ[id]=0;
+  // 数量表示だけ更新（全再描画せず確実に反映）
+  var qEl=document.getElementById('mq-'+id);
+  if(qEl)qEl.textContent=MQ[id];
+  var subEl=document.getElementById('msub-'+id);
+  var item=MI.find(function(x){return String(x.id)===id;});
+  if(subEl&&item){var sub=MQ[id]*item.p;subEl.textContent=sub>0?yn(sub):'';}
+  // 上部の点数・売上サマリは再計算
+  updateMerchSummary();
+}
+function updateMerchSummary(){
+  var cnt=0,sal=0;
+  for(var i=0;i<MI.length;i++){var q=parseInt(MQ[String(MI[i].id)])||0;cnt+=q;sal+=q*MI[i].p;}
+  var mc=document.getElementById('mc'),ms=document.getElementById('ms');
+  // 保存済み今日分がある場合はそちらを優先表示（従来通り）
+  var t=td(),tr=MS.find(function(m){return m.d===t;});
+  if(!window._editMerchDate&&tr){var c2=0,s2=0;for(var k=0;k<tr.i.length;k++){c2+=tr.i[k].q;s2+=tr.i[k].q*tr.i[k].p;}if(mc)mc.textContent=c2;if(ms)ms.textContent=s2.toLocaleString();}
+  else{if(mc)mc.textContent=cnt;if(ms)ms.textContent=sal.toLocaleString();}
+}
 function saveMerch(){
   var dateEl=document.getElementById('merch-date');
   var t=window._editMerchDate||(dateEl&&dateEl.value?dateEl.value:td());var items=[];
-  for(var i=0;i<MI.length;i++)items.push({id:MI[i].id,n:MI[i].n,p:MI[i].p,q:MQ[MI[i].id]||0});
+  for(var i=0;i<MI.length;i++)items.push({id:MI[i].id,n:MI[i].n,p:MI[i].p,q:MQ[String(MI[i].id)]||0});
   var total=0;for(var j=0;j<items.length;j++)total+=items[j].q*items[j].p;
   MS=MS.filter(function(m){return m.d!==t;});MS.push({d:t,i:items,total:total});
   sv();saveMerchToSupa(MS.find(function(m){return m.d===t;}));logAction('物販保存','日付:'+t+' 合計:'+yn(total));
   var wasEdit=window._editMerchDate;window._editMerchDate=null;
   // 保存後は数量をリセット（次の入力に前の数字が残らないように）
-  for(var r=0;r<MI.length;r++)MQ[MI[r].id]=0;
+  for(var r=0;r<MI.length;r++)MQ[String(MI[r].id)]=0;
   rMerch();rGuests();
   toast(wasEdit?(wasEdit+' の物販を保存しました 🛍️'):'物販を保存しました 🛍️');
 }
