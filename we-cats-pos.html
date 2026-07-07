@@ -899,8 +899,10 @@ select.fc{cursor:pointer;}
 </div></div>
 
 <!-- アンケート後編集モーダル -->
+<!-- RECEIPT SCREEN -->
 <div class="ov" id="m-aqedit"><div class="modal"><span class="mh"></span>
   <div class="mt"><span>📋 アンケート入力</span><button class="mc" onclick="cModal('m-aqedit')">✕</button></div>
+  <div style="font-size:11px;color:var(--tx2);margin-bottom:10px;">お客様に口頭で確認した内容を入力してください（任意）</div>
   <div style="background:var(--sf2);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
     <div style="font-size:13px;font-weight:500;margin-bottom:8px;">何を見てきましたか？</div>
     <div class="chips" id="eaq-tri"></div>
@@ -925,7 +927,7 @@ select.fc{cursor:pointer;}
   <div style="display:flex;gap:8px;"><button class="btn bs" style="flex:1;" onclick="cModal('m-aqedit')">キャンセル</button><button class="btn bp" style="flex:2;" onclick="saveAqEdit()">保存</button></div>
 </div></div>
 
-<!-- RECEIPT SCREEN -->
+<!-- RECEIPT SCREEN2 -->
 <div class="ov" id="m-rcpt" style="align-items:stretch;">
   <div style="background:linear-gradient(160deg,#fdeef0 0%,#fff5f6 60%,#fdeef0 100%);width:100%;max-width:540px;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;position:relative;">
     <button onclick="cModal('m-rcpt')" style="position:absolute;top:20px;right:20px;background:rgba(0,0,0,.08);border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--tx2);">✕</button>
@@ -1618,8 +1620,8 @@ function oDet(id){
   h+='</table>';
   document.getElementById('det-body').innerHTML=h;
   document.getElementById('det-act').innerHTML=st
-    ?'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="openAqEdit('+id+')">📋</button><button class="btn bso bsm" onclick="oGEdit('+id+')">✏️</button><button class="btn bsu" style="flex:2;" onclick="cModal(\'m-det\');oCO('+id+')">退店処理</button>'
-    :'<button class="btn bs" style="flex:1;" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bsm" onclick="openAqEdit('+id+')">📋 アンケート</button><button class="btn bp" style="flex:1;" onclick="oGEdit('+id+')">✏️ 編集</button>';
+    ?'<button class="btn bsu bf" onclick="cModal(\'m-det\');oCO('+id+')" style="font-size:16px;padding:16px;margin-bottom:8px;">退店処理</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"><button class="btn bs bf" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bso bf" onclick="oGEdit('+id+')">✏️ 編集</button></div><button class="btn bf" onclick="openAqEdit('+id+')" style="background:#eef2fb;border:1px solid #aab8de;color:#5a6ea8;font-size:12px;padding:8px;">📋 アンケート（任意）</button>'
+    :'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;"><button class="btn bs bf" onclick="cModal(\'m-det\')">閉じる</button><button class="btn bp bf" onclick="oGEdit('+id+')">✏️ 編集</button></div><button class="btn bf" onclick="openAqEdit('+id+')" style="background:#eef2fb;border:1px solid #aab8de;color:#5a6ea8;font-size:12px;padding:8px;">📋 アンケート（任意）</button>';
   oModal('m-det');
 }
 
@@ -2415,6 +2417,13 @@ function oGEdit(id){
   document.getElementById('ge-co').value=g.co||'';document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
   document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
   buildMemberSelects();var gem=document.getElementById('ge-member');if(gem)gem.value=g.member||'';
+  // アンケートを読み込む
+  var aq=g.aq||{};
+  eaqCh={tri:(aq.tri||[]).slice(),exp:aq.exp||'',cats:(aq.cats||[]).slice()};
+  window._eaqGid=id;
+  buildEaqChips();
+  var exps=document.querySelectorAll('#eaq-exp .chip');
+  for(var ei=0;ei<exps.length;ei++){exps[ei].classList.remove('on');if(exps[ei].getAttribute('data-v')===eaqCh.exp)exps[ei].classList.add('on');}
   oModal('m-gedit');
 }
 function saveGEdit(){
@@ -2435,7 +2444,8 @@ function saveGEdit(){
     var discName2=document.getElementById('ge-disc-name').value.trim();
     var moVal2=document.getElementById('ge-mo').value;
     if(discName2&&discAmt2>0)moVal2=(moVal2?moVal2+' ':'')+discName2+' -¥'+discAmt2.toLocaleString();
-    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{}};
+    var expEl0=document.querySelector('#eaq-exp .chip.on');var exp0=expEl0?expEl0.getAttribute('data-v'):'';
+    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{tri:eaqCh.tri.slice(),exp:exp0,cats:eaqCh.cats.slice()}};
     G.push(newG);sv();saveGuestToSupa(newG);cModal('m-gedit');rfAll();toast('記録を追加しました ✅');return;
   }
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
@@ -2449,6 +2459,7 @@ function saveGEdit(){
   var moVal=document.getElementById('ge-mo').value;
   if(discName&&discAmt>0)moVal=(moVal?moVal+' ':'')+discName+' -¥'+discAmt.toLocaleString();
   g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';
+  var expElE=document.querySelector('#eaq-exp .chip.on');g.aq={tri:eaqCh.tri.slice(),exp:expElE?expElE.getAttribute('data-v'):'',cats:eaqCh.cats.slice()};
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
 function delGuest(){var id=document.getElementById('ge-id').value;askConfirm('この記録を削除しますか？',function(){G=G.filter(function(x){return String(x.id)!==String(id);});sv();supaDelete('pos_guests',id);cModal('m-gedit');rfAll();toast('削除しました');});}
@@ -3066,4 +3077,3 @@ init();
 </script>
 </body>
 </html>
-
