@@ -149,8 +149,12 @@ function loadFromSupabase() {
       }
     }
         sv(); rfAll();
+    window._dataReady=true;
+    // 金種の入力画面を開いたまま読み込みが完了した場合、表示中の計算を最新データで更新
+    var cashModalEl=document.getElementById('m-cash');
+    if(cashModalEl && cashModalEl.classList.contains('on')){try{rcCash();}catch(e){}}
     console.log('Supabase load complete!');
-  }).catch(function(e){console.error('loadFromSupabase error:',e.message);rfAll();});
+  }).catch(function(e){console.error('loadFromSupabase error:',e.message);window._dataReady=true;rfAll();});
 }
 
 function saveGuestToSupa(g) {
@@ -1210,6 +1214,7 @@ select.fc{cursor:pointer;}
 // ===== DATA =====
 var G=JSON.parse(localStorage.getItem('wc_g')||'[]');
 var CR=JSON.parse(localStorage.getItem('wc_cr')||'[]');
+window._dataReady=false;
 var MS=JSON.parse(localStorage.getItem('wc_ms')||'[]');
 var MI=JSON.parse(localStorage.getItem('wc_mi')||'[{"id":1,"n":"ガチャ","p":400},{"id":2,"n":"靴下","p":200},{"id":3,"n":"ドリンク","p":200},{"id":4,"n":"チュールアイス","p":300}]');
 var CU=JSON.parse(localStorage.getItem('wc_cu')||'[]');
@@ -2249,6 +2254,18 @@ function setDQ(id,val){
   rcCash();
 }
 function oCash(){
+  if(!window._dataReady){
+    toast('データを読み込み中です。少々お待ちください…');
+    var tries=0;
+    var waitTimer=setInterval(function(){
+      tries++;
+      if(window._dataReady || tries>20){ // 最大約6秒待つ
+        clearInterval(waitTimer);
+        oCash();
+      }
+    },300);
+    return;
+  }
   window._editCashId=null;
   document.getElementById('k-d').value=td();document.getElementById('k-sup').value=0;document.getElementById('k-carry').value=0;document.getElementById('k-mo').value='';
   var se=document.getElementById('k-sales');if(se)se.value='';
@@ -2256,6 +2273,18 @@ function oCash(){
   loadPrev();oModal('m-cash');
 }
 function editCash(idOrDate){
+  if(!window._dataReady){
+    toast('データを読み込み中です。少々お待ちください…');
+    var tries2=0;
+    var waitTimer2=setInterval(function(){
+      tries2++;
+      if(window._dataReady || tries2>20){
+        clearInterval(waitTimer2);
+        editCash(idOrDate);
+      }
+    },300);
+    return;
+  }
   var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
   if(!rec)rec=CR.find(function(r){return r.d===idOrDate;});
   if(!rec)return;
