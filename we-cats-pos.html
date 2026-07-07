@@ -2157,14 +2157,18 @@ function setDQ(id,val){
   rcCash();
 }
 function oCash(){
+  window._editCashId=null;
   document.getElementById('k-d').value=td();document.getElementById('k-sup').value=0;document.getElementById('k-carry').value=0;document.getElementById('k-mo').value='';
   var se=document.getElementById('k-sales');if(se)se.value='';
   buildCarrySelect();
   loadPrev();oModal('m-cash');
 }
-function editCash(date){
-  var rec=CR.find(function(r){return r.d===date;});
+function editCash(idOrDate){
+  var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
+  if(!rec)rec=CR.find(function(r){return r.d===idOrDate;});
   if(!rec)return;
+  var date=rec.d;
+  window._editCashId=rec.id||null;
   document.getElementById('k-d').value=date;
   document.getElementById('k-sup').value=rec.sup||0;
   document.getElementById('k-carry').value=rec.carry||0;
@@ -2193,11 +2197,17 @@ function editCash(date){
   rcCash();
   oModal('m-cash');
 }
-function delCash(date){
-  askConfirm(date+' の金種記録を削除しますか？',function(){
-    var rec=CR.find(function(r){return r.d===date;});
-    CR=CR.filter(function(r){return r.d!==date;});sv();
-    if(rec)supaDelete('pos_cash',String(rec.id||date));
+function delCash(idOrDate){
+  var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
+  // 旧データ（idなし）は日付で1件だけ探す
+  if(!rec)rec=CR.find(function(r){return r.d===idOrDate;});
+  if(!rec){toast('記録が見つかりません',true);return;}
+  askConfirm(rec.d+' の金種記録を削除しますか？',function(){
+    // ID一致で1件だけ消す（同じ日付の他の記録は残す）
+    if(rec.id){CR=CR.filter(function(r){return String(r.id)!==String(rec.id);});}
+    else{CR=CR.filter(function(r){return r!==rec;});}
+    sv();
+    if(rec.id)supaDelete('pos_cash',String(rec.id));
     rCash();toast('削除しました');
   });
 }
@@ -2271,6 +2281,18 @@ function rcCash(){
 function saveCash(){
   var date=document.getElementById('k-d').value;
   if(!date){toast('日付を入力してください',true);return;}
+  // 同じ日付が既にある＆編集中でない → 上書き確認
+  var existing=CR.find(function(r){return r.d===date;});
+  if(existing && !window._editCashId){
+    askConfirm(date+' の金種はすでに登録されています。\n上書きしますか？',function(){
+      window._editCashId=existing.id;  // 既存を上書き対象に
+      proceedSaveCash();
+    },'上書きする');
+    return;
+  }
+  proceedSaveCash();
+}
+function proceedSaveCash(){
   // 過不足チェック（前日記録があってズレている場合は警告）
   rcCash(); // 最新の差額を計算
   var diff=window._cashDiff||0;
@@ -2306,9 +2328,15 @@ function doSaveCash(staffName){
   var grand=dt+sup,net=grand;
   var carryName=document.getElementById('k-carry-name')?document.getElementById('k-carry-name').value:'';
   var salesEl=document.getElementById('k-sales');var sales=salesEl&&salesEl.value!==''?parseInt(salesEl.value)||0:0;
-  var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,sales:sales,grand:grand,net:net,staff:staffName||'',id:Date.now()};
+  // 編集中なら既存IDを引き継ぐ。新規なら新しいID
+  var useId=window._editCashId||Date.now();
+  var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,sales:sales,grand:grand,net:net,staff:staffName||'',id:useId};
   for(var j=0;j<AD.length;j++)data[AD[j].id]=CQ[AD[j].id]||0;
-  CR=CR.filter(function(r){return r.d!==date;});CR.push(data);sv();saveCashToSupa(data);cModal('m-cash');rCash();
+  // 同じIDの記録だけ置き換える（同じ日付の別記録は消さない）
+  CR=CR.filter(function(r){return String(r.id)!==String(useId);});
+  CR.push(data);sv();saveCashToSupa(data);
+  window._editCashId=null;
+  cModal('m-cash');rCash();
   toast('金種登録しました 💴'+(staffName?'（'+staffName+'）':''));
 }
 function chKM(d){kM.setMonth(kM.getMonth()+d);rCash();}
@@ -2357,8 +2385,8 @@ function rCash(){
     if(r.memo)h+='<span class="tag">📝 '+r.memo+'</span>';
     h+='</div>';
     h+='<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">';
-    h+='<button onclick="editCash(\''+r.d+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">✏️ 編集</button>';
-    h+='<button onclick="delCash(\''+r.d+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🗑 削除</button>';
+    h+='<button onclick="editCash(\''+(r.id||r.d)+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">✏️ 編集</button>';
+    h+='<button onclick="delCash(\''+(r.id||r.d)+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🗑 削除</button>';
     h+='</div>';
     h+='</div>';
   }
