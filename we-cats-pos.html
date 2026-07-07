@@ -2032,6 +2032,7 @@ function delMI(id){
     MI=MI.filter(function(x){return x.id!==id;});
     delete MQ[id];
     sv();
+    supaDelete('pos_merch_items',String(id));
     saveMerchItemsToSupa();
     rMerch();
     toast('削除しました');
@@ -2376,7 +2377,7 @@ function rcCash(){
   // 前日のレジ残高を取得
   var prevSorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
   var prevRec=prevSorted.length?prevSorted[0]:null;
-  var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
+  var prevNet=prevRec?(prevRec.grand||prevRec.net):0;
   // あるべき金額 = 前日残高 + 本日売上 − 持ち帰り
   var expected=prevNet+tot-carry;
   // 過不足 = 実際の金庫（数えた金種合計） − あるべき金額
