@@ -613,7 +613,7 @@ select.fc{cursor:pointer;}
       <div class="cr"><button class="cb" onclick="cc2('c',-1)">－</button><div class="cv" id="cc3">0</div><button class="cb" onclick="cc2('c',1)">＋</button></div>
     </div>
     <div class="sep"></div>
-    <div class="fg"><label class="fl">入店時間</label><input type="time" class="fc" id="r-time"></div>
+    <div class="fg"><label class="fl">入店時間</label><div id="r-time"></div></div>
     <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="r-memo" placeholder="例：大学生位女子"></div>
   </div>
 
@@ -774,7 +774,8 @@ select.fc{cursor:pointer;}
       <div class="tab" id="tz-y" onclick="ztab('y')">年別</div>
     </div>
     <div id="z-d">
-      <div class="mnav"><button class="mnbtn" onclick="chZD(-1)">＜前日</button><div class="mnlbl" id="z-d-lbl"></div><button class="mnbtn" onclick="chZD(1)">翌日＞</button></div>
+      <div class="mnav"><button class="mnbtn" onclick="chZD(-1)">＜前日</button><div class="mnlbl" id="z-d-lbl" onclick="openZDCal()" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">📅</div><button class="mnbtn" onclick="chZD(1)">翌日＞</button></div>
+      <input type="date" id="z-d-cal" onchange="jumpZD(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;">
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-d-type"></div></div>
       <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-d-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-d-pattern"></div></div>
@@ -867,11 +868,12 @@ select.fc{cursor:pointer;}
   <div class="mt"><span>🚪 退店処理</span><button class="mc" onclick="cModal('m-co')">✕</button></div>
   <div id="co-info" style="margin-bottom:12px;"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-    <div><label class="fl">入店時間（編集可）</label><input type="time" class="fc" id="co-ci" oninput="rcCO()" onchange="rcCO()" onblur="rcCO()"></div>
-    <div><label class="fl">退店時間</label><input type="time" class="fc" id="co-co" oninput="rcCO()" onchange="rcCO()" onblur="rcCO()"></div>
+    <div><label class="fl">入店時間（編集可）</label><div id="co-ci"></div></div>
+    <div><label class="fl">退店時間</label><div id="co-co"></div></div>
   </div>
   <div class="pbox"><div class="pbox-l">滞在時間</div><div class="pbox-a" id="co-dur">—</div></div>
   <div id="co-det" style="font-size:11px;color:var(--tx2);margin-bottom:10px;text-align:center;"></div>
+  <div class="fg"><button id="co-fn-btn" onclick="togCOFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button></div>
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px;">
     <div class="ct" onclick="toggleSection('co-discount-body',this)" style="cursor:pointer;padding:12px 14px;margin:0;font-size:12px;user-select:none;">🎫 割引・クーポンなど <span style="float:right;font-size:12px;color:var(--tx2);">▼</span></div>
     <div id="co-discount-body" style="display:none;padding:0 14px 14px;">
@@ -1089,11 +1091,17 @@ select.fc{cursor:pointer;}
     </div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-    <div class="fg"><label class="fl">大人</label><input type="number" class="fc" id="ge-a" min="0" value="1"></div>
-    <div class="fg"><label class="fl">子ども</label><input type="number" class="fc" id="ge-c" min="0" value="0"></div>
+    <div class="fg"><label class="fl">大人</label>
+      <div class="cr"><button class="cb" onclick="geCnt('a',-1)">－</button><div class="cv" id="ge-a-disp">1</div><button class="cb" onclick="geCnt('a',1)">＋</button></div>
+      <input type="hidden" id="ge-a" value="1">
+    </div>
+    <div class="fg"><label class="fl">子ども</label>
+      <div class="cr"><button class="cb" onclick="geCnt('c',-1)">－</button><div class="cv" id="ge-c-disp">0</div><button class="cb" onclick="geCnt('c',1)">＋</button></div>
+      <input type="hidden" id="ge-c" value="0">
+    </div>
   </div>
-  <div class="fg"><label class="fl">入店時間</label><input type="time" class="fc" id="ge-ci"></div>
-  <div class="fg"><label class="fl">退店時間（滞在中の場合は空白でOK）</label><input type="time" class="fc" id="ge-co"></div>
+  <div class="fg"><label class="fl">入店時間</label><div id="ge-ci"></div></div>
+  <div class="fg"><label class="fl">退店時間（滞在中の場合は空白でOK）</label><div id="ge-co"></div><button type="button" onclick="setTime('ge-co','')" style="margin-top:6px;background:none;border:1px solid var(--bd);color:var(--tx2);padding:4px 10px;border-radius:10px;font-size:11px;cursor:pointer;font-family:'Zen Maru Gothic',sans-serif;">滞在中（空白）にする</button></div>
   <div class="fg"><label class="fl">料金（手動入力）</label><input type="number" class="fc" id="ge-pr" min="0" placeholder="空白で自動計算"></div>
   <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="ge-mo"></div>
   <div class="fg"><label class="fl">割引内容（例：クーポン、振興券）</label><input type="text" class="fc" id="ge-disc-name" placeholder="例：クーポン"></div>
@@ -1259,6 +1267,34 @@ var eChartS=null,eChartV=null;
 // ===== HELPERS =====
 function p2(n){return String(n).padStart(2,'0');}
 function ft(d){return p2(d.getHours())+':'+p2(d.getMinutes());}
+// 時刻セレクト（時・分）を生成してコンテナに入れる
+function buildTimeSelect(containerId,onchg){
+  var c=document.getElementById(containerId);if(!c)return;
+  var hOpts='';for(var h=0;h<24;h++)hOpts+='<option value="'+p2(h)+'">'+p2(h)+'</option>';
+  var mOpts='';for(var m=0;m<60;m++)mOpts+='<option value="'+p2(m)+'">'+p2(m)+'</option>';
+  var chg=onchg?(' onchange="'+onchg+'"'):'';
+  c.innerHTML='<div style="display:flex;align-items:center;gap:6px;">'
+    +'<select class="tsel" data-role="h"'+chg+'>'+hOpts+'</select><span style="font-weight:700;color:var(--tx2);">時</span>'
+    +'<span style="font-weight:700;color:var(--tx2);">:</span>'
+    +'<select class="tsel" data-role="m"'+chg+'>'+mOpts+'</select><span style="font-weight:700;color:var(--tx2);">分</span></div>';
+}
+// 時刻コンテナから "HH:MM" を取得
+function getTime(containerId){
+  var c=document.getElementById(containerId);if(!c)return '';
+  var h=c.querySelector('[data-role=h]'),m=c.querySelector('[data-role=m]');
+  if(!h||!m)return '';
+  if(c.getAttribute('data-empty')==='1')return '';
+  return h.value+':'+m.value;
+}
+// 時刻コンテナに "HH:MM" をセット（空文字なら未設定状態に）
+function setTime(containerId,val){
+  var c=document.getElementById(containerId);if(!c)return;
+  var h=c.querySelector('[data-role=h]'),m=c.querySelector('[data-role=m]');
+  if(!h||!m)return;
+  if(!val){c.setAttribute('data-empty','1');h.value='00';m.value='00';return;}
+  c.removeAttribute('data-empty');
+  var parts=val.split(':');h.value=p2(parseInt(parts[0])||0);m.value=p2(parseInt(parts[1])||0);
+}
 function fYMD(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
 function td(){return fYMD(new Date());}
 function yn(n){return '¥'+Number(n).toLocaleString();}
@@ -1384,9 +1420,9 @@ function calcP(a,c,ci,co,dt,fn){
   return {t:t,bd:bd,dur:dur,m:m};
 }
 function ppCalc(){
-  var ppEl=document.getElementById('pp');var pbEl=document.getElementById('pb');var tEl=document.getElementById('r-time');
-  if(!ppEl||!pbEl||!tEl)return;
-  var t=tEl.value;if(!t)return;
+  var ppEl=document.getElementById('pp');var pbEl=document.getElementById('pb');
+  if(!ppEl||!pbEl)return;
+  var t=getTime('r-time');if(!t)return;
   var ds=td(),hol=isHol(ds),sat=isSat(ds);
   if(isFN){ppEl.textContent=yn(2600*(aC+cC));pbEl.textContent='フリーにゃんタイム　¥2,600×'+(aC+cC)+'名';return;}
   var a30=hol?Price.hd30:Price.wd30,a60=hol?Price.hd60:Price.wd60;
@@ -1505,14 +1541,14 @@ function saveAqEdit(){
 
 // ===== REGISTER =====
 function regGuest(){
-  var t=document.getElementById('r-time').value;if(!t){toast('入店時間を入力してください',true);return;}
+  var t=getTime('r-time');if(!t){toast('入店時間を入力してください',true);return;}
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
   var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,member:document.getElementById('r-member')?document.getElementById('r-member').value:'',a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
   G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
-  document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
+  setTime('r-time',ft(new Date()));document.getElementById('r-memo').value='';
   isFN=false;isKD=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};var rm=document.getElementById('r-member');if(rm)rm.value='';
   var fnBtn=document.getElementById('fn-btn');
   if(fnBtn){fnBtn.style.background='var(--sf2)';fnBtn.style.borderColor='var(--bd)';fnBtn.style.color='var(--tx2)';fnBtn.textContent='🐱 フリーにゃん　OFF';}
@@ -1527,24 +1563,41 @@ function regGuest(){
 function oCO(id){
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
   coId=id;
-  document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱 フリーにゃん</span>':'')+'</div>';
-  document.getElementById('co-ci').value=g.ci;document.getElementById('co-co').value=ft(new Date());
+  window._coFN=!!g.fn;  // 退店処理中のフリーにゃん状態
+  document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span></div>';
+  setTime('co-ci',g.ci);setTime('co-co',ft(new Date()));
   document.getElementById('co-cup').value=0;document.getElementById('co-tkt').value=0;document.getElementById('co-sup').value=0;
   document.getElementById('co-othn').value='';document.getElementById('co-otha').value=0;
   document.getElementById('co-mo').value=g.mo||'';
+  updateCOFNBtn();
   rcCO();oModal('m-co');
+}
+function togCOFN(){
+  window._coFN=!window._coFN;
+  updateCOFNBtn();
+  rcCO();
+}
+function updateCOFNBtn(){
+  var btn=document.getElementById('co-fn-btn');if(!btn)return;
+  if(window._coFN){
+    btn.textContent='🐱 フリーにゃん　ON';
+    btn.style.background='linear-gradient(135deg,#eeebfa,#ddd4f4)';btn.style.borderColor='var(--ac2)';btn.style.color='#6a5fb0';btn.style.fontWeight='700';
+  }else{
+    btn.textContent='🐱 フリーにゃん　OFF';
+    btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.style.fontWeight='normal';
+  }
 }
 function rcCO(){
   var g=G.find(function(x){return String(x.id)===String(coId);});if(!g)return;
-  var ci=document.getElementById('co-ci').value||g.ci;
-  var co=document.getElementById('co-co').value;
+  var ci=getTime('co-ci')||g.ci;
+  var co=getTime('co-co');
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,g.fn);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN);isKD=g.kd||false;
   document.getElementById('co-dur').textContent=r.dur||'—';
   document.getElementById('co-det').textContent=r.bd;
   document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
@@ -1554,17 +1607,17 @@ function rcCO(){
 function confCO(){
   var g=G.find(function(x){return String(x.id)===String(coId);});
   if(!g){toast('対象のお客様が見つかりません',true);return;}
-  var ci=document.getElementById('co-ci').value||g.ci;
-  var co=document.getElementById('co-co').value||ft(new Date());
+  var ci=getTime('co-ci')||g.ci;
+  var co=getTime('co-co')||ft(new Date());
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
-  var r=calcP(g.a,g.c,ci,co,g.d,g.fn);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN);isKD=g.kd||false;
   var mo=document.getElementById('co-mo').value;
   if(otha>0)mo=(mo?mo+' ':'')+(othn||'その他割引')+' -¥'+otha.toLocaleString();
-  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup-otha);g.mo=mo;g.st='done';
+  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup-otha);g.mo=mo;g.st='done';g.fn=window._coFN;
   sv();
   cModal('m-co');
   rfAll();
@@ -1575,15 +1628,15 @@ function confCO(){
 }
 function showRcpt(){
   var g=G.find(function(x){return String(x.id)===String(coId);});if(!g)return;
-  var ci=document.getElementById('co-ci').value||g.ci;
-  var co=document.getElementById('co-co').value;
+  var ci=getTime('co-ci')||g.ci;
+  var co=getTime('co-co');
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,g.fn);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN);isKD=g.kd||false;
   var tot=Math.max(0,r.t-disc);
   document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
   document.getElementById('rc-dur').textContent=r.dur||'—';
@@ -2060,6 +2113,35 @@ function dayDelGuest(id){
     sv();supaDelete('pos_guests',id);rDay();rGuests();toast('削除しました');
   });
 }
+function geCnt(which,delta){
+  var el=document.getElementById('ge-'+which);
+  var v=Math.max(0,(parseInt(el.value)||0)+delta);
+  el.value=v;
+  var disp=document.getElementById('ge-'+which+'-disp');if(disp)disp.textContent=v;
+}
+function geSetCnt(which,v){
+  var el=document.getElementById('ge-'+which);if(el)el.value=v;
+  var disp=document.getElementById('ge-'+which+'-disp');if(disp)disp.textContent=v;
+}
+function resetPastForm(keepDate){
+  document.getElementById('ge-id').value='';
+  document.getElementById('ge-tp').value='new';
+  document.getElementById('ge-pt').value='友人';
+  geSetCnt('a',1);geSetCnt('c',0);
+  setTime('ge-ci','12:00');
+  setTime('ge-co','13:00');
+  document.getElementById('ge-pr').value='';
+  document.getElementById('ge-mo').value='';
+  var dn=document.getElementById('ge-disc-name');if(dn)dn.value='';
+  var da=document.getElementById('ge-disc-amt');if(da)da.value=0;
+  var gm=document.getElementById('ge-member');if(gm)gm.value='';
+  // アンケートもクリア
+  eaqCh={tri:[],exp:'',cats:[]};
+  if(typeof buildEaqChips==='function')buildEaqChips();
+  var exps=document.querySelectorAll('#eaq-exp .chip');for(var i=0;i<exps.length;i++)exps[i].classList.remove('on');
+  // 日付は保持
+  if(keepDate){document.getElementById('ge-id').setAttribute('data-date',keepDate);var de=document.getElementById('ge-date');if(de)de.value=keepDate;}
+}
 function openPastAdd(){
   // 昨日の日付をデフォルトにセット
   var yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
@@ -2067,10 +2149,9 @@ function openPastAdd(){
   document.getElementById('ge-id').value='';
   document.getElementById('ge-tp').value='new';
   document.getElementById('ge-pt').value='友人';
-  document.getElementById('ge-a').value=1;
-  document.getElementById('ge-c').value=0;
-  document.getElementById('ge-ci').value='12:00';
-  document.getElementById('ge-co').value='13:00';
+  geSetCnt('a',1);geSetCnt('c',0);
+  setTime('ge-ci','12:00');
+  setTime('ge-co','13:00');
   document.getElementById('ge-pr').value='';
   document.getElementById('ge-mo').value='';
   document.getElementById('ge-id').setAttribute('data-date', yStr);
@@ -2085,10 +2166,9 @@ function openDayAdd(){
   document.getElementById('ge-id').value='';
   document.getElementById('ge-tp').value='new';
   document.getElementById('ge-pt').value='友人';
-  document.getElementById('ge-a').value=1;
-  document.getElementById('ge-c').value=0;
-  document.getElementById('ge-ci').value='12:00';
-  document.getElementById('ge-co').value='13:00';
+  geSetCnt('a',1);geSetCnt('c',0);
+  setTime('ge-ci','12:00');
+  setTime('ge-co','13:00');
   document.getElementById('ge-pr').value='';
   document.getElementById('ge-mo').value='';
   // 日付をvDの日付にセット
@@ -2441,8 +2521,8 @@ function impData(e){
 function oGEdit(id){
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;cModal('m-det');
   document.getElementById('ge-id').value=id;document.getElementById('ge-tp').value=g.tp;document.getElementById('ge-pt').value=g.pt;
-  document.getElementById('ge-a').value=g.a;document.getElementById('ge-c').value=g.c;document.getElementById('ge-ci').value=g.ci;
-  document.getElementById('ge-co').value=g.co||'';document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
+  geSetCnt('a',g.a);geSetCnt('c',g.c);setTime('ge-ci',g.ci);
+  setTime('ge-co',g.co||'');document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
   document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
   buildMemberSelects();var gem=document.getElementById('ge-member');if(gem)gem.value=g.member||'';
   // アンケートを読み込む
@@ -2462,8 +2542,8 @@ function saveGEdit(){
     var newId=String(Date.now());
     var a=parseInt(document.getElementById('ge-a').value)||1;
     var c=parseInt(document.getElementById('ge-c').value)||0;
-    var ci=document.getElementById('ge-ci').value;
-    var co=document.getElementById('ge-co').value;
+    var ci=getTime('ge-ci');
+    var co=getTime('ge-co');
     var prInput=document.getElementById('ge-pr').value;
     var pr=prInput!==''?parseInt(prInput):0;
     if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,false);pr=r.t;}
@@ -2474,11 +2554,14 @@ function saveGEdit(){
     if(discName2&&discAmt2>0)moVal2=(moVal2?moVal2+' ':'')+discName2+' -¥'+discAmt2.toLocaleString();
     var expEl0=document.querySelector('#eaq-exp .chip.on');var exp0=expEl0?expEl0.getAttribute('data-v'):'';
     var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{tri:eaqCh.tri.slice(),exp:exp0,cats:eaqCh.cats.slice()}};
-    G.push(newG);sv();saveGuestToSupa(newG);cModal('m-gedit');rfAll();toast('記録を追加しました ✅');return;
+    G.push(newG);sv();saveGuestToSupa(newG);rfAll();
+    // 連続入力のためフォームをリセット（日付は保持）。モーダルは開いたまま
+    resetPastForm(dateAttr);
+    toast('記録を追加しました ✅ 続けて入力できます');return;
   }
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
   var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
-  var ci=document.getElementById('ge-ci').value;var co=document.getElementById('ge-co').value;
+  var ci=getTime('ge-ci');var co=getTime('ge-co');
   var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
   if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,g.fn);pr=r.t;}
   var discAmt=parseInt(document.getElementById('ge-disc-amt').value)||0;
@@ -2877,6 +2960,19 @@ function ztab(t){
   rZAnalysis();
 }
 function chZD(d){zD.setDate(zD.getDate()+d);rZAnalysis();}
+function openZDCal(){
+  var cal=document.getElementById('z-d-cal');if(!cal)return;
+  // 現在の日付をカレンダーにセット
+  cal.value=fYMD(zD);
+  // カレンダーを開く（showPickerが使える場合）
+  try{cal.showPicker();}catch(e){cal.style.pointerEvents='auto';cal.focus();cal.click();}
+}
+function jumpZD(val){
+  if(!val)return;
+  var parts=val.split('-');
+  zD=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+  rZAnalysis();
+}
 function chZM(d){zM.setMonth(zM.getMonth()+d);rZAnalysis();}
 function chZY(d){zY.setFullYear(zY.getFullYear()+d);rZAnalysis();}
 
@@ -2899,7 +2995,7 @@ function rZAnalysis(){
   var sfx = zMode;
   if(zMode==='d'){
     ds=fYMD(zD);
-    document.getElementById('z-d-lbl').textContent=ds;
+    document.getElementById('z-d-lbl').textContent='📅 '+ds;
     gs=G.filter(function(g){return g.d===ds&&g.st==='done';});
     var msItem=MS.find(function(m){return m.d===ds;});
     ms=msItem?msItem.i:[];
@@ -3098,6 +3194,7 @@ function init(){
   for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
   buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();buildMemberSelects();
+  buildTimeSelect('r-time');buildTimeSelect('co-ci','rcCO()');buildTimeSelect('co-co','rcCO()');buildTimeSelect('ge-ci');buildTimeSelect('ge-co');
   // Supabaseからデータロード
   loadFromSupabase();
 }
