@@ -107,14 +107,30 @@ function loadFromSupabase() {
       var ts=settings.find(function(s){return s.key==='triggers';});
       if(ts) Tris=ts.value;
       var mbs=settings.find(function(s){return s.key==='members';});
-      if(mbs && Array.isArray(mbs.value)){ Members=mbs.value; localStorage.setItem('wc_members',JSON.stringify(Members)); buildMemberSelects(); }
+      if(mbs && Array.isArray(mbs.value)){
+        var mergedMembers=mbs.value.slice();
+        Members.forEach(function(m){if(mergedMembers.indexOf(m)<0)mergedMembers.push(m);});
+        Members=mergedMembers;
+        localStorage.setItem('wc_members',JSON.stringify(Members));
+        buildMemberSelects();
+      }
       var cms=settings.find(function(s){return s.key==='carry_members';});
-      if(cms) CarryMembers=cms.value;
+      if(cms && Array.isArray(cms.value)){
+        var mergedCarry=cms.value.slice();
+        CarryMembers.forEach(function(m){if(mergedCarry.indexOf(m)<0)mergedCarry.push(m);});
+        CarryMembers=mergedCarry;
+        saveCarryMembers();
+      }
       var sls=settings.find(function(s){return s.key==='staff_list';});
       if(sls){
         var sv2=sls.value;
         if(typeof sv2==='string'){try{sv2=JSON.parse(sv2);}catch(e){sv2=null;}}
-        if(Array.isArray(sv2) && sv2.length>0){ StaffList=sv2; localStorage.setItem('wc_staff',JSON.stringify(StaffList)); }
+        if(Array.isArray(sv2) && sv2.length>0){
+          var mergedStaff=sv2.slice();
+          StaffList.forEach(function(s){if(mergedStaff.indexOf(s)<0)mergedStaff.push(s);});
+          StaffList=mergedStaff;
+          localStorage.setItem('wc_staff',JSON.stringify(StaffList));
+        }
       }
     }
     // settingsの有無に関わらず、担当者リストは必ず構築（空なら初期メンバー）
