@@ -724,7 +724,8 @@ select.fc{cursor:pointer;}
     <div class="tag ac" id="ts-z" onclick="stab('z')" style="cursor:pointer;white-space:nowrap;padding:7px 12px;">📊 分析</div>
   </div>
   <div id="s-d">
-    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div class="mnlbl" id="d-lbl"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div class="mnlbl" id="d-lbl" onclick="openDCal()" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
+    <input type="date" id="d-cal" onchange="jumpD(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;">
     <div class="sr2">
       <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="d-g">0</div><div class="su">名</div></div>
       <div class="sc gr"><div class="sl">売上合計</div><div class="sv g" id="d-s">0</div><div class="su">円</div></div>
@@ -2034,7 +2035,7 @@ function cancelMerch(){
 
 // ===== STATS =====
 function rDay(){
-  var ds=fYMD(vD);document.getElementById('d-lbl').textContent=ds;
+  var ds=fYMD(vD);document.getElementById('d-lbl').textContent='📅 '+ds;
   var dg=G.filter(function(g){return g.d===ds&&g.st==='done';});
   var p=0;for(var i=0;i<dg.length;i++)p+=dg[i].a+dg[i].c;
   var s=0;for(var j=0;j<dg.length;j++)s+=dg[j].pr;
@@ -2105,6 +2106,17 @@ function rAnket(){
   mkChart(document.getElementById('ch-tri'),tc,'');mkChart(document.getElementById('ch-exp'),ec,'gr');mkChart(document.getElementById('ch-cat'),cc2,'pu');mkChart(document.getElementById('ch-cheki'),chc,'pk');
 }
 function chD(d){vD.setDate(vD.getDate()+d);rDay();}
+function openDCal(){
+  var cal=document.getElementById('d-cal');if(!cal)return;
+  cal.value=fYMD(vD);
+  try{cal.showPicker();}catch(e){cal.style.pointerEvents='auto';cal.focus();cal.click();}
+}
+function jumpD(val){
+  if(!val)return;
+  var parts=val.split('-');
+  vD=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+  rDay();
+}
 function chM(d){vM.setMonth(vM.getMonth()+d);rMon();}
 function chAM(d){aM.setMonth(aM.getMonth()+d);rAnket();}
 function dayDelGuest(id){
@@ -3185,21 +3197,9 @@ function rfAll(){
 
 function init(){
   clk();setInterval(clk,1000);setInterval(rGuests,60000);
-  var rt=document.getElementById('r-time');if(rt)rt.value=ft(new Date());
   try{document.getElementById('ei-month').value=new Date().getMonth()+1;}catch(e){}
   try{document.getElementById('merch-date').value=td();}catch(e){}
   try{document.getElementById('nc-date').value=td();}catch(e){}
   try{document.getElementById('ei-month2').value=new Date().getMonth()+1;}catch(e){}
   var allOvs=document.querySelectorAll('.ov');
-  for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
-  var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
-  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();buildMemberSelects();
-  buildTimeSelect('r-time');buildTimeSelect('co-ci','rcCO()');buildTimeSelect('co-co','rcCO()');buildTimeSelect('ge-ci');buildTimeSelect('ge-co');
-  // Supabaseからデータロード
-  loadFromSupabase();
-}
-init();
-</script>
-</body>
-</html>
-
+  for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',
