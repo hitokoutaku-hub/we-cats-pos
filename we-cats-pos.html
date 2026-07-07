@@ -3202,4 +3202,15 @@ function init(){
   try{document.getElementById('nc-date').value=td();}catch(e){}
   try{document.getElementById('ei-month2').value=new Date().getMonth()+1;}catch(e){}
   var allOvs=document.querySelectorAll('.ov');
-  for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',
+  for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
+  var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
+  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();buildMemberSelects();
+  buildTimeSelect('r-time');buildTimeSelect('co-ci','rcCO()');buildTimeSelect('co-co','rcCO()');buildTimeSelect('ge-ci');buildTimeSelect('ge-co');
+  setTime('r-time',ft(new Date()));
+  // Supabaseからデータロード
+  loadFromSupabase();
+}
+init();
+</script>
+</body>
+</html>
