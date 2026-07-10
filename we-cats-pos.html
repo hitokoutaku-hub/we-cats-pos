@@ -40,8 +40,9 @@ function supaDelete(table, id) {
     method: 'DELETE',
     headers: getSupaHeaders()
   }).then(function(r){
-    if(!r.ok) r.text().then(function(t){console.error('delete err',table,t);});
-  }).catch(function(e){console.error('delete err',table,e.message);});
+    if(!r.ok) { r.text().then(function(t){console.error('delete err',table,t);}); return false; }
+    return true;
+  }).catch(function(e){console.error('delete err',table,e.message);return false;});
 }
 
 function supaLoad(table) {
@@ -1970,7 +1971,11 @@ function openMerchEdit(date){
 function deleteMerchHistory(date){
   askConfirm(date+'の物販記録を削除しますか？',function(){
     MS=MS.filter(function(m){return m.d!==date;});
-    sv();supaDelete('pos_merch',date);rMerch();rGuests();toast('削除しました');
+    sv();rMerch();rGuests();
+    supaDelete('pos_merch',date).then(function(ok){
+      if(ok){toast('削除しました');}
+      else{toast('⚠️ クラウドへの削除反映に失敗しました。再読み込みすると復活する可能性があります',true);}
+    });
   });
 }
 function exitMerchEdit(){
@@ -2045,9 +2050,10 @@ function cancelMerch(){
     for(var id in MQ) MQ[id]=0;
     sv(); // localStorage全体を更新
     // Supabaseから削除してから画面更新
-    supaDelete('pos_merch', t).then(function(){
+    supaDelete('pos_merch', t).then(function(ok){
       rMerch();rGuests();
-      toast('物販記録を取り消しました');
+      if(ok){toast('物販記録を取り消しました');}
+      else{toast('⚠️ クラウドへの削除反映に失敗しました。再読み込みすると復活する可能性があります',true);}
     });
   },'取り消す');
 }
