@@ -614,7 +614,7 @@ select.fc{cursor:pointer;}
       <div class="cr"><button class="cb" onclick="cc2('c',-1)">－</button><div class="cv" id="cc3">0</div><button class="cb" onclick="cc2('c',1)">＋</button></div>
     </div>
     <div class="sep"></div>
-    <div class="fg"><label class="fl">入店時間</label><input type="text" readonly class="tp-fake" id="r-time" onclick="openTimePicker('r-time','入店時間')"></div>
+    <div class="fg"><label class="fl">入店時間</label><input type="text" readonly autocomplete="off" inputmode="none" class="tp-fake" id="r-time" onfocus="this.blur()" onclick="openTimePicker('r-time','入店時間')"></div>
     <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="r-memo" placeholder="例：大学生位女子"></div>
   </div>
 
@@ -862,8 +862,8 @@ select.fc{cursor:pointer;}
   <div class="mt"><span>🚪 退店処理</span><button class="mc" onclick="cModal('m-co')">✕</button></div>
   <div id="co-info" style="margin-bottom:12px;"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-    <div><label class="fl">入店時間（編集可）</label><input type="text" readonly class="tp-fake" id="co-ci" onclick="openTimePicker('co-ci','入店時間')" onchange="rcCO()"></div>
-    <div><label class="fl">退店時間</label><input type="text" readonly class="tp-fake" id="co-co" onclick="openTimePicker('co-co','退店時間')" onchange="rcCO()"></div>
+    <div><label class="fl">入店時間（編集可）</label><input type="text" readonly autocomplete="off" inputmode="none" class="tp-fake" id="co-ci" onfocus="this.blur()" onclick="openTimePicker('co-ci','入店時間')" onchange="rcCO()"></div>
+    <div><label class="fl">退店時間</label><input type="text" readonly autocomplete="off" inputmode="none" class="tp-fake" id="co-co" onfocus="this.blur()" onclick="openTimePicker('co-co','退店時間')" onchange="rcCO()"></div>
   </div>
   <div class="pbox"><div class="pbox-l">滞在時間</div><div class="pbox-a" id="co-dur">—</div></div>
   <div id="co-det" style="font-size:11px;color:var(--tx2);margin-bottom:10px;text-align:center;"></div>
@@ -1030,8 +1030,8 @@ select.fc{cursor:pointer;}
     <div class="fg"><label class="fl">大人</label><input type="number" class="fc" id="ge-a" min="0" value="1"></div>
     <div class="fg"><label class="fl">子ども</label><input type="number" class="fc" id="ge-c" min="0" value="0"></div>
   </div>
-  <div class="fg"><label class="fl">入店時間</label><input type="text" readonly class="tp-fake" id="ge-ci" onclick="openTimePicker('ge-ci','入店時間')"></div>
-  <div class="fg"><label class="fl">退店時間（滞在中の場合は空白でOK）</label><input type="text" readonly class="tp-fake" id="ge-co" onclick="openTimePicker('ge-co','退店時間')"></div>
+  <div class="fg"><label class="fl">入店時間</label><input type="text" readonly autocomplete="off" inputmode="none" class="tp-fake" id="ge-ci" onfocus="this.blur()" onclick="openTimePicker('ge-ci','入店時間')"></div>
+  <div class="fg"><label class="fl">退店時間（滞在中の場合は空白でOK）</label><input type="text" readonly autocomplete="off" inputmode="none" class="tp-fake" id="ge-co" onfocus="this.blur()" onclick="openTimePicker('ge-co','退店時間')"></div>
   <div class="fg"><label class="fl">料金（手動入力）</label><input type="number" class="fc" id="ge-pr" min="0" placeholder="空白で自動計算"></div>
   <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="ge-mo"></div>
   <div class="fg"><label class="fl">割引内容（例：クーポン、振興券）</label><input type="text" class="fc" id="ge-disc-name" placeholder="例：クーポン"></div>
