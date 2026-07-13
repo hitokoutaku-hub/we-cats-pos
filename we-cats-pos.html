@@ -1044,6 +1044,10 @@ select.fc{cursor:pointer;}
   <div class="fg"><label class="fl">来店パターン</label>
     <select class="fc" id="ge-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
   </div>
+  <div class="fg" style="background:var(--sf2);border-radius:14px;padding:10px 12px;border:1.5px solid var(--ac2);">
+    <label class="fl" style="color:var(--ok);">🌟 常連さん（任意）</label>
+    <input type="text" class="fc" id="ge-cu" list="cu-list" placeholder="名前を入力">
+  </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
     <div class="fg"><label class="fl">大人</label><input type="number" class="fc" id="ge-a" min="0" value="1"></div>
     <div class="fg"><label class="fl">子ども</label><input type="number" class="fc" id="ge-c" min="0" value="0"></div>
@@ -1408,6 +1412,33 @@ function togAqCat(el){var v=el.getAttribute('data-v');var idx=aqCh.cats.indexOf(
 function addAqTri(){var v=document.getElementById('aq-tri-add').value.trim();if(!v)return;if(Tris.indexOf(v)<0)Tris.push(v);if(aqCh.tri.indexOf(v)<0)aqCh.tri.push(v);document.getElementById('aq-tri-add').value='';sv();buildAqChips();}
 function selOne(el,gid){var els=document.querySelectorAll('#'+gid+' .chip');for(var i=0;i<els.length;i++)els[i].classList.remove('on');el.classList.add('on');}
 
+function normalizeName(name){
+  if(!name)return '';
+  var n=name.trim();
+  // 敬称を末尾から繰り返し取り除く（例: 「有村さん」「有村サン」「有村様」→「有村」）
+  var honorifics=['さん','サン','様','さま','ちゃん','くん','君','氏'];
+  var changed=true;
+  while(changed){
+    changed=false;
+    for(var i=0;i<honorifics.length;i++){
+      if(n.length>honorifics[i].length && n.endsWith(honorifics[i])){
+        n=n.slice(0,n.length-honorifics[i].length).trim();
+        changed=true;
+      }
+    }
+  }
+  return n;
+}
+function findOrCreateCustomer(rawName){
+  var name=(rawName||'').trim();
+  if(!name)return null;
+  var key=normalizeName(name);
+  var existing=CU.find(function(c){return normalizeName(c.name)===key;});
+  if(existing)return existing.id;
+  var newCu={id:Date.now()+Math.floor(Math.random()*1000),memberNo:'',name:name,visits:[],memos:[]};
+  CU.push(newCu);saveCustomerToSupa(newCu);buildCuDatalist();
+  return newCu.id;
+}
 function buildCuDatalist(){
   var dl=document.getElementById('cu-list');if(!dl)return;
   dl.innerHTML=CU.map(function(c){return '<option value="'+c.name+'">';}).join('');
@@ -1420,15 +1451,7 @@ function regGuest(){
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
   var cuName=(document.getElementById('r-cu')||{}).value||'';cuName=cuName.trim();
-  var cuId=null;
-  if(cuName){
-    var existing=CU.find(function(c){return c.name===cuName;});
-    if(existing){cuId=existing.id;}
-    else{
-      var newCu={id:Date.now()+1,memberNo:'',name:cuName,visits:[],memos:[]};
-      CU.push(newCu);cuId=newCu.id;saveCustomerToSupa(newCu);
-    }
-  }
+  var cuId=cuName?findOrCreateCustomer(cuName):null;
   var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()},cuId:cuId,cuName:cuName||null};
   G.push(g);sv();saveGuestToSupa(g);
   if(cuId){
@@ -2106,6 +2129,7 @@ function oGEdit(id){
   document.getElementById('ge-a').value=g.a;document.getElementById('ge-c').value=g.c;document.getElementById('ge-ci').value=g.ci;
   document.getElementById('ge-co').value=g.co||'';document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
   document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
+  var geCu=document.getElementById('ge-cu');if(geCu)geCu.value=g.cuName||'';
   oModal('m-gedit');
 }
 function saveGEdit(){
@@ -2126,8 +2150,12 @@ function saveGEdit(){
     var discName2=document.getElementById('ge-disc-name').value.trim();
     var moVal2=document.getElementById('ge-mo').value;
     if(discName2&&discAmt2>0)moVal2=(moVal2?moVal2+' ':'')+discName2+' -¥'+discAmt2.toLocaleString();
-    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{}};
-    G.push(newG);sv();saveGuestToSupa(newG);cModal('m-gedit');rfAll();toast('記録を追加しました ✅');return;
+    var cuNameNew=(document.getElementById('ge-cu')||{}).value||'';cuNameNew=cuNameNew.trim();
+    var cuIdNew=cuNameNew?findOrCreateCustomer(cuNameNew):null;
+    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{},cuId:cuIdNew,cuName:cuNameNew||null};
+    G.push(newG);sv();saveGuestToSupa(newG);
+    if(cuIdNew){var cuRecNew=CU.find(function(c){return c.id===cuIdNew;});if(cuRecNew){cuRecNew.visits=cuRecNew.visits||[];cuRecNew.visits.push({d:newG.d,guestId:newG.id});sv();saveCustomerToSupa(cuRecNew);}}
+    cModal('m-gedit');rfAll();toast('記録を追加しました ✅');return;
   }
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
   var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
@@ -2139,7 +2167,21 @@ function saveGEdit(){
   var discName=document.getElementById('ge-disc-name').value.trim();
   var moVal=document.getElementById('ge-mo').value;
   if(discName&&discAmt>0)moVal=(moVal?moVal+' ':'')+discName+' -¥'+discAmt.toLocaleString();
-  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';
+  var cuNameEdit=(document.getElementById('ge-cu')||{}).value||'';cuNameEdit=cuNameEdit.trim();
+  var oldCuId=g.cuId||null;
+  var newCuId=cuNameEdit?findOrCreateCustomer(cuNameEdit):null;
+  if(oldCuId!==newCuId){
+    if(oldCuId){
+      var oldCu=CU.find(function(c){return c.id===oldCuId;});
+      if(oldCu&&oldCu.visits)oldCu.visits=oldCu.visits.filter(function(v){return String(v.guestId)!==String(g.id);});
+      if(oldCu)saveCustomerToSupa(oldCu);
+    }
+    if(newCuId){
+      var newCuRec=CU.find(function(c){return c.id===newCuId;});
+      if(newCuRec){newCuRec.visits=newCuRec.visits||[];newCuRec.visits.push({d:g.d,guestId:g.id});saveCustomerToSupa(newCuRec);}
+    }
+  }
+  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';g.cuId=newCuId;g.cuName=cuNameEdit||null;
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
 function delGuest(){var id=document.getElementById('ge-id').value;if(!confirm('この記録を削除しますか？'))return;G=G.filter(function(x){return String(x.id)!==String(id);});sv();supaDelete('pos_guests',id);cModal('m-gedit');rfAll();toast('削除しました');}
