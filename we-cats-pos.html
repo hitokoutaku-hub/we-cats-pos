@@ -96,7 +96,7 @@ function loadFromSupabase() {
     flushSyncQueue();
     if(guests) {
       var cloudG = guests.map(function(g){return {
-        id:g.id, d:g.date, tp:g.type, pt:g.pattern,
+        id:g.id, d:g.date, tp:g.type, pt:g.pattern, member:g.member||'',
         a:g.adults, c:g.children, ci:g.checkin, co:g.checkout,
         pr:g.price, st:g.status, fn:g.free_nyan,
         bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
@@ -199,7 +199,7 @@ function loadFromSupabase() {
 
 function saveGuestToSupa(g) {
   supaUpsert('pos_guests',{
-    id:String(g.id), date:g.d, type:g.tp, pattern:g.pt,
+    id:String(g.id), date:g.d, type:g.tp, pattern:g.pt, member:g.member||'',
     adults:g.a, children:g.c, checkin:g.ci, checkout:g.co||'',
     price:g.pr, status:g.st, free_nyan:g.fn,
     binder_color:g.bc||'', binder_name:g.bcn||'',
