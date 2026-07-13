@@ -177,7 +177,7 @@ function loadFromSupabase() {
         localStorage.setItem('wc_migrated','1');
       }
     }
-        sv(); rfAll();
+        sv(); rfAll(); buildCuDatalist();
     console.log('Supabase load complete!');
   }).catch(function(e){console.error('loadFromSupabase error:',e.message);rfAll();});
 }
@@ -599,6 +599,12 @@ select.fc{cursor:pointer;}
     <div class="fg"><label class="fl">来店パターン</label>
       <select class="fc" id="r-pt"><option value="友人">友人</option><option value="家族">家族</option><option value="カップル">カップル</option><option value="おひとり様">おひとり様</option></select>
     </div>
+    <div class="fg" style="background:var(--sf2);border-radius:14px;padding:10px 12px;border:1.5px solid var(--ac2);">
+      <label class="fl" style="color:var(--ok);">🌟 常連さん（任意）</label>
+      <input type="text" class="fc" id="r-cu" list="cu-list" placeholder="名前を入力（新しい名前なら自動で登録されます）">
+      <datalist id="cu-list"></datalist>
+      <div style="font-size:10px;color:var(--tx2);margin-top:4px;">※入力すると来店回数が集計に反映されます</div>
+    </div>
     <div class="fg">
       <label class="fl">フリーにゃんタイム</label>
       <button id="fn-btn" onclick="togFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button>
@@ -786,6 +792,7 @@ select.fc{cursor:pointer;}
       <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div class="mnlbl" id="z-m-lbl"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-m-type"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-m-pattern"></div></div>
+      <div class="card"><div class="ct">🌟 常連さんランキング</div><div id="z-m-cu"></div></div>
       <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-m-time"></div></div>
       <div class="card"><div class="ct">🛍️ 物販商品別（数量）</div><div id="z-m-merch"></div></div>
       <div class="card"><div class="ct">💴 物販商品別（売上）</div><div id="z-m-merch-sales"></div><div id="z-m-merch-total" style="text-align:right;font-family:'Noto Sans JP',sans-serif;font-size:18px;color:var(--ok);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd);"></div></div>
@@ -1401,6 +1408,10 @@ function togAqCat(el){var v=el.getAttribute('data-v');var idx=aqCh.cats.indexOf(
 function addAqTri(){var v=document.getElementById('aq-tri-add').value.trim();if(!v)return;if(Tris.indexOf(v)<0)Tris.push(v);if(aqCh.tri.indexOf(v)<0)aqCh.tri.push(v);document.getElementById('aq-tri-add').value='';sv();buildAqChips();}
 function selOne(el,gid){var els=document.querySelectorAll('#'+gid+' .chip');for(var i=0;i<els.length;i++)els[i].classList.remove('on');el.classList.add('on');}
 
+function buildCuDatalist(){
+  var dl=document.getElementById('cu-list');if(!dl)return;
+  dl.innerHTML=CU.map(function(c){return '<option value="'+c.name+'">';}).join('');
+}
 // ===== REGISTER =====
 var _regBusy=false;
 function regGuest(){
@@ -1408,10 +1419,27 @@ function regGuest(){
   var t=document.getElementById('r-time').value;if(!t){toast('入店時間を入力してください',true);_regBusy=false;return;}
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
-  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
-  G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
+  var cuName=(document.getElementById('r-cu')||{}).value||'';cuName=cuName.trim();
+  var cuId=null;
+  if(cuName){
+    var existing=CU.find(function(c){return c.name===cuName;});
+    if(existing){cuId=existing.id;}
+    else{
+      var newCu={id:Date.now()+1,memberNo:'',name:cuName,visits:[],memos:[]};
+      CU.push(newCu);cuId=newCu.id;saveCustomerToSupa(newCu);
+    }
+  }
+  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()},cuId:cuId,cuName:cuName||null};
+  G.push(g);sv();saveGuestToSupa(g);
+  if(cuId){
+    var cuRec=CU.find(function(c){return c.id===cuId;});
+    if(cuRec){cuRec.visits=cuRec.visits||[];cuRec.visits.push({d:g.d,guestId:g.id});sv();saveCustomerToSupa(cuRec);}
+  }
+  logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci+(cuName?' 常連:'+cuName:''));toast('入店登録しました 🐾');
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
+  if(document.getElementById('r-cu'))document.getElementById('r-cu').value='';
+  buildCuDatalist();
   document.getElementById('r-time').value=ft(new Date());document.getElementById('r-memo').value='';
   isFN=false;isKD=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};
   var fnBtn=document.getElementById('fn-btn');
@@ -2555,6 +2583,24 @@ function rZAnalysis(){
         if(totalEl)totalEl.textContent='物販合計　'+yn(totalSales);
       }
     }
+    // 常連さんランキング
+    var cuEl=document.getElementById('z-m-cu');
+    if(cuEl){
+      var cuCount={};
+      gs.forEach(function(g){if(g.cuName){cuCount[g.cuName]=(cuCount[g.cuName]||0)+1;}});
+      var cuKeys=Object.keys(cuCount).sort(function(a,b){return cuCount[b]-cuCount[a];});
+      if(cuKeys.length===0){cuEl.innerHTML='<div style="color:var(--tx2);font-size:12px;text-align:center;padding:12px;">この月の常連さん登録なし</div>';}
+      else{
+        var ch2='';
+        var maxCu=cuCount[cuKeys[0]];
+        for(var ck=0;ck<cuKeys.length;ck++){
+          var cn=cuKeys[ck];var cval=cuCount[cn];var cpct=Math.round(cval/maxCu*100);
+          ch2+='<div class="cbar"><div class="cbar-l"><span>'+cn+'</span><span>'+cval+'回</span></div>';
+          ch2+='<div class="cbar-bg"><div class="cbar-fill" style="width:'+cpct+'%;background:linear-gradient(90deg,var(--ac),#f4a4ad);"></div></div></div>';
+        }
+        cuEl.innerHTML=ch2;
+      }
+    }
   } else {
     var yr=zY.getFullYear();
     document.getElementById('z-y-lbl').textContent=yr+'年';
@@ -2673,7 +2719,7 @@ function init(){
   var allOvs=document.querySelectorAll('.ov');
   for(var i=0;i<allOvs.length;i++){allOvs[i].addEventListener('click',function(ev){if(ev.target===this)this.classList.remove('on');});}
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
-  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();
+  buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildCuDatalist();
   // Supabaseからデータロード
   loadFromSupabase();
   startPresenceLoop();
