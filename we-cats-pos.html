@@ -686,12 +686,12 @@ select.fc{cursor:pointer;}
   </div>
 
   <div id="mt-list" style="display:none;">
-    <div id="ml"></div>
-    <div class="sep"></div>
-    <div class="fg">
-      <label class="fl">保存する日付</label>
+    <div class="fg" style="background:var(--sf2);border-radius:14px;padding:12px;margin-bottom:12px;border:1.5px solid var(--ac);">
+      <label class="fl" style="color:var(--ac);">📅 この記録の日付</label>
       <input type="date" class="fc" id="merch-date">
     </div>
+    <div id="ml"></div>
+    <div class="sep"></div>
     <div style="display:flex;gap:8px;">
       <button class="btn bso bf" onclick="oMF(null)">＋ 商品追加</button>
       <button class="btn bp bf" onclick="saveMerch()">💾 保存</button>
