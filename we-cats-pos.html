@@ -255,7 +255,12 @@ function logAction(action, detail) {
     ts: new Date().toLocaleString('ja-JP'),
     ua: navigator.userAgent.substring(0,50)
   };
-  supaUpsert('pos_logs', log);
+  // 操作履歴は補助的な記録なので、失敗しても警告は出さない（お客様データの保存失敗警告と区別するため）
+  fetch(SUPA_URL + '/rest/v1/pos_logs', {
+    method: 'POST',
+    headers: Object.assign({}, getSupaHeaders(), {'Prefer': 'resolution=merge-duplicates,return=minimal'}),
+    body: JSON.stringify(log)
+  }).catch(function(e){console.warn('logAction sync skipped:',e.message);});
 }
 
 // ===== 担当者選択 =====
