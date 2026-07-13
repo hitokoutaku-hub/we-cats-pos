@@ -379,6 +379,7 @@ body{background:#fff5f6;min-height:100vh;color:var(--tx);font-family:\'Noto Sans
 .fg{margin-bottom:14px;}
 .fl{font-size:11px;color:var(--tx2);margin-bottom:6px;display:block;font-weight:500;}
 .fc{width:100%;background:var(--sf2);border:1.5px solid var(--bd);color:var(--tx);padding:11px 12px;border-radius:11px;font-size:14px;font-family:\'Zen Maru Gothic\',sans-serif;outline:none;transition:border-color .2s;-webkit-appearance:none;}
+.tsel{background:var(--sf2);border:1.5px solid var(--ac);color:var(--tx);padding:12px 10px;border-radius:12px;font-size:22px;font-weight:800;font-family:\'Noto Sans JP\',sans-serif;text-align:center;min-width:72px;outline:none;-webkit-appearance:none;appearance:none;cursor:pointer;}
 .fc:focus{border-color:var(--ac);background:var(--sf);}
 textarea.fc{resize:vertical;min-height:70px;}
 select.fc{cursor:pointer;}
@@ -1315,10 +1316,10 @@ function buildTimeSelect(containerId,onchg){
   var hOpts='';for(var h=0;h<24;h++)hOpts+='<option value="'+p2(h)+'">'+p2(h)+'</option>';
   var mOpts='';for(var m=0;m<60;m++)mOpts+='<option value="'+p2(m)+'">'+p2(m)+'</option>';
   var chg=onchg?(' onchange="'+onchg+'"'):'';
-  c.innerHTML='<div style="display:flex;align-items:center;gap:6px;">'
-    +'<select class="tsel" data-role="h"'+chg+'>'+hOpts+'</select><span style="font-weight:700;color:var(--tx2);">時</span>'
-    +'<span style="font-weight:700;color:var(--tx2);">:</span>'
-    +'<select class="tsel" data-role="m"'+chg+'>'+mOpts+'</select><span style="font-weight:700;color:var(--tx2);">分</span></div>';
+  c.innerHTML='<div style="display:flex;align-items:center;gap:8px;">'
+    +'<select class="tsel" data-role="h"'+chg+'>'+hOpts+'</select><span style="font-weight:700;color:var(--tx2);font-size:18px;">時</span>'
+    +'<span style="font-weight:700;color:var(--tx2);font-size:22px;">:</span>'
+    +'<select class="tsel" data-role="m"'+chg+'>'+mOpts+'</select><span style="font-weight:700;color:var(--tx2);font-size:18px;">分</span></div>';
 }
 // 時刻コンテナから "HH:MM" を取得
 function getTime(containerId){
