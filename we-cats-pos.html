@@ -2371,6 +2371,8 @@ function loadPrev(){
   var sorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
   var prev=sorted.length?sorted[0]:null;
   for(var i=0;i<AD.length;i++){var d=AD[i];var pq=prev?(prev[d.id]||0):0;var pvEl=document.getElementById('pv-'+d.id);var dqEl=document.getElementById('dq-'+d.id);var dsEl=document.getElementById('ds-'+d.id);if(pvEl){pvEl.textContent=pq>0?pq:'—';pvEl.setAttribute('data-prev',pq);pvEl.style.color='var(--tx2)';pvEl.style.fontWeight='normal';pvEl.title='';}CQ[d.id]=pq;if(dqEl)dqEl.value=pq;if(dsEl)dsEl.textContent=pq>0?yn(pq*d.v):'—';}
+  // 日付が変わったら、常にその日の売上を計算し直す（前の日付の数字を持ち越さない）
+  var se=document.getElementById('k-sales');if(se)se.value='';
   rcCash();
 }
 function chDQ(id,delta){
