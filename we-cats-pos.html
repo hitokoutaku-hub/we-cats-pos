@@ -96,7 +96,7 @@ function loadFromSupabase() {
     flushSyncQueue();
     if(guests) {
       var cloudG = guests.map(function(g){return {
-        id:g.id, d:g.date, tp:g.type, pt:g.pattern, member:g.member||'',
+        id:g.id, d:g.date, tp:g.type, pt:g.pattern, member:g.member||'', operator:g.operator||'',
         a:g.adults, c:g.children, ci:g.checkin, co:g.checkout,
         pr:g.price, st:g.status, fn:g.free_nyan,
         bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
@@ -199,7 +199,7 @@ function loadFromSupabase() {
 
 function saveGuestToSupa(g) {
   supaUpsert('pos_guests',{
-    id:String(g.id), date:g.d, type:g.tp, pattern:g.pt, member:g.member||'',
+    id:String(g.id), date:g.d, type:g.tp, pattern:g.pt, member:g.member||'', operator:g.operator||'',
     adults:g.a, children:g.c, checkin:g.ci, checkout:g.co||'',
     price:g.pr, status:g.st, free_nyan:g.fn,
     binder_color:g.bc||'', binder_name:g.bcn||'',
@@ -246,6 +246,53 @@ try{
 }catch(e){}
 var CurrentOperator = localStorage.getItem('wc_operator') || '';
 
+// ===== 今アクセス中の表示 =====
+function deviceId(){
+  var id=localStorage.getItem('wc_device_id');
+  if(!id){id='dev_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);localStorage.setItem('wc_device_id',id);}
+  return id;
+}
+function heartbeatPresence(){
+  var name=CurrentOperator||'未選択';
+  fetch(SUPA_URL + '/rest/v1/pos_presence', {
+    method: 'POST',
+    headers: Object.assign({}, getSupaHeaders(), {'Prefer': 'resolution=merge-duplicates,return=minimal'}),
+    body: JSON.stringify({id:deviceId(),name:name,last_seen:new Date().toISOString()})
+  }).catch(function(e){console.warn('presence sync skipped:',e.message);});
+}
+function loadPresence(){
+  fetch(SUPA_URL + '/rest/v1/pos_presence?select=*', {method:'GET', headers: getSupaHeaders()})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(rows){
+      if(!rows)return;
+      var now=Date.now();
+      var active=rows.filter(function(r){return r.last_seen && (now-new Date(r.last_seen).getTime())<60000;});
+      renderPresence(active);
+    }).catch(function(e){console.warn('presence load skipped:',e.message);});
+}
+function renderPresence(active){
+  var badge=document.getElementById('presence-badge');
+  var view=document.getElementById('presence-view');
+  var myId=deviceId();
+  var others=active.filter(function(r){return r.id!==myId;});
+  if(badge){
+    if(others.length>0){badge.style.display='block';badge.textContent='👥 '+others.length+'人 操作中';}
+    else{badge.style.display='none';}
+  }
+  if(view){
+    if(active.length===0){view.innerHTML='読み込み中...';}
+    else{
+      view.innerHTML=active.map(function(r){
+        var secs=Math.round((Date.now()-new Date(r.last_seen).getTime())/1000);
+        return (r.id===myId?'📍 ':'👤 ')+(r.name||'未選択')+(r.id===myId?'（あなた）':'')+' <span style="opacity:.6;">・'+secs+'秒前</span>';
+      }).join('<br>');
+    }
+  }
+}
+function startPresenceLoop(){
+  heartbeatPresence();loadPresence();
+  setInterval(function(){heartbeatPresence();loadPresence();},20000);
+}
 function logAction(action, detail) {
   var log = {
     id: String(Date.now()),
@@ -279,6 +326,7 @@ function buildOperatorSelect(){
 function setOperator(name){
   CurrentOperator=name;
   localStorage.setItem('wc_operator',name);
+  if(typeof heartbeatPresence==='function')heartbeatPresence();
 }
 function saveStaffList(){ localStorage.setItem('wc_staff',JSON.stringify(StaffList)); saveSettingToSupa('staff_list',StaffList); }
 function rStaffList(){
@@ -601,7 +649,10 @@ select.fc{cursor:pointer;}
 <div class="hdr">
   <div class="hdr-top">
     <div class="logo">🐱 WE CATS POS</div>
-    <button class="btn bso bsm" onclick="oModal('m-menu')" style="padding:7px 11px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;">⚙️</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="presence-badge" style="display:none;font-size:11px;color:#fff;background:rgba(255,255,255,.25);padding:5px 10px;border-radius:14px;cursor:pointer;" onclick="oModal('m-menu')"></div>
+      <button class="btn bso bsm" onclick="oModal('m-menu')" style="padding:7px 11px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;">⚙️</button>
+    </div>
   </div>
   <div class="hdate" id="hdate"></div>
 </div>
@@ -1088,6 +1139,8 @@ select.fc{cursor:pointer;}
     <button class="btn bso bf" onclick="document.getElementById('imp-f').click()">📥 データインポート</button>
     <input type="file" id="imp-f" accept=".json" style="display:none;" onchange="impData(event)">
     <div class="sep"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px;">👥 今アクセス中</div>
+    <div id="presence-view" style="font-size:12px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);margin-bottom:8px;">読み込み中...</div>
     <div id="menu-price-view" style="font-size:11px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);"></div>
   </div>
 </div></div>
@@ -1380,7 +1433,7 @@ function closeConfirm(){
   document.getElementById('m-confirm').classList.remove('on');
   _confirmCb=null;
 }
-function oModal(id){document.getElementById(id).classList.add('on');if(id==='m-bc')rBCList();if(id==='m-price')loadPriceModal();}
+function oModal(id){document.getElementById(id).classList.add('on');if(id==='m-bc')rBCList();if(id==='m-price')loadPriceModal();if(id==='m-menu')loadPresence();}
 function cModal(id){document.getElementById(id).classList.remove('on');}
 function sp(id){
   var pages=['p-g','p-r','p-m','p-s','p-k'];
@@ -1597,7 +1650,7 @@ function regGuest(){
   var t=getTime('r-time');if(!t){toast('入店時間を入力してください',true);_regBusy=false;return;}
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
-  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,member:document.getElementById('r-member')?document.getElementById('r-member').value:'',a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
+  var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,member:document.getElementById('r-member')?document.getElementById('r-member').value:'',operator:CurrentOperator||'',a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
   G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
@@ -2090,7 +2143,7 @@ function rDay(){
   for(var l=0;l<dg.length;l++){
     var g=dg[l];
     lh+='<tr>';
-    lh+='<td>'+(g.tp==='new'?'新規':'リピ')+'</td>';
+    lh+='<td>'+(g.tp==='new'?'新規':'リピ')+(g.operator?'<div style="font-size:9px;color:var(--tx2);white-space:nowrap;">担当:'+g.operator+'</div>':'')+'</td>';
     lh+='<td>'+g.a+(g.c>0?'+子'+g.c:'')+'</td>';
     lh+='<td>'+g.ci+'</td>';
     lh+='<td>'+(g.co||'-')+'</td>';
@@ -3273,6 +3326,7 @@ function init(){
   buildTimeSelect('r-time');buildTimeSelect('co-ci','rcCO()');buildTimeSelect('co-co','rcCO()');buildTimeSelect('ge-ci');buildTimeSelect('ge-co');
   // Supabaseからデータロード
   loadFromSupabase();
+  startPresenceLoop();
 }
 init();
 </script>
