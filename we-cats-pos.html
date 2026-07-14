@@ -2566,18 +2566,24 @@ function rCash(){
     if(kCtxEmpty && window.kChart){window.kChart.destroy();window.kChart=null;}
     return;
   }
+  // 全期間分を毎回スキャンしないよう、事前に1回だけ整理しておく（記録が増えても重くならないように）
+  var crSorted=CR.slice().sort(function(a,b){return a.d.localeCompare(b.d);});
+  var gSalesByDate={};
+  G.forEach(function(g){if(g.st==='done'){gSalesByDate[g.d]=(gSalesByDate[g.d]||0)+g.pr;}});
+  var msByDate={};
+  MS.forEach(function(m){msByDate[m.d]=m;});
   var h='';
   for(var i=0;i<recs.length;i++){
     var r=recs[i];
     // 前日比で過不足を計算（月をまたいでも全期間から直前の記録を探す）
-    var prevAll=CR.filter(function(x){return x.d<r.d;}).sort(function(a,b){return b.d.localeCompare(a.d);});
-    var prevRec=prevAll.length?prevAll[0]:null;
+    var prevRec=null;
+    for(var pIdx=crSorted.length-1;pIdx>=0;pIdx--){if(crSorted[pIdx].d<r.d){prevRec=crSorted[pIdx];break;}}
     // 前日・当日とも「数えた金種合計(grand)」を実際の金庫として使う
     var prevNet=prevRec?(prevRec.grand||prevRec.net):0;
     var todayNet=r.grand||r.net;
     // 本日の売上
-    var dg=G.filter(function(g){return g.d===r.d&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
-    var mr=MS.find(function(m){return m.d===r.d;});var autoSales=gs+(mr?mr.total:0);
+    var gs=gSalesByDate[r.d]||0;
+    var mr=msByDate[r.d];var autoSales=gs+(mr?mr.total:0);
     var daySales=(typeof r.sales==='number' && r.sales>0)?r.sales:autoSales;
     // あるべき金額 = 前日残高 ＋ 本日売上 − 持ち帰り
     var expected=prevNet+daySales-(r.carry||0);
