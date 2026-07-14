@@ -1038,8 +1038,11 @@ select.fc{cursor:pointer;}
   <div class="stit">硬貨</div><div id="d-coins"></div>
   <div class="sep"></div>
   <div class="fg"><label class="fl">本日の売上（自動集計・訂正可）</label>
-    <input type="number" class="fc" id="k-sales" min="0" oninput="rcCash()" placeholder="自動集計されます" style="background:#f0f8ee;border-color:var(--ac2);font-size:16px;text-align:center;font-family:'Noto Sans JP',sans-serif;">
-    <div style="font-size:10px;color:var(--tx2);margin-top:3px;">来店料金＋物販から自動計算。違う場合は直接入力してください。</div>
+    <div style="display:flex;gap:6px;">
+      <input type="number" class="fc" id="k-sales" min="0" oninput="rcCash()" placeholder="自動集計されます" style="background:#f0f8ee;border-color:var(--ac2);font-size:16px;text-align:center;font-family:'Noto Sans JP',sans-serif;flex:1;">
+      <button type="button" onclick="recalcKSales()" style="flex-shrink:0;background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:11px;padding:0 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">🔄 再計算</button>
+    </div>
+    <div style="font-size:10px;color:var(--tx2);margin-top:3px;">来店料金＋物販から自動計算。違う場合は直接入力してください。保存済みの記録を開いた時は、その時点の値が表示されます。後から来店記録を直した場合は「🔄再計算」を押してください。</div>
   </div>
   <div class="fg"><label class="fl">応援券など（金額）</label><input type="number" class="fc" id="k-sup" value="0" min="0" oninput="rcCash()"></div>
   <div class="carry">
@@ -1151,9 +1154,9 @@ select.fc{cursor:pointer;}
   <div class="fg"><label class="fl">割引内容（例：クーポン、振興券）</label><input type="text" class="fc" id="ge-disc-name" placeholder="例：クーポン"></div>
   <div class="fg"><label class="fl">割引金額（円）</label><input type="number" class="fc" id="ge-disc-amt" min="0" value="0" placeholder="0"></div>
   <div class="sep"></div>
-  <div style="display:flex;gap:8px;">
+  <div style="display:flex;gap:8px;position:sticky;bottom:0;background:var(--bg);padding:10px 0 6px;margin:0 -16px;padding-left:16px;padding-right:16px;box-shadow:0 -6px 12px -6px rgba(0,0,0,.08);">
     <button class="btn bs" style="flex:1;" onclick="cModal('m-gedit')">キャンセル</button>
-    <button class="btn bp" style="flex:2;" onclick="saveGEdit()">保存</button>
+    <button class="btn bp" style="flex:2;" onclick="saveGEdit()">💾 保存</button>
   </div>
   <div class="sep"></div>
   <button class="btn bf" onclick="delGuest()" style="background:#fef0ec;border:1.5px solid var(--pk);color:var(--ng);">🗑️ この記録を削除</button>
@@ -2313,7 +2316,7 @@ function oCash(){
   document.getElementById('k-d').value=td();document.getElementById('k-sup').value=0;document.getElementById('k-carry').value=0;document.getElementById('k-mo').value='';
   var se=document.getElementById('k-sales');if(se)se.value='';
   buildCarrySelect();
-  loadPrev();oModal('m-cash');
+  loadPrev();rcCash();oModal('m-cash');
 }
 function editCash(idOrDate){
   var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
@@ -2373,6 +2376,12 @@ function loadPrev(){
 function chDQ(id,delta){
   var cur=parseInt(CQ[id])||0;
   setDQ(id, Math.max(0,cur+delta));
+}
+function recalcKSales(){
+  var se=document.getElementById('k-sales');
+  if(se)se.value='';
+  rcCash();
+  toast('最新の来店・物販データで再計算しました');
 }
 function rcCash(){
   var date=document.getElementById('k-d').value||td();var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
