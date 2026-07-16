@@ -844,7 +844,7 @@ select.fc{cursor:pointer;}
     <div class="tag ac" id="ts-z" onclick="stab('z')" style="cursor:pointer;white-space:nowrap;padding:7px 12px;">📊 分析</div>
   </div>
   <div id="s-d">
-    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div class="mnlbl" id="d-lbl"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="d-lbl"></div><button onclick="openCal('d-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 日付選択</button><input type="date" id="d-cal" onchange="jumpD(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
     <div class="sr2">
       <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="d-g">0</div><div class="su">名</div></div>
       <div class="sc gr"><div class="sl">売上合計</div><div class="sv g" id="d-s">0</div><div class="su">円</div></div>
@@ -853,7 +853,7 @@ select.fc{cursor:pointer;}
     <div id="d-list"></div>
   </div>
   <div id="s-m" style="display:none;">
-    <div class="mnav"><button class="mnbtn" onclick="chM(-1)">＜前月</button><div class="mnlbl" id="m-lbl"></div><button class="mnbtn" onclick="chM(1)">翌月＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="m-lbl"></div><button onclick="openCal('m-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="m-cal" onchange="jumpM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chM(1)">翌月＞</button></div>
     <div class="sr2">
       <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="m-g">0</div><div class="su">名</div></div>
       <div class="sc gr"><div class="sl">月間売上</div><div class="sv g" id="m-s">0</div><div class="su">円</div></div>
@@ -879,7 +879,7 @@ select.fc{cursor:pointer;}
     <div id="pd-list"></div>
   </div>
   <div id="s-a" style="display:none;">
-    <div class="mnav"><button class="mnbtn" onclick="chAM(-1)">＜前月</button><div class="mnlbl" id="am-lbl"></div><button class="mnbtn" onclick="chAM(1)">翌月＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chAM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="am-lbl"></div><button onclick="openCal('am-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="am-cal" onchange="jumpAM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chAM(1)">翌月＞</button></div>
     <div class="card"><div class="ct">📍 来店きっかけ</div><div id="ch-tri"></div></div>
     <div class="card"><div class="ct">🐱 猫カフェ経験</div><div id="ch-exp"></div></div>
     <div class="card"><div class="ct">🐾 人気の猫ランキング（アンケート）</div><div id="ch-cat"></div></div>
@@ -908,7 +908,7 @@ select.fc{cursor:pointer;}
       <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-d-merch"></div></div>
     </div>
     <div id="z-m" style="display:none;">
-      <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div class="mnlbl" id="z-m-lbl"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
+      <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="z-m-lbl"></div><button onclick="openCal('z-m-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="z-m-cal" onchange="jumpZM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-m-type"></div></div>
       <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-m-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-m-pattern"></div></div>
@@ -979,7 +979,7 @@ select.fc{cursor:pointer;}
 
 <!-- ===== CASH ===== -->
 <div class="pg" id="p-k">
-  <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div class="mnlbl" id="k-lbl"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
+  <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="k-lbl"></div><button onclick="openCal('k-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="k-cal" onchange="jumpKM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
   <div class="card"><div class="ct">📈 月内残高推移</div><div class="chart-wrap"><canvas id="k-chart"></canvas></div></div>
   <div id="k-list"></div>
   <button class="btn bp bf" onclick="oCash()" style="margin-top:8px;">＋ 金種登録</button>
@@ -2265,6 +2265,15 @@ function rAnket(){
   }
   mkChart(document.getElementById('ch-tri'),tc,'');mkChart(document.getElementById('ch-exp'),ec,'gr');mkChart(document.getElementById('ch-cat'),cc2,'pu');mkChart(document.getElementById('ch-cheki'),chc,'pk');
 }
+function openCal(inputId){
+  var el=document.getElementById(inputId);if(!el)return;
+  try{el.showPicker();}catch(e){el.style.pointerEvents='auto';el.focus();el.click();}
+}
+function jumpD(val){if(!val)return;var p=val.split('-');vD=new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2]));rDay();}
+function jumpM(val){if(!val)return;var p=val.split('-');vM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rMon();}
+function jumpAM(val){if(!val)return;var p=val.split('-');aM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rAnket();}
+function jumpZM(val){if(!val)return;var p=val.split('-');zM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rZAnalysis();}
+function jumpKM(val){if(!val)return;var p=val.split('-');kM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rCash();}
 function chD(d){vD.setDate(vD.getDate()+d);rDay();}
 function chM(d){vM.setMonth(vM.getMonth()+d);rMon();}
 function chAM(d){aM.setMonth(aM.getMonth()+d);rAnket();}
