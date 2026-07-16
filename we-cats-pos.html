@@ -894,7 +894,12 @@ select.fc{cursor:pointer;}
       <div class="tab" id="tz-y" onclick="ztab('y')">年別</div>
     </div>
     <div id="z-d">
-      <div class="mnav"><button class="mnbtn" onclick="chZD(-1)">＜前日</button><div class="mnlbl" id="z-d-lbl" onclick="openZDCal()" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">📅</div><button class="mnbtn" onclick="chZD(1)">翌日＞</button></div>
+      <div class="mnav"><button class="mnbtn" onclick="chZD(-1)">＜前日</button>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="mnlbl" id="z-d-lbl">📅</span>
+          <button onclick="openZDCal()" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 日付選択</button>
+        </div>
+        <button class="mnbtn" onclick="chZD(1)">翌日＞</button></div>
       <input type="date" id="z-d-cal" onchange="jumpZD(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;">
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-d-type"></div></div>
       <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-d-member"></div></div>
