@@ -75,13 +75,52 @@ function flushSyncQueue(){
   q.forEach(function(item){supaUpsert(item.table,item.data);});
 }
 
-function supaDelete(table, id) {
+function supaDeleteOnce(table, id) {
   return fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(String(id)), {
     method: 'DELETE',
     headers: getSupaHeaders()
   }).then(function(r){
-    if(!r.ok) r.text().then(function(t){console.error('delete err',table,t);});
-  }).catch(function(e){console.error('delete err',table,e.message);});
+    if(!r.ok) return r.text().then(function(t){console.error('delete err',table,t);return Promise.reject(t);});
+    return true;
+  });
+}
+function supaDelete(table, id, _attempt) {
+  _attempt = _attempt || 1;
+  // 削除待ちとして記録しておく（クラウド側の削除が終わるまで、読み込み時に復活させないため）
+  try{
+    var dq=JSON.parse(localStorage.getItem('wc_delete_queue')||'[]');
+    if(!dq.some(function(x){return x.table===table&&String(x.id)===String(id);})){
+      dq.push({table:table,id:String(id)});
+      localStorage.setItem('wc_delete_queue',JSON.stringify(dq));
+    }
+  }catch(qe){}
+  return supaDeleteOnce(table, id).then(function(res){
+    removeFromDeleteQueue(table,id);
+    return res;
+  }).catch(function(e){
+    if(_attempt < 3){
+      return new Promise(function(res){setTimeout(res, 1000*_attempt);})
+        .then(function(){return supaDelete(table, id, _attempt+1);});
+    }
+    console.error('delete failed after retries', table, id, e);
+    if(typeof toast === 'function') toast('⚠️ クラウドからの削除に失敗しました。電波を確認してください', true);
+  });
+}
+function removeFromDeleteQueue(table,id){
+  try{
+    var dq=JSON.parse(localStorage.getItem('wc_delete_queue')||'[]');
+    dq=dq.filter(function(x){return !(x.table===table&&String(x.id)===String(id));});
+    localStorage.setItem('wc_delete_queue',JSON.stringify(dq));
+  }catch(qe){}
+}
+function flushDeleteQueue(){
+  var dq=JSON.parse(localStorage.getItem('wc_delete_queue')||'[]');
+  dq.forEach(function(item){supaDelete(item.table,item.id);});
+}
+function getPendingDeleteIds(table){
+  var dq=JSON.parse(localStorage.getItem('wc_delete_queue')||'[]');
+  var ids={};dq.forEach(function(x){if(x.table===table)ids[x.id]=true;});
+  return ids;
 }
 
 function supaLoad(table) {
@@ -117,8 +156,10 @@ function loadFromSupabase() {
     var customers=results[3], cash=results[4], settings=results[5], cheki=results[6];
 
     flushSyncQueue();
+    flushDeleteQueue();
     if(guests) {
-      var cloudG = guests.map(function(g){return {
+      var pendingDelG=getPendingDeleteIds('pos_guests');
+      var cloudG = guests.filter(function(g){return !pendingDelG[String(g.id)];}).map(function(g){return {
         id:g.id, d:g.date, tp:g.type, pt:g.pattern, member:g.member||'', operator:g.operator||'',
         a:g.adults, c:g.children, ci:g.checkin, co:g.checkout,
         pr:g.price, st:g.status, fn:g.free_nyan,
@@ -130,7 +171,8 @@ function loadFromSupabase() {
       G = cloudG.concat(localGOnly);
     }
     if(merch) {
-      var cloudMS = merch.map(function(m){return {d:m.date,i:m.items,total:m.total};});
+      var pendingDelMS=getPendingDeleteIds('pos_merch');
+      var cloudMS = merch.filter(function(m){return !pendingDelMS[String(m.date)];}).map(function(m){return {d:m.date,i:m.items,total:m.total};});
       var cloudMSDates={};cloudMS.forEach(function(m){cloudMSDates[m.d]=true;});
       var localMSOnly=JSON.parse(localStorage.getItem('wc_ms')||'[]').filter(function(m){return !cloudMSDates[m.d];});
       if(localMSOnly.length>0){localMSOnly.forEach(function(m){saveMerchToSupa(m);});}
@@ -141,7 +183,8 @@ function loadFromSupabase() {
         .map(function(m){return {id:m.id,n:m.name,p:m.price};});
     }
     if(customers) {
-      var cloudCU = customers.map(function(c){return {
+      var pendingDelCU=getPendingDeleteIds('pos_customers');
+      var cloudCU = customers.filter(function(c){return !pendingDelCU[String(c.id)];}).map(function(c){return {
         id:c.id, memberNo:c.member_no, name:c.name,
         look:c.look, pref:c.pref, alert:c.alert, birth:c.birth, photo:c.photo,
         trigger:c.trigger_list||[], companion:c.companion||[],
@@ -154,7 +197,8 @@ function loadFromSupabase() {
       CU = cloudCU.concat(localCUOnly);
     }
     if(cash) {
-      var cloudCR = cash.map(function(c){return Object.assign({},c.data,{d:c.date,id:c.id});});
+      var pendingDelCR=getPendingDeleteIds('pos_cash');
+      var cloudCR = cash.filter(function(c){return !pendingDelCR[String(c.id)];}).map(function(c){return Object.assign({},c.data,{d:c.date,id:c.id});});
       var cloudCRIds={};cloudCR.forEach(function(c){cloudCRIds[String(c.id)]=true;});
       var localCROnly=JSON.parse(localStorage.getItem('wc_cr')||'[]').filter(function(c){return !cloudCRIds[String(c.id||c.d)];});
       if(localCROnly.length>0){localCROnly.forEach(function(c){saveCashToSupa(c);});}
@@ -184,7 +228,8 @@ function loadFromSupabase() {
     buildOperatorSelect();
 
     if(cheki) {
-      var cloudCheki = cheki.map(function(c){return {id:c.id,d:c.date,cats:c.cats||[],multi:!!c.multi,qty:c.qty,price:c.price,total:c.total};});
+      var pendingDelCheki=getPendingDeleteIds('pos_cheki');
+      var cloudCheki = cheki.filter(function(c){return !pendingDelCheki[String(c.id)];}).map(function(c){return {id:c.id,d:c.date,cats:c.cats||[],multi:!!c.multi,qty:c.qty,price:c.price,total:c.total};});
       var cloudChekiIds={};cloudCheki.forEach(function(c){cloudChekiIds[String(c.id)]=true;});
       var localChekiOnly=JSON.parse(localStorage.getItem('wc_cheki')||'[]').filter(function(c){return !cloudChekiIds[String(c.id)];});
       if(localChekiOnly.length>0){localChekiOnly.forEach(function(c){saveChekiToSupa(c);});}
