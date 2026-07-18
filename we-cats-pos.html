@@ -743,7 +743,7 @@ select.fc{cursor:pointer;}
     <div class="sc gr"><div class="sl">本日の売上</div><div class="sv g" id="ss">0</div><div class="su">円</div></div>
   </div>
   <div style="margin-bottom:10px;">
-    <button onclick="openPastAdd()" style="width:100%;padding:11px;background:var(--sf2);border:1.5px dashed var(--lp);border-radius:14px;color:var(--ac);font-family:'Noto Sans JP',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">📅 過去の来店記録を追加</button>
+    <button onclick="openPastAdd()" style="width:100%;padding:11px;background:var(--sf2);border:1.5px dashed var(--lp);border-radius:14px;color:var(--ac);font-family:'Noto Sans JP',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">➕ 本日の来店記録追加</button>
   </div>
   <div class="tabs">
     <div class="tab active" id="ts1" onclick="gtab('stay')">滞在中 <span class="badge" id="bs">0</span></div>
@@ -2365,9 +2365,8 @@ function resetPastForm(keepDate){
   if(keepDate){document.getElementById('ge-id').setAttribute('data-date',keepDate);var de=document.getElementById('ge-date');if(de)de.value=keepDate;}
 }
 function openPastAdd(){
-  // 昨日の日付をデフォルトにセット
-  var yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
-  var yStr=yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+  // 今日の日付をデフォルトにセット（過去の日付にしたい場合は日付欄で変更可能）
+  var tStr=td();
   document.getElementById('ge-id').value='';
   document.getElementById('ge-tp').value='new';
   document.getElementById('ge-pt').value='友人';
@@ -2376,10 +2375,9 @@ function openPastAdd(){
   setTime('ge-co','13:00');
   document.getElementById('ge-pr').value='';
   document.getElementById('ge-mo').value='';
-  document.getElementById('ge-id').setAttribute('data-date', yStr);
-  // 日付フィールドがあれば昨日にセット
+  document.getElementById('ge-id').setAttribute('data-date', tStr);
   var dateEl=document.getElementById('ge-date');
-  if(dateEl)dateEl.value=yStr;
+  if(dateEl)dateEl.value=tStr;
   oModal('m-gedit');
 }
 
