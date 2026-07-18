@@ -2102,7 +2102,7 @@ function deleteMerchHistory(date){
     var target=MS.find(function(m){return m.d===date;});
     var delId=target&&target.id?target.id:date;
     MS=MS.filter(function(m){return m.d!==date;});
-    sv();supaDelete('pos_merch',delId);rMerch();rGuests();toast('削除しました');
+    sv();supaDelete('pos_merch',delId);rMerch();rGuests();if(typeof rDay==='function')rDay();toast('削除しました');
   });
 }
 function exitMerchEdit(){
@@ -2214,6 +2214,7 @@ function rDay(){
     me.style.display='block';var mh='';
     for(var k=0;k<m.i.length;k++){if(m.i[k].q>0)mh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>'+m.i[k].n+' × '+m.i[k].q+'</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(m.i[k].q*m.i[k].p)+'</span></div>';}
     mh+='<div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;font-size:12px;"><span>物販合計</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(m.total)+'</span></div>';
+    mh+='<button onclick="deleteMerchHistory(\''+ds+'\')" style="margin-top:8px;width:100%;background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:6px;border-radius:10px;font-size:11px;cursor:pointer;">🗑 この日の物販を削除</button>';
     md.innerHTML=mh;
   }else me.style.display='none';
   var le=document.getElementById('d-list');
