@@ -172,7 +172,7 @@ function loadFromSupabase() {
     }
     if(merch) {
       var pendingDelMS=getPendingDeleteIds('pos_merch');
-      var cloudMS = merch.filter(function(m){return !pendingDelMS[String(m.date)];}).map(function(m){return {d:m.date,i:m.items,total:m.total};});
+      var cloudMS = merch.filter(function(m){return !pendingDelMS[String(m.date)];}).map(function(m){return {id:m.id,d:m.date,i:m.items,total:m.total};});
       var cloudMSDates={};cloudMS.forEach(function(m){cloudMSDates[m.d]=true;});
       var localMSOnly=JSON.parse(localStorage.getItem('wc_ms')||'[]').filter(function(m){return !cloudMSDates[m.d];});
       if(localMSOnly.length>0){localMSOnly.forEach(function(m){saveMerchToSupa(m);});}
@@ -2099,8 +2099,10 @@ function openMerchEdit(date){
 function deleteMerchHistory(date){
   askConfirm(date+'の物販記録を削除しますか？',function(){
     logAction('物販記録を削除',date);
+    var target=MS.find(function(m){return m.d===date;});
+    var delId=target&&target.id?target.id:date;
     MS=MS.filter(function(m){return m.d!==date;});
-    sv();supaDelete('pos_merch',date);rMerch();rGuests();toast('削除しました');
+    sv();supaDelete('pos_merch',delId);rMerch();rGuests();toast('削除しました');
   });
 }
 function exitMerchEdit(){
@@ -2133,7 +2135,7 @@ function saveMerchCombined(){
   }
 
   var total=0;for(var j=0;j<items.length;j++)total+=items[j].q*items[j].p;
-  MS=MS.filter(function(m){return m.d!==t;});MS.push({d:t,i:items,total:total});
+  MS=MS.filter(function(m){return m.d!==t;});MS.push({id:t,d:t,i:items,total:total});
   sv();saveMerchToSupa(MS.find(function(m){return m.d===t;}));
   logAction('物販保存','日付:'+t+' 合計:'+yn(total)+(ncOn?' (夜カフェ'+ncTktN+'枚含む)':''));
   var wasEdit=window._editMerchDate;window._editMerchDate=null;
@@ -2183,11 +2185,13 @@ function delMI(id){
 function cancelMerch(){
   askConfirm('本日の物販記録を取り消しますか？',function(){
     var t=td();
+    var targetRec=MS.find(function(m){return m.d===t;});
+    var delId2=targetRec&&targetRec.id?targetRec.id:t;
     MS=MS.filter(function(m){return m.d!==t;});
     for(var id in MQ) MQ[id]=0;
     sv(); // localStorage全体を更新
     // Supabaseから削除してから画面更新
-    supaDelete('pos_merch', t).then(function(){
+    supaDelete('pos_merch', delId2).then(function(){
       rMerch();rGuests();
       toast('物販記録を取り消しました');
     });
@@ -2261,7 +2265,7 @@ function delMonDay(date){
   if(!confirm(date+'の記録（来店'+g1.length+'件・物販'+m1.length+'件）を全て削除しますか？\nこの操作は元に戻せません。'))return;
   logAction('日別まとめ削除',date+' 来店'+g1.length+'件・物販'+m1.length+'件');
   g1.forEach(function(g){supaDelete('pos_guests',g.id);});
-  m1.forEach(function(m){supaDelete('pos_merch',m.d);});
+  m1.forEach(function(m){supaDelete('pos_merch',m.id||m.d);});
   G=G.filter(function(g){return g.d!==date;});
   MS=MS.filter(function(m){return m.d!==date;});
   sv();rMon();rGuests();toast(date+'の記録を削除しました');
@@ -2789,7 +2793,7 @@ function saveGEdit(){
     G.push(newG);sv();saveGuestToSupa(newG);rfAll();
     // 連続入力のためフォームをリセット（日付は保持）。モーダルは開いたまま
     resetPastForm(dateAttr);
-    toast('記録を追加しました ✅ 続けて入力できます');return;
+    toast('📅 '+dateAttr+' に記録を追加しました ✅ 続けて入力できます');return;
   }
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
   var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
