@@ -74,6 +74,15 @@ function flushSyncQueue(){
   localStorage.setItem('wc_sync_queue','[]');
   q.forEach(function(item){supaUpsert(item.table,item.data);});
 }
+function getPendingSyncKeys(table){
+  var q=JSON.parse(localStorage.getItem('wc_sync_queue')||'[]');
+  var keys={};
+  q.filter(function(item){return item.table===table;}).forEach(function(item){
+    var k=item.data.id!==undefined?String(item.data.id):String(item.data.date);
+    keys[k]=true;
+  });
+  return keys;
+}
 
 function supaDeleteOnce(table, id) {
   return fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(String(id)), {
@@ -166,7 +175,8 @@ function loadFromSupabase() {
         bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
       };});
       var cloudGIds={};cloudG.forEach(function(g){cloudGIds[String(g.id)]=true;});
-      var localGOnly=JSON.parse(localStorage.getItem('wc_g')||'[]').filter(function(g){return !cloudGIds[String(g.id)];});
+      var pendingG=getPendingSyncKeys('pos_guests');
+      var localGOnly=JSON.parse(localStorage.getItem('wc_g')||'[]').filter(function(g){return !cloudGIds[String(g.id)]&&pendingG[String(g.id)];});
       if(localGOnly.length>0){localGOnly.forEach(function(g){saveGuestToSupa(g);});}
       G = cloudG.concat(localGOnly);
     }
@@ -174,7 +184,8 @@ function loadFromSupabase() {
       var pendingDelMS=getPendingDeleteIds('pos_merch');
       var cloudMS = merch.filter(function(m){return !pendingDelMS[String(m.date)];}).map(function(m){return {id:m.id,d:m.date,i:m.items,total:m.total};});
       var cloudMSDates={};cloudMS.forEach(function(m){cloudMSDates[m.d]=true;});
-      var localMSOnly=JSON.parse(localStorage.getItem('wc_ms')||'[]').filter(function(m){return !cloudMSDates[m.d];});
+      var pendingMS=getPendingSyncKeys('pos_merch');
+      var localMSOnly=JSON.parse(localStorage.getItem('wc_ms')||'[]').filter(function(m){return !cloudMSDates[m.d]&&pendingMS[m.d];});
       if(localMSOnly.length>0){localMSOnly.forEach(function(m){saveMerchToSupa(m);});}
       MS = cloudMS.concat(localMSOnly);
     }
@@ -192,7 +203,8 @@ function loadFromSupabase() {
         visits:c.visits||[], memos:c.memos||[]
       };});
       var cloudCUIds={};cloudCU.forEach(function(c){cloudCUIds[String(c.id)]=true;});
-      var localCUOnly=JSON.parse(localStorage.getItem('wc_cu')||'[]').filter(function(c){return !cloudCUIds[String(c.id)];});
+      var pendingCU=getPendingSyncKeys('pos_customers');
+      var localCUOnly=JSON.parse(localStorage.getItem('wc_cu')||'[]').filter(function(c){return !cloudCUIds[String(c.id)]&&pendingCU[String(c.id)];});
       if(localCUOnly.length>0){localCUOnly.forEach(function(c){saveCustomerToSupa(c);});}
       CU = cloudCU.concat(localCUOnly);
     }
@@ -200,7 +212,8 @@ function loadFromSupabase() {
       var pendingDelCR=getPendingDeleteIds('pos_cash');
       var cloudCR = cash.filter(function(c){return !pendingDelCR[String(c.id)];}).map(function(c){return Object.assign({},c.data,{d:c.date,id:c.id});});
       var cloudCRIds={};cloudCR.forEach(function(c){cloudCRIds[String(c.id)]=true;});
-      var localCROnly=JSON.parse(localStorage.getItem('wc_cr')||'[]').filter(function(c){return !cloudCRIds[String(c.id||c.d)];});
+      var pendingCR=getPendingSyncKeys('pos_cash');
+      var localCROnly=JSON.parse(localStorage.getItem('wc_cr')||'[]').filter(function(c){return !cloudCRIds[String(c.id||c.d)]&&pendingCR[String(c.id||c.d)];});
       if(localCROnly.length>0){localCROnly.forEach(function(c){saveCashToSupa(c);});}
       CR = cloudCR.concat(localCROnly);
     }
@@ -231,7 +244,8 @@ function loadFromSupabase() {
       var pendingDelCheki=getPendingDeleteIds('pos_cheki');
       var cloudCheki = cheki.filter(function(c){return !pendingDelCheki[String(c.id)];}).map(function(c){return {id:c.id,d:c.date,cats:c.cats||[],multi:!!c.multi,qty:c.qty,price:c.price,total:c.total};});
       var cloudChekiIds={};cloudCheki.forEach(function(c){cloudChekiIds[String(c.id)]=true;});
-      var localChekiOnly=JSON.parse(localStorage.getItem('wc_cheki')||'[]').filter(function(c){return !cloudChekiIds[String(c.id)];});
+      var pendingCheki=getPendingSyncKeys('pos_cheki');
+      var localChekiOnly=JSON.parse(localStorage.getItem('wc_cheki')||'[]').filter(function(c){return !cloudChekiIds[String(c.id)]&&pendingCheki[String(c.id)];});
       if(localChekiOnly.length>0){localChekiOnly.forEach(function(c){saveChekiToSupa(c);});}
       Cheki = cloudCheki.concat(localChekiOnly);
     }
