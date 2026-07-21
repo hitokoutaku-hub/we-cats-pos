@@ -230,6 +230,8 @@ function loadFromSupabase() {
       if(mbs && Array.isArray(mbs.value)){ Members=mbs.value; localStorage.setItem('wc_members',JSON.stringify(Members)); buildMemberSelects(); }
       var cms=settings.find(function(s){return s.key==='carry_members';});
       if(cms) CarryMembers=cms.value;
+      var chs=settings.find(function(s){return s.key==='custom_holidays';});
+      if(chs && Array.isArray(chs.value)){ CustomHolidays=chs.value; localStorage.setItem('wc_custom_hols',JSON.stringify(CustomHolidays)); }
       var sls=settings.find(function(s){return s.key==='staff_list';});
       if(sls){
         var sv2=sls.value;
@@ -1229,6 +1231,18 @@ select.fc{cursor:pointer;}
     <input type="file" id="imp-f" accept=".json" style="display:none;" onchange="impData(event)">
     <div class="sep"></div>
     <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px;">👥 今アクセス中</div>
+    <div class="sep"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px;">🎌 特別休日料金の期間（夏休み・お盆・年末年始など）</div>
+    <div id="ch-list" style="margin-bottom:8px;"></div>
+    <div style="background:var(--sf2);border-radius:12px;padding:10px;border:1.5px solid var(--bd);margin-bottom:8px;">
+      <input type="text" id="ch-name" placeholder="名前（例：お盆休み）" class="fc" style="margin-bottom:6px;">
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <input type="date" id="ch-start" class="fc" style="flex:1;">
+        <span style="align-self:center;color:var(--tx2);">〜</span>
+        <input type="date" id="ch-end" class="fc" style="flex:1;">
+      </div>
+      <button onclick="addCustomHoliday()" class="btn bp bf" style="font-size:12px;padding:8px;">＋ この期間を休日料金にする</button>
+    </div>
     <div id="presence-view" style="font-size:12px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);margin-bottom:8px;">読み込み中...</div>
     <div id="menu-price-view" style="font-size:11px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);"></div>
   </div>
@@ -1522,7 +1536,7 @@ function closeConfirm(){
   document.getElementById('m-confirm').classList.remove('on');
   _confirmCb=null;
 }
-function oModal(id){document.getElementById(id).classList.add('on');if(id==='m-bc')rBCList();if(id==='m-price')loadPriceModal();if(id==='m-menu')loadPresence();}
+function oModal(id){document.getElementById(id).classList.add('on');if(id==='m-bc')rBCList();if(id==='m-price')loadPriceModal();if(id==='m-menu'){loadPresence();rCustomHolidays();}}
 function cModal(id){document.getElementById(id).classList.remove('on');}
 function sp(id){
   var pages=['p-g','p-r','p-m','p-s','p-k'];
@@ -1553,6 +1567,7 @@ function clk(){
 // ===== PRICING =====
 var DefaultPrice = {wd30:1000,wd60:1500,wdext:500,hd30:1200,hd60:1800,fn:2600,cheki:500};
 var Price = JSON.parse(localStorage.getItem('wc_price') || JSON.stringify(DefaultPrice));
+var CustomHolidays = JSON.parse(localStorage.getItem('wc_custom_hols') || '[]');
 if(!Price.cheki) Price.cheki = DefaultPrice.cheki;
 function savePrice(){ localStorage.setItem('wc_price', JSON.stringify(Price)); }
 function loadPriceModal(){
@@ -1585,8 +1600,109 @@ function updateMenuPriceView(){
 }
 
 
-function isHol(ds){var w=new Date(ds||td()).getDay();return w===0||w===6;}
+// ===== 日本の祝日判定 =====
+function nthMonday(year,month,n){
+  // その月のn番目の月曜日を返す（1始まり）
+  var d=new Date(year,month-1,1);
+  var add=(8-d.getDay())%7; // 最初の月曜日までの日数
+  d.setDate(1+add+(n-1)*7);
+  return d;
+}
+function vernalEquinox(year){
+  // 春分の日の近似計算（2000〜2099年用の簡易式）
+  return Math.floor(20.8431+0.242194*(year-1980)-Math.floor((year-1980)/4));
+}
+function autumnalEquinox(year){
+  // 秋分の日の近似計算（2000〜2099年用の簡易式）
+  return Math.floor(23.2488+0.242194*(year-1980)-Math.floor((year-1980)/4));
+}
+function jpHolidaySet(year){
+  var hols={};
+  function add(m,d){hols[year+'-'+p2(m)+'-'+p2(d)]=true;}
+  add(1,1);                              // 元日
+  var seijin=nthMonday(year,1,2);add(1,seijin.getDate());       // 成人の日（1月第2月曜）
+  add(2,11);                             // 建国記念の日
+  add(2,23);                             // 天皇誕生日
+  add(3,vernalEquinox(year));            // 春分の日
+  add(4,29);                             // 昭和の日
+  add(5,3);add(5,4);add(5,5);            // 憲法記念日・みどりの日・こどもの日
+  var umi=nthMonday(year,7,3);add(7,umi.getDate());             // 海の日（7月第3月曜）
+  add(8,11);                             // 山の日
+  var keiro=nthMonday(year,9,3);add(9,keiro.getDate());         // 敬老の日（9月第3月曜）
+  add(9,autumnalEquinox(year));          // 秋分の日
+  var sports=nthMonday(year,10,2);add(10,sports.getDate());     // スポーツの日（10月第2月曜）
+  add(11,3);                             // 文化の日
+  add(11,23);                            // 勤労感謝の日
+  // 振替休日：祝日が日曜なら翌平日（月曜、ただし連休なら空いてる日）まで繰り下げ
+  var addSub={};
+  Object.keys(hols).forEach(function(key){
+    var d=new Date(key);
+    if(d.getDay()===0){
+      var sub=new Date(d);
+      do{sub.setDate(sub.getDate()+1);}while(hols[sub.getFullYear()+'-'+p2(sub.getMonth()+1)+'-'+p2(sub.getDate())]);
+      addSub[sub.getFullYear()+'-'+p2(sub.getMonth()+1)+'-'+p2(sub.getDate())]=true;
+    }
+  });
+  Object.assign(hols,addSub);
+  return hols;
+}
+var _jpHolCache={};
+function isJpHoliday(ds){
+  var d=new Date(ds);
+  var y=d.getFullYear();
+  if(!_jpHolCache[y])_jpHolCache[y]=jpHolidaySet(y);
+  var key=y+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+  return !!_jpHolCache[y][key];
+}
+function isInCustomHoliday(ds){
+  var d=ds||td();
+  for(var i=0;i<CustomHolidays.length;i++){
+    var h=CustomHolidays[i];
+    if(d>=h.start && d<=h.end)return true;
+  }
+  return false;
+}
+function isHol(ds){var d=ds||td();var w=new Date(d).getDay();return w===0||w===6||isJpHoliday(d)||isInCustomHoliday(d);}
 function isSat(ds){return new Date(ds||td()).getDay()===6;}
+function saveCustomHolidays(){
+  localStorage.setItem('wc_custom_hols',JSON.stringify(CustomHolidays));
+  saveSettingToSupa('custom_holidays',CustomHolidays);
+}
+function addCustomHoliday(){
+  var name=document.getElementById('ch-name').value.trim();
+  var start=document.getElementById('ch-start').value;
+  var end=document.getElementById('ch-end').value;
+  if(!name){toast('名前を入力してください',true);return;}
+  if(!start||!end){toast('開始日と終了日を入力してください',true);return;}
+  if(start>end){toast('終了日は開始日より後にしてください',true);return;}
+  CustomHolidays.push({name:name,start:start,end:end});
+  CustomHolidays.sort(function(a,b){return a.start.localeCompare(b.start);});
+  saveCustomHolidays();
+  document.getElementById('ch-name').value='';
+  document.getElementById('ch-start').value='';
+  document.getElementById('ch-end').value='';
+  rCustomHolidays();
+  toast('追加しました ✅');
+}
+function delCustomHoliday(idx){
+  askConfirm('この期間を削除しますか？',function(){
+    CustomHolidays.splice(idx,1);
+    saveCustomHolidays();
+    rCustomHolidays();
+    toast('削除しました');
+  });
+}
+function rCustomHolidays(){
+  var el=document.getElementById('ch-list');if(!el)return;
+  if(CustomHolidays.length===0){el.innerHTML='<div style="font-size:12px;color:var(--tx2);text-align:center;padding:10px;">追加した期間はありません</div>';return;}
+  var h='';
+  CustomHolidays.forEach(function(hd,i){
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);">';
+    h+='<div><div style="font-size:13px;font-weight:700;">'+hd.name+'</div><div style="font-size:11px;color:var(--tx2);">'+hd.start+' 〜 '+hd.end+'</div></div>';
+    h+='<button onclick="delCustomHoliday('+i+')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:10px;font-size:11px;cursor:pointer;">🗑</button></div>';
+  });
+  el.innerHTML=h;
+}
 function calcP(a,c,ci,co,dt,fn){
   var ds=dt||td();
   if(fn){return {t:Price.fn*(a+c),bd:'フリーにゃんタイム ¥'+Price.fn+'×'+(a+c)+'名',dur:'〜4時間',m:0};}
