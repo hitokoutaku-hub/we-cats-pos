@@ -350,7 +350,7 @@ function loadPresence(){
     .then(function(rows){
       if(!rows)return;
       var now=Date.now();
-      var active=rows.filter(function(r){return r.last_seen && (now-new Date(r.last_seen).getTime())<60000;});
+      var active=rows.filter(function(r){return r.last_seen && (now-new Date(r.last_seen).getTime())<90000;});
       renderPresence(active);
     }).catch(function(e){console.warn('presence load skipped:',e.message);});
 }
@@ -375,7 +375,7 @@ function renderPresence(active){
 }
 function startPresenceLoop(){
   heartbeatPresence();loadPresence();
-  setInterval(function(){heartbeatPresence();loadPresence();},20000);
+  setInterval(function(){heartbeatPresence();loadPresence();},60000);
 }
 function logAction(action, detail) {
   var log = {
