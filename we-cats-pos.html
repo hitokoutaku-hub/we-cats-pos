@@ -1241,6 +1241,12 @@ select.fc{cursor:pointer;}
         <span style="align-self:center;color:var(--tx2);">〜</span>
         <input type="date" id="ch-end" class="fc" style="flex:1;">
       </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);margin-bottom:4px;">
+        <input type="checkbox" id="ch-noFN" style="width:16px;height:16px;">この期間はフリーにゃんタイムを禁止する
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);margin-bottom:6px;">
+        <input type="checkbox" id="ch-noKD" style="width:16px;height:16px;">この期間はキッズデイを禁止する
+      </label>
       <button onclick="addCustomHoliday()" class="btn bp bf" style="font-size:12px;padding:8px;">＋ この期間を休日料金にする</button>
     </div>
     <div id="presence-view" style="font-size:12px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);margin-bottom:8px;">読み込み中...</div>
@@ -1305,6 +1311,15 @@ select.fc{cursor:pointer;}
   </div>
   <div class="fg"><label class="fl">入店時間</label><div id="ge-ci"></div></div>
   <div class="fg"><label class="fl">退店時間（滞在中の場合は空白でOK）</label><div id="ge-co"></div><button type="button" onclick="setTime('ge-co','')" style="margin-top:6px;background:none;border:1px solid var(--bd);color:var(--tx2);padding:4px 10px;border-radius:10px;font-size:11px;cursor:pointer;font-family:'Zen Maru Gothic',sans-serif;">滞在中（空白）にする</button></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div class="fg"><label class="fl">フリーにゃんタイム</label>
+      <button type="button" id="ge-fn-btn" onclick="togGEFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:13px;cursor:pointer;">🐱 フリーにゃん OFF</button>
+    </div>
+    <div class="fg"><label class="fl">キッズデイ</label>
+      <button type="button" id="ge-kd-btn" onclick="togGEKD()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:13px;cursor:pointer;">🧒 キッズデイ OFF</button>
+    </div>
+  </div>
+  <div style="font-size:10px;color:var(--tx2);margin:-4px 0 8px;">※切り替えると「料金」欄が空欄の場合、保存時に自動で再計算されます</div>
   <div class="fg"><label class="fl">料金（手動入力）</label><input type="number" class="fc" id="ge-pr" min="0" placeholder="空白で自動計算"></div>
   <div class="fg"><label class="fl">メモ</label><input type="text" class="fc" id="ge-mo"></div>
   <div class="fg"><label class="fl">割引内容（例：クーポン、振興券）</label><input type="text" class="fc" id="ge-disc-name" placeholder="例：クーポン"></div>
@@ -1672,15 +1687,19 @@ function addCustomHoliday(){
   var name=document.getElementById('ch-name').value.trim();
   var start=document.getElementById('ch-start').value;
   var end=document.getElementById('ch-end').value;
+  var noFN=document.getElementById('ch-noFN').checked;
+  var noKD=document.getElementById('ch-noKD').checked;
   if(!name){toast('名前を入力してください',true);return;}
   if(!start||!end){toast('開始日と終了日を入力してください',true);return;}
   if(start>end){toast('終了日は開始日より後にしてください',true);return;}
-  CustomHolidays.push({name:name,start:start,end:end});
+  CustomHolidays.push({name:name,start:start,end:end,noFN:noFN,noKD:noKD});
   CustomHolidays.sort(function(a,b){return a.start.localeCompare(b.start);});
   saveCustomHolidays();
   document.getElementById('ch-name').value='';
   document.getElementById('ch-start').value='';
   document.getElementById('ch-end').value='';
+  document.getElementById('ch-noFN').checked=false;
+  document.getElementById('ch-noKD').checked=false;
   rCustomHolidays();
   toast('追加しました ✅');
 }
@@ -1697,16 +1716,27 @@ function rCustomHolidays(){
   if(CustomHolidays.length===0){el.innerHTML='<div style="font-size:12px;color:var(--tx2);text-align:center;padding:10px;">追加した期間はありません</div>';return;}
   var h='';
   CustomHolidays.forEach(function(hd,i){
+    var restrict=[];
+    if(hd.noFN)restrict.push('🐱フリーにゃん禁止');
+    if(hd.noKD)restrict.push('🧒キッズデイ禁止');
     h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd);">';
-    h+='<div><div style="font-size:13px;font-weight:700;">'+hd.name+'</div><div style="font-size:11px;color:var(--tx2);">'+hd.start+' 〜 '+hd.end+'</div></div>';
+    h+='<div><div style="font-size:13px;font-weight:700;">'+hd.name+'</div><div style="font-size:11px;color:var(--tx2);">'+hd.start+' 〜 '+hd.end+(restrict.length?'<br>'+restrict.join('・'):'')+'</div></div>';
     h+='<button onclick="delCustomHoliday('+i+')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:10px;font-size:11px;cursor:pointer;">🗑</button></div>';
   });
   el.innerHTML=h;
 }
-function calcP(a,c,ci,co,dt,fn){
+function getFNKDBlock(date){
+  var d=date||td();
+  for(var i=0;i<CustomHolidays.length;i++){
+    var hcd=CustomHolidays[i];
+    if(d>=hcd.start && d<=hcd.end && (hcd.noFN||hcd.noKD)) return hcd;
+  }
+  return null;
+}
+function calcP(a,c,ci,co,dt,fn,forceKD){
   var ds=dt||td();
   if(fn){return {t:Price.fn*(a+c),bd:'フリーにゃんタイム ¥'+Price.fn+'×'+(a+c)+'名',dur:'〜4時間',m:0};}
-  var hol=isHol(ds),sat=isSat(ds);
+  var hol=isHol(ds),sat=(forceKD!==undefined)?!!forceKD:isSat(ds);
   var ciArr=ci.split(':');var ih=parseInt(ciArr[0]),im=parseInt(ciArr[1]);
   var m=0;
   if(co){var coArr=co.split(':');var oh=parseInt(coArr[0]),om=parseInt(coArr[1]);m=(oh*60+om)-(ih*60+im);if(m<0)m+=1440;}
@@ -1744,6 +1774,7 @@ function ppCalc(){
   pbEl.textContent='30分 / 1時間\n'+parts.join(' + ');
 }
 function togFN(){
+  if(!isFN){var blk=getFNKDBlock(td());if(blk&&blk.noFN){toast('⚠️ '+blk.name+'期間中はフリーにゃんタイムを利用できません',true);return;}}
   isFN=!isFN;
   var btn=document.getElementById('fn-btn');if(!btn)return;
   if(isFN){btn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';btn.style.borderColor='var(--ac2)';btn.style.color='#5a8050';btn.textContent='🐱 フリーにゃん　ON ✓';}
@@ -1751,11 +1782,26 @@ function togFN(){
   ppCalc();
 }
 function togKD(){
+  if(!isKD){var blk=getFNKDBlock(td());if(blk&&blk.noKD){toast('⚠️ '+blk.name+'期間中はキッズデイを利用できません',true);return;}}
   isKD=!isKD;
   var btn=document.getElementById('kd-btn');if(!btn)return;
   if(isKD){btn.style.background='linear-gradient(135deg,#fff8e8,#ffe0a0)';btn.style.borderColor='var(--wn)';btn.style.color='#a06010';btn.textContent='🧒 キッズデイ　ON ✓';}
   else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='🧒 キッズデイ　OFF';}
   ppCalc();
+}
+function togGEFN(){
+  if(!window._geFN){var geDate=(document.getElementById('ge-date')||{}).value||td();var blk=getFNKDBlock(geDate);if(blk&&blk.noFN){toast('⚠️ '+blk.name+'期間中はフリーにゃんタイムを利用できません',true);return;}}
+  window._geFN=!window._geFN;
+  var btn=document.getElementById('ge-fn-btn');if(!btn)return;
+  if(window._geFN){btn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';btn.style.borderColor='var(--ac2)';btn.style.color='#5a8050';btn.textContent='🐱 フリーにゃん ON ✓';}
+  else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='🐱 フリーにゃん OFF';}
+}
+function togGEKD(){
+  if(!window._geKD){var geDate2=(document.getElementById('ge-date')||{}).value||td();var blk=getFNKDBlock(geDate2);if(blk&&blk.noKD){toast('⚠️ '+blk.name+'期間中はキッズデイを利用できません',true);return;}}
+  window._geKD=!window._geKD;
+  var btn=document.getElementById('ge-kd-btn');if(!btn)return;
+  if(window._geKD){btn.style.background='linear-gradient(135deg,#fff8e8,#ffe0a0)';btn.style.borderColor='var(--wn)';btn.style.color='#a06010';btn.textContent='🧒 キッズデイ ON ✓';}
+  else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.textContent='🧒 キッズデイ OFF';}
 }
 
 
@@ -1884,6 +1930,7 @@ function oCO(id){
   rcCO();oModal('m-co');
 }
 function togCOFN(){
+  if(!window._coFN){var g4=G.find(function(x){return String(x.id)===String(coId);});var blk=getFNKDBlock(g4?g4.d:td());if(blk&&blk.noFN){toast('⚠️ '+blk.name+'期間中はフリーにゃんタイムを利用できません',true);return;}}
   window._coFN=!window._coFN;
   updateCOFNBtn();
   rcCO();
@@ -1908,7 +1955,7 @@ function rcCO(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd||false);isKD=g.kd||false;
   document.getElementById('co-dur').textContent=r.dur||'—';
   document.getElementById('co-det').textContent=r.bd;
   document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
@@ -1925,7 +1972,7 @@ function confCO(){
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd||false);isKD=g.kd||false;
   var mo=document.getElementById('co-mo').value;
   if(otha>0)mo=(mo?mo+' ':'')+(othn||'その他割引')+' -¥'+otha.toLocaleString();
   g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup-otha);g.mo=mo;g.st='done';g.fn=window._coFN;
@@ -1947,7 +1994,7 @@ function showRcpt(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd||false);isKD=g.kd||false;
   var tot=Math.max(0,r.t-disc);
   document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
   document.getElementById('rc-dur').textContent=r.dur||'—';
@@ -2508,6 +2555,10 @@ function openPastAdd(){
   document.getElementById('ge-id').setAttribute('data-date', tStr);
   var dateEl=document.getElementById('ge-date');
   if(dateEl)dateEl.value=tStr;
+  window._geFN=false;window._geKD=false;
+  var geFnBtn0=document.getElementById('ge-fn-btn'),geKdBtn0=document.getElementById('ge-kd-btn');
+  if(geFnBtn0){geFnBtn0.style.background='var(--sf2)';geFnBtn0.style.borderColor='var(--bd)';geFnBtn0.style.color='var(--tx2)';geFnBtn0.textContent='🐱 フリーにゃん OFF';}
+  if(geKdBtn0){geKdBtn0.style.background='var(--sf2)';geKdBtn0.style.borderColor='var(--bd)';geKdBtn0.style.color='var(--tx2)';geKdBtn0.textContent='🧒 キッズデイ OFF';}
   oModal('m-gedit');
 }
 
@@ -2525,6 +2576,10 @@ function openDayAdd(){
   document.getElementById('ge-id').setAttribute('data-date', fYMD(vD));
   var dateEl2=document.getElementById('ge-date');
   if(dateEl2)dateEl2.value=fYMD(vD);
+  window._geFN=false;window._geKD=false;
+  var geFnBtn0=document.getElementById('ge-fn-btn'),geKdBtn0=document.getElementById('ge-kd-btn');
+  if(geFnBtn0){geFnBtn0.style.background='var(--sf2)';geFnBtn0.style.borderColor='var(--bd)';geFnBtn0.style.color='var(--tx2)';geFnBtn0.textContent='🐱 フリーにゃん OFF';}
+  if(geKdBtn0){geKdBtn0.style.background='var(--sf2)';geKdBtn0.style.borderColor='var(--bd)';geKdBtn0.style.color='var(--tx2)';geKdBtn0.textContent='🧒 キッズデイ OFF';}
   oModal('m-gedit');
 }
 function stab(t){
@@ -2890,6 +2945,10 @@ function oGEdit(id){
   setTime('ge-co',g.co||'');document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
   document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
   buildMemberSelects();var gem=document.getElementById('ge-member');if(gem)gem.value=g.member||'';
+  window._geFN=!!g.fn;window._geKD=!!g.kd;
+  var geFnBtn=document.getElementById('ge-fn-btn'),geKdBtn=document.getElementById('ge-kd-btn');
+  if(geFnBtn){if(window._geFN){geFnBtn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';geFnBtn.style.borderColor='var(--ac2)';geFnBtn.style.color='#5a8050';geFnBtn.textContent='🐱 フリーにゃん ON ✓';}else{geFnBtn.style.background='var(--sf2)';geFnBtn.style.borderColor='var(--bd)';geFnBtn.style.color='var(--tx2)';geFnBtn.textContent='🐱 フリーにゃん OFF';}}
+  if(geKdBtn){if(window._geKD){geKdBtn.style.background='linear-gradient(135deg,#fff8e8,#ffe0a0)';geKdBtn.style.borderColor='var(--wn)';geKdBtn.style.color='#a06010';geKdBtn.textContent='🧒 キッズデイ ON ✓';}else{geKdBtn.style.background='var(--sf2)';geKdBtn.style.borderColor='var(--bd)';geKdBtn.style.color='var(--tx2)';geKdBtn.textContent='🧒 キッズデイ OFF';}}
   // アンケートを読み込む
   var aq=g.aq||{};
   eaqCh={tri:(aq.tri||[]).slice(),exp:aq.exp||'',cats:(aq.cats||[]).slice()};
@@ -2911,14 +2970,14 @@ function saveGEdit(){
     var co=getTime('ge-co');
     var prInput=document.getElementById('ge-pr').value;
     var pr=prInput!==''?parseInt(prInput):0;
-    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,false);pr=r.t;}
+    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,!!window._geFN,!!window._geKD);pr=r.t;}
     var discAmt2=parseInt(document.getElementById('ge-disc-amt').value)||0;
     if(discAmt2>0)pr=Math.max(0,pr-discAmt2);
     var discName2=document.getElementById('ge-disc-name').value.trim();
     var moVal2=document.getElementById('ge-mo').value;
     if(discName2&&discAmt2>0)moVal2=(moVal2?moVal2+' ':'')+discName2+' -¥'+discAmt2.toLocaleString();
     var expEl0=document.querySelector('#eaq-exp .chip.on');var exp0=expEl0?expEl0.getAttribute('data-v'):'';
-    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:false,bc:'',bcn:'',aq:{tri:eaqCh.tri.slice(),exp:exp0,cats:eaqCh.cats.slice()}};
+    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:!!window._geFN,kd:!!window._geKD,bc:'',bcn:'',aq:{tri:eaqCh.tri.slice(),exp:exp0,cats:eaqCh.cats.slice()}};
     G.push(newG);sv();saveGuestToSupa(newG);rfAll();
     // 連続入力のためフォームをリセット（日付は保持）。モーダルは開いたまま
     resetPastForm(dateAttr);
@@ -2928,13 +2987,13 @@ function saveGEdit(){
   var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
   var ci=getTime('ge-ci');var co=getTime('ge-co');
   var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
-  if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,g.fn);pr=r.t;}
+  if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,!!window._geFN,!!window._geKD);pr=r.t;}
   var discAmt=parseInt(document.getElementById('ge-disc-amt').value)||0;
   if(discAmt>0)pr=Math.max(0,pr-discAmt);
   var discName=document.getElementById('ge-disc-name').value.trim();
   var moVal=document.getElementById('ge-mo').value;
   if(discName&&discAmt>0)moVal=(moVal?moVal+' ':'')+discName+' -¥'+discAmt.toLocaleString();
-  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';
+  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';g.fn=!!window._geFN;g.kd=!!window._geKD;
   var expElE=document.querySelector('#eaq-exp .chip.on');g.aq={tri:eaqCh.tri.slice(),exp:expElE?expElE.getAttribute('data-v'):'',cats:eaqCh.cats.slice()};
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
