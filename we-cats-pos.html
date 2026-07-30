@@ -1041,6 +1041,7 @@ select.fc{cursor:pointer;}
 <!-- ===== CASH ===== -->
 <div class="pg" id="p-k">
   <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="k-lbl"></div><button onclick="openCal('k-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="k-cal" onchange="jumpKM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
+  <button class="btn bp bf" onclick="oCash()" style="margin-bottom:12px;">＋ 金種登録</button>
   <div class="card"><div class="ct">📈 月内残高推移</div><div class="chart-wrap"><canvas id="k-chart"></canvas></div></div>
   <div id="k-list"></div>
   <button class="btn bp bf" onclick="oCash()" style="margin-top:8px;">＋ 金種登録</button>
