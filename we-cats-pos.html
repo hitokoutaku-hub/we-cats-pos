@@ -976,6 +976,7 @@ select.fc{cursor:pointer;}
       <div class="card"><div class="ct">🕐 時間帯別来店</div><div id="z-m-time"></div></div>
       <div class="card"><div class="ct">🛍️ 物販商品別（数量）</div><div id="z-m-merch"></div></div>
       <div class="card"><div class="ct">💴 物販商品別（売上）</div><div id="z-m-merch-sales"></div><div id="z-m-merch-total" style="text-align:right;font-family:'Noto Sans JP',sans-serif;font-size:18px;color:var(--ok);margin-top:8px;padding-top:8px;border-top:1px solid var(--bd);"></div></div>
+      <div class="card"><div class="ct">📸 猫別チェキ人気ランキング</div><div id="z-m-cheki-cat"></div></div>
     </div>
     <div id="z-y" style="display:none;">
       <div class="mnav"><button class="mnbtn" onclick="chZY(-1)">＜前年</button><div class="mnlbl" id="z-y-lbl"></div><button class="mnbtn" onclick="chZY(1)">翌年＞</button></div>
@@ -1956,7 +1957,7 @@ function rcCO(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd||false);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined);isKD=g.kd?true:isSat(g.d);
   document.getElementById('co-dur').textContent=r.dur||'—';
   document.getElementById('co-det').textContent=r.bd;
   document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
@@ -1973,7 +1974,7 @@ function confCO(){
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd||false);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined);isKD=g.kd?true:isSat(g.d);
   var mo=document.getElementById('co-mo').value;
   if(otha>0)mo=(mo?mo+' ':'')+(othn||'その他割引')+' -¥'+otha.toLocaleString();
   g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup-otha);g.mo=mo;g.st='done';g.fn=window._coFN;
@@ -1995,7 +1996,7 @@ function showRcpt(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd||false);isKD=g.kd||false;
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined);isKD=g.kd?true:isSat(g.d);
   var tot=Math.max(0,r.t-disc);
   document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
   document.getElementById('rc-dur').textContent=r.dur||'—';
@@ -2153,7 +2154,7 @@ function saveCheki(){
   Cheki.push(rec);sv();saveChekiToSupa(rec);
   logAction('チェキ販売',(chekiMulti?'複数':chekiSel.join('・'))+' '+chekiQty+'枚 '+yn(total));
   cModal('m-cheki');toast('📸 チェキを記録しました');
-  renderChekiToday();rGuests();
+  renderChekiToday();rGuests();rMerch();
 }
 function renderChekiToday(){
   var el=document.getElementById('cheki-today');if(!el)return;
@@ -2178,7 +2179,7 @@ function delCheki(id){
   askConfirm('この記録を削除しますか？',function(){
     logAction('チェキ記録を削除','id:'+id);
     Cheki=Cheki.filter(function(c){return c.id!==id;});sv();supaDelete('pos_cheki',id);
-    renderChekiToday();toast('削除しました');
+    renderChekiToday();rMerch();toast('削除しました');
   });
 }
 
@@ -2196,6 +2197,9 @@ function rMerch(){
       if(!inList && it.q>0){cnt+=it.q;sal+=it.q*it.p;}
     }
   }
+  // チェキ販売も物販点数・売上に合算する
+  var todaysCheki=Cheki.filter(function(c){return c.d===t;});
+  for(var ci=0;ci<todaysCheki.length;ci++){cnt+=todaysCheki[ci].qty;sal+=todaysCheki[ci].total;}
   document.getElementById('mc').textContent=cnt;document.getElementById('ms').textContent=sal.toLocaleString();
   // 編集モード表示バナー
   var banner=document.getElementById('merch-edit-banner');
@@ -2257,6 +2261,10 @@ function rMerchHistory(){
     h+='</div>';
   }
   he.innerHTML=h;
+}
+function jumpToMerchEdit(date){
+  sp('p-m');
+  setTimeout(function(){openMerchEdit(date);},50);
 }
 function openMerchEdit(date){
   // 指定日の物販データをMQに読み込んで編集
@@ -2392,7 +2400,10 @@ function rDay(){
     me.style.display='block';var mh='';
     for(var k=0;k<m.i.length;k++){if(m.i[k].q>0)mh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>'+m.i[k].n+' × '+m.i[k].q+'</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(m.i[k].q*m.i[k].p)+'</span></div>';}
     mh+='<div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;font-size:12px;"><span>物販合計</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(m.total)+'</span></div>';
-    mh+='<button onclick="deleteMerchHistory(\''+ds+'\')" style="margin-top:8px;width:100%;background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:6px;border-radius:10px;font-size:11px;cursor:pointer;">🗑 この日の物販を削除</button>';
+    mh+='<div style="display:flex;gap:8px;margin-top:8px;">';
+    mh+='<button onclick="jumpToMerchEdit(\''+ds+'\')" style="flex:1;background:#fff8e8;border:1px solid var(--wn);color:#a06010;padding:6px;border-radius:10px;font-size:11px;cursor:pointer;">✏️ この日の物販を編集</button>';
+    mh+='<button onclick="deleteMerchHistory(\''+ds+'\')" style="flex:1;background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:6px;border-radius:10px;font-size:11px;cursor:pointer;">🗑 この日の物販を削除</button>';
+    mh+='</div>';
     md.innerHTML=mh;
   }else me.style.display='none';
   var le=document.getElementById('d-list');
@@ -2971,7 +2982,7 @@ function saveGEdit(){
     var co=getTime('ge-co');
     var prInput=document.getElementById('ge-pr').value;
     var pr=prInput!==''?parseInt(prInput):0;
-    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,!!window._geFN,!!window._geKD);pr=r.t;}
+    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,!!window._geFN,window._geKD?true:undefined);pr=r.t;}
     var discAmt2=parseInt(document.getElementById('ge-disc-amt').value)||0;
     if(discAmt2>0)pr=Math.max(0,pr-discAmt2);
     var discName2=document.getElementById('ge-disc-name').value.trim();
@@ -2988,7 +2999,7 @@ function saveGEdit(){
   var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
   var ci=getTime('ge-ci');var co=getTime('ge-co');
   var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
-  if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,!!window._geFN,!!window._geKD);pr=r.t;}
+  if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,!!window._geFN,window._geKD?true:undefined);pr=r.t;}
   var discAmt=parseInt(document.getElementById('ge-disc-amt').value)||0;
   if(discAmt>0)pr=Math.max(0,pr-discAmt);
   var discName=document.getElementById('ge-disc-name').value.trim();
@@ -3447,6 +3458,31 @@ function rZAnalysis(){
         }
         salesEl.innerHTML=sh;
         if(totalEl)totalEl.textContent='物販合計　'+yn(totalSales);
+      }
+    }
+    // 猫別チェキ人気ランキング
+    var chekiCatEl=document.getElementById('z-m-cheki-cat');
+    if(chekiCatEl){
+      var monthCheki2=Cheki.filter(function(c){var d=new Date(c.d);return d.getFullYear()===yr&&d.getMonth()===mo;});
+      var chekiCatCount={};
+      monthCheki2.forEach(function(c){
+        if(c.multi){chekiCatCount['複数']=(chekiCatCount['複数']||0)+c.qty;}
+        else{c.cats.forEach(function(catName){chekiCatCount[catName]=(chekiCatCount[catName]||0)+c.qty;});}
+      });
+      var chekiKeys=Object.keys(chekiCatCount).sort(function(a,b){return chekiCatCount[b]-chekiCatCount[a];});
+      var chekiTotal=0;for(var cki=0;cki<chekiKeys.length;cki++)chekiTotal+=chekiCatCount[chekiKeys[cki]];
+      if(chekiKeys.length===0){chekiCatEl.innerHTML='<div style="color:var(--tx2);font-size:12px;text-align:center;padding:12px;">データなし</div>';}
+      else{
+        var ckh='';
+        var medals=['🥇','🥈','🥉'];
+        for(var ckj=0;ckj<chekiKeys.length;ckj++){
+          var ckn=chekiKeys[ckj];var ckq=chekiCatCount[ckn];
+          var ckpct=chekiTotal>0?Math.round(ckq/chekiTotal*100):0;
+          var medal=medals[ckj]||'';
+          ckh+='<div class="cbar"><div class="cbar-l"><span>'+medal+' '+ckn+'</span><span>'+ckq+'枚（'+ckpct+'%）</span></div>';
+          ckh+='<div class="cbar-bg"><div class="cbar-fill pk" style="width:'+ckpct+'%;"></div></div></div>';
+        }
+        chekiCatEl.innerHTML=ckh;
       }
     }
   } else {
