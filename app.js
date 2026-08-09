@@ -1466,12 +1466,15 @@ function rDay(){
   var p=0;for(var i=0;i<dg.length;i++)p+=dg[i].a+dg[i].c;
   var s=0;for(var j=0;j<dg.length;j++)s+=dg[j].pr;
   var m=MS.find(function(x){return x.d===ds;});
-  document.getElementById('d-g').textContent=p;document.getElementById('d-s').textContent=(s+(m?m.total:0)).toLocaleString();
+  var dc=Cheki.filter(function(c){return c.d===ds;});
+  var tc=0;dc.forEach(function(c){tc+=c.total;});
+  document.getElementById('d-g').textContent=p;document.getElementById('d-s').textContent=(s+(m?m.total:0)+tc).toLocaleString();
   var me=document.getElementById('d-ms'),md=document.getElementById('d-md');
-  if(m&&m.i.some(function(i){return i.q>0;})){
+  if((m&&m.i.some(function(i){return i.q>0;}))||dc.length>0){
     me.style.display='block';var mh='';
-    for(var k=0;k<m.i.length;k++){if(m.i[k].q>0)mh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>'+m.i[k].n+' × '+m.i[k].q+'</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(m.i[k].q*m.i[k].p)+'</span></div>';}
-    mh+='<div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;font-size:12px;"><span>物販合計</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(m.total)+'</span></div>';
+    if(m)for(var k=0;k<m.i.length;k++){if(m.i[k].q>0)mh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>'+m.i[k].n+' × '+m.i[k].q+'</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(m.i[k].q*m.i[k].p)+'</span></div>';}
+    if(dc.length>0)mh+='<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12px;"><span>📸 チェキ × '+dc.length+'</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn(tc)+'</span></div>';
+    mh+='<div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;font-size:12px;"><span>物販合計</span><span style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;">'+yn((m?m.total:0)+tc)+'</span></div>';
     mh+='<div style="display:flex;gap:8px;margin-top:8px;">';
     mh+='<button onclick="jumpToMerchEdit(\''+ds+'\')" style="flex:1;background:#fff8e8;border:1px solid var(--wn);color:#a06010;padding:6px;border-radius:10px;font-size:11px;cursor:pointer;">✏️ この日の物販を編集</button>';
     mh+='<button onclick="deleteMerchHistory(\''+ds+'\')" style="flex:1;background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:6px;border-radius:10px;font-size:11px;cursor:pointer;">🗑 この日の物販を削除</button>';
@@ -1505,10 +1508,13 @@ function rMon(){
   var sb=0;for(var j=0;j<mg.length;j++)sb+=mg[j].pr;
   var mm=MS.filter(function(m){var d=new Date(m.d);return d.getFullYear()===yr&&d.getMonth()===mo;});
   var sm=0;for(var k=0;k<mm.length;k++)sm+=mm[k].total;
-  document.getElementById('m-g').textContent=p;document.getElementById('m-s').textContent=(sb+sm).toLocaleString();
+  var mc=Cheki.filter(function(c){var d=new Date(c.d);return d.getFullYear()===yr&&d.getMonth()===mo;});
+  var sc=0;for(var ci=0;ci<mc.length;ci++)sc+=mc[ci].total;
+  document.getElementById('m-g').textContent=p;document.getElementById('m-s').textContent=(sb+sm+sc).toLocaleString();
   var bd={};
   for(var l=0;l<mg.length;l++){var g=mg[l];if(!bd[g.d])bd[g.d]={c:0,s:0};bd[g.d].c+=g.a+g.c;bd[g.d].s+=g.pr;}
   for(var n=0;n<mm.length;n++){var mx=mm[n];if(!bd[mx.d])bd[mx.d]={c:0,s:0};bd[mx.d].s+=mx.total;}
+  for(var ni=0;ni<mc.length;ni++){var cx=mc[ni];if(!bd[cx.d])bd[cx.d]={c:0,s:0};bd[cx.d].s+=cx.total;}
   var dates=Object.keys(bd).sort();
   var le=document.getElementById('m-list');
   if(dates.length===0){le.innerHTML='<div class="empty"><div class="ei">📅</div>記録なし</div>';return;}
