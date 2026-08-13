@@ -1435,10 +1435,11 @@ function editMerch(){
 }
 function delMI(id){
   askConfirm('削除しますか？',function(){
-    MI=MI.filter(function(x){return x.id!==id;});
+    MI=MI.filter(function(x){return String(x.id)!==String(id);});
     delete MQ[id];
     sv();
     saveMerchItemsToSupa();
+    supaDelete('pos_merch_items',id);
     rMerch();
     toast('削除しました');
   });
