@@ -1385,11 +1385,14 @@ function saveMerchCombined(){
   var items=[];
   for(var i=0;i<MI.length;i++)items.push({id:MI[i].id,n:MI[i].n,p:MI[i].p,q:MQ[String(MI[i].id)]||0});
 
+  // 既に保存済みの夜カフェチケット数量を引き継ぐ（チェックし忘れても消えないように）
+  var existingRec = MS.find(function(m){return m.d===t;});
+  var priorNc = existingRec ? existingRec.i.find(function(x){return x.id==='nc-ticket';}) : null;
+  var priorNcQty = priorNc ? (priorNc.q||0) : 0;
   var ncOn=document.getElementById('nc-tkt-on').checked;
-  if(ncOn){
-    var ncItem=items.find(function(x){return x.n==='🌙 夜カフェチケット';});
-    if(ncItem){ncItem.q=(ncItem.q||0)+ncTktN;}
-    else{items.push({id:'nc-ticket',n:'🌙 夜カフェチケット',p:3000,q:ncTktN});}
+  var newNcQty = priorNcQty + (ncOn ? ncTktN : 0);
+  if(newNcQty>0){
+    items.push({id:'nc-ticket',n:'🌙 夜カフェチケット',p:3000,q:newNcQty});
   }
 
   var total=0;for(var j=0;j<items.length;j++)total+=items[j].q*items[j].p;
@@ -1463,6 +1466,7 @@ function cancelMerch(){
 function rDay(){
   var ds=fYMD(vD);document.getElementById('d-lbl').textContent=ds;
   var dg=G.filter(function(g){return g.d===ds&&g.st==='done';});
+  dg.sort(function(a,b){return (a.ci||'').localeCompare(b.ci||'');});
   var p=0;for(var i=0;i<dg.length;i++)p+=dg[i].a+dg[i].c;
   var s=0;for(var j=0;j<dg.length;j++)s+=dg[j].pr;
   var m=MS.find(function(x){return x.d===ds;});
@@ -1590,7 +1594,7 @@ function jumpD(val){if(!val)return;var p=val.split('-');vD=new Date(parseInt(p[0
 function jumpM(val){if(!val)return;var p=val.split('-');vM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rMon();}
 function jumpAM(val){if(!val)return;var p=val.split('-');aM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rAnket();}
 function jumpZM(val){if(!val)return;var p=val.split('-');zM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rZAnalysis();}
-function jumpKM(val){if(!val)return;var p=val.split('-');kM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);rCash();}
+function jumpKM(val){if(!val)return;var p=val.split('-');kM=new Date(parseInt(p[0]),parseInt(p[1])-1,1);window._kShowAll=false;rCash();}
 function chD(d){vD.setDate(vD.getDate()+d);rDay();}
 function chM(d){vM.setMonth(vM.getMonth()+d);rMon();}
 function chAM(d){aM.setMonth(aM.getMonth()+d);rAnket();}
@@ -1923,7 +1927,11 @@ function doSaveCash(staffName){
   cModal('m-cash');rCash();
   toast('金種登録しました 💴'+(staffName?'（'+staffName+'）':''));
 }
-function chKM(d){kM.setMonth(kM.getMonth()+d);rCash();}
+function chKM(d){kM.setMonth(kM.getMonth()+d);window._kShowAll=false;rCash();}
+function toggleKShowAll(){
+  window._kShowAll=!window._kShowAll;
+  rCash();
+}
 function rCash(){
   var yr=kM.getFullYear(),mo=kM.getMonth();document.getElementById('k-lbl').textContent=yr+'/'+p2(mo+1);
   var recs=CR.filter(function(r){var d=new Date(r.d);return d.getFullYear()===yr&&d.getMonth()===mo;}).sort(function(a,b){return a.d.localeCompare(b.d);});
@@ -1941,8 +1949,13 @@ function rCash(){
   var msByDate={};
   MS.forEach(function(m){msByDate[m.d]=m;});
   var h='';
-  for(var i=0;i<recs.length;i++){
-    var r=recs[i];
+  // 表示は新しい日付が上に来るように並び替え。最初は直近7件だけ描画し、
+  // 「もっと見る」ボタンで残りをまとめて表示する（件数が多い月でも軽くするため）
+  var dispRecs=recs.slice().reverse();
+  var showAll=!!window._kShowAll;
+  var visibleRecs=showAll?dispRecs:dispRecs.slice(0,7);
+  for(var i=0;i<visibleRecs.length;i++){
+    var r=visibleRecs[i];
     // 前日比で過不足を計算（月をまたいでも全期間から直前の記録を探す）
     var prevRec=null;
     for(var pIdx=crSorted.length-1;pIdx>=0;pIdx--){if(crSorted[pIdx].d<r.d){prevRec=crSorted[pIdx];break;}}
@@ -1979,6 +1992,13 @@ function rCash(){
     h+='<button onclick="delCash(\''+(r.id||r.d)+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🗑 削除</button>';
     h+='</div>';
     h+='</div>';
+  }
+  if(dispRecs.length>7){
+    if(showAll){
+      h+='<button onclick="toggleKShowAll()" class="btn bs bf" style="margin-bottom:8px;">▲ 直近7件だけ表示</button>';
+    }else{
+      h+='<button onclick="toggleKShowAll()" class="btn bs bf" style="margin-bottom:8px;">▼ 残り'+(dispRecs.length-7)+'件をもっと見る</button>';
+    }
   }
   // 持ち帰り月次集計
   var carryByPerson={};
