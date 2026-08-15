@@ -2773,6 +2773,10 @@ function rfAll(){
   try{rESummary2();}catch(e){}
 }
 
+function syncHdrHeight(){
+  var hdr=document.querySelector('.hdr');
+  if(hdr)document.documentElement.style.setProperty('--hdr-h',hdr.offsetHeight+'px');
+}
 function init(){
   clk();setInterval(clk,1000);setInterval(rGuests,60000);
   var rt=document.getElementById('r-time');if(rt)rt.value=ft(new Date());
@@ -2784,6 +2788,10 @@ function init(){
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
   buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();buildMemberSelects();
   buildTimeSelect('r-time');buildTimeSelect('co-ci','rcCO()');buildTimeSelect('co-co','rcCO()');buildTimeSelect('ge-ci');buildTimeSelect('ge-co');
+  // ヘッダー高さに合わせてタブバーの固定位置を調整（ヘッダーの後ろに隠れないように）
+  syncHdrHeight();
+  window.addEventListener('resize',syncHdrHeight);
+  setInterval(syncHdrHeight,2000); // 日付文字列の折り返し等で高さが変わる場合に追従
   // Supabaseからデータロード
   loadFromSupabase();
   startPresenceLoop();
