@@ -119,22 +119,36 @@ function getPendingDeleteIds(table){
 }
 
 function supaLoad(table) {
-  return fetch(SUPA_URL + '/rest/v1/' + table + '?select=*', {
-    method: 'GET',
-    headers: getSupaHeaders()
-  }).then(function(r){
-    if(!r.ok) {
-      // テーブルが存在しない(404)場合はエラー表示せず静かに空扱い
-      if(r.status===404){return null;}
-      r.text().then(function(t){
-        // PGRST205（テーブル未検出）も静かに無視
-        if(t && t.indexOf('PGRST205')>=0) return;
-        console.error('load err',table,t);
-      });
-      return null;
-    }
-    return r.json();
-  }).catch(function(e){console.error('load err',table,e.message);return null;});
+  // Supabase/PostgRESTは1リクエストにつき既定で最大1000件しか返さないため、
+  // 1000件ちょうど返ってきた場合は続きのページを追加取得して全件つなげる
+  var PAGE=1000;
+  function fetchPage(offset, acc){
+    return fetch(SUPA_URL + '/rest/v1/' + table + '?select=*&limit='+PAGE+'&offset='+offset, {
+      method: 'GET',
+      headers: getSupaHeaders()
+    }).then(function(r){
+      if(!r.ok) {
+        // テーブルが存在しない(404)場合はエラー表示せず静かに空扱い
+        if(r.status===404){return null;}
+        r.text().then(function(t){
+          // PGRST205（テーブル未検出）も静かに無視
+          if(t && t.indexOf('PGRST205')>=0) return;
+          console.error('load err',table,t);
+        });
+        return null;
+      }
+      return r.json();
+    }).then(function(page){
+      if(page===null) return acc.length>0?acc:null;
+      acc = acc.concat(page);
+      if(page.length===PAGE){
+        // ちょうどページ上限まで返ってきた＝まだ続きがある可能性
+        return fetchPage(offset+PAGE, acc);
+      }
+      return acc;
+    }).catch(function(e){console.error('load err',table,e.message);return acc.length>0?acc:null;});
+  }
+  return fetchPage(0, []);
 }
 
 function manualRefresh(){
