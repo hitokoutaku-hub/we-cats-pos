@@ -1803,7 +1803,7 @@ function syncCashSales(idOrDate){
     rec.sales=autoSales;
     sv();saveCashToSupa(rec);
     rCash();toast('売上を更新しました');
-  });
+  },'更新する');
 }
 function delCash(idOrDate){
   var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
@@ -1856,7 +1856,7 @@ function rcCash(){
   // 前日のレジ残高を取得
   var prevSorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
   var prevRec=prevSorted.length?prevSorted[0]:null;
-  var prevNet=prevRec?(prevRec.net||prevRec.grand):0;
+  var prevNet=prevRec?(prevRec.grand||prevRec.net):0;
   // あるべき金額 = 前日残高 + 本日売上 − 持ち帰り
   var expected=prevNet+tot-carry;
   // 過不足 = 実際の金庫（数えた金種合計） − あるべき金額
@@ -1945,13 +1945,18 @@ function doSaveCash(staffName){
   var grand=dt+sup,net=grand;
   var carryName=document.getElementById('k-carry-name')?document.getElementById('k-carry-name').value:'';
   var salesEl=document.getElementById('k-sales');var sales=salesEl&&salesEl.value!==''?parseInt(salesEl.value)||0:0;
-  // 編集中なら既存IDを引き継ぐ。新規なら新しいID
-  var useId=window._editCashId||Date.now();
+  // 編集中なら既存IDを引き継ぐ。新規でも、同じ日付の記録が既にあれば
+  // 新しいIDを作らずそのIDを使う（再送信等で二重登録されるのを防ぐ）
+  var sameDateRec=CR.find(function(r){return r.d===date && String(r.id)!==String(window._editCashId||'');});
+  var useId=window._editCashId||(sameDateRec?sameDateRec.id:Date.now());
   var data={d:date,memo:document.getElementById('k-mo').value,sup:sup,carry:carry,carryName:carryName,sales:sales,grand:grand,net:net,staff:staffName||'',id:useId};
   for(var j=0;j<AD.length;j++)data[AD[j].id]=CQ[AD[j].id]||0;
-  // 同じIDの記録だけ置き換える（同じ日付の別記録は消さない）
-  CR=CR.filter(function(r){return String(r.id)!==String(useId);});
+  // 同じ日付の記録は（IDが違うものも含めて）すべて置き換える
+  var oldSameDate=CR.filter(function(r){return r.d===date && String(r.id)!==String(useId);});
+  CR=CR.filter(function(r){return String(r.id)!==String(useId) && r.d!==date;});
   CR.push(data);sv();saveCashToSupa(data);
+  // クラウド側に残っている重複日付の古いレコードも削除しておく
+  oldSameDate.forEach(function(r){if(r.id)supaDelete('pos_cash',String(r.id));});
   window._editCashId=null;
   cModal('m-cash');rCash();
   toast('金種登録しました 💴'+(staffName?'（'+staffName+'）':''));
