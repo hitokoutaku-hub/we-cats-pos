@@ -7,11 +7,12 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{background:#fff5f6;min-height:100%;}
 body{background:#fff5f6;min-height:100vh;color:var(--tx);font-family:\'Noto Sans JP\',\'Zen Maru Gothic\',sans-serif;font-size:14px;}
-.hdr{background:linear-gradient(135deg,#f4a4ad 0%,#e8838f 100%);border-bottom:none;padding:18px 16px 22px;height:auto;display:block;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(220,100,120,.2);max-width:820px;margin-left:auto;margin-right:auto;}
+.hdr-wrap{position:sticky;top:0;z-index:100;background:#fff5f6;padding-bottom:12px;box-shadow:0 6px 18px rgba(220,100,120,.15);}
+.hdr{background:linear-gradient(135deg,#f4a4ad 0%,#e8838f 100%);border-bottom:none;padding:18px 16px 22px;height:auto;display:block;box-shadow:0 4px 16px rgba(220,100,120,.2);max-width:820px;margin-left:auto;margin-right:auto;}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .logo{font-family:\'Noto Sans JP\',sans-serif;font-size:19px;color:#fff;letter-spacing:.5px;font-weight:800;display:flex;align-items:center;gap:6px;}
 .hdate{color:rgba(255,255,255,.88);font-size:12px;font-weight:600;line-height:1.4;}
-.nav{background:#fff;border-bottom:none;display:flex;position:sticky;top:var(--hdr-h,84px);z-index:99;overflow-x:auto;scrollbar-width:none;box-shadow:0 6px 18px rgba(220,100,120,.15);margin:12px auto 0;border-radius:20px;padding:6px;gap:2px;max-width:796px;}
+.nav{background:#fff;border-bottom:none;display:flex;overflow-x:auto;scrollbar-width:none;box-shadow:0 4px 12px rgba(220,100,120,.1);margin:12px auto 0;border-radius:20px;padding:6px;gap:2px;max-width:796px;}
 .nav::-webkit-scrollbar{display:none;}
 .ni{flex:1;min-width:52px;padding:13px 4px 12px;text-align:center;font-size:12px;color:var(--tx2);cursor:pointer;border-radius:16px;white-space:nowrap;transition:all .2s;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;}
 .ni.active{color:#fff;background:var(--ac);font-weight:700;}
