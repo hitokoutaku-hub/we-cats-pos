@@ -1791,6 +1791,20 @@ function editCash(idOrDate){
   rcCash();
   oModal('m-cash');
 }
+function syncCashSales(idOrDate){
+  var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
+  if(!rec)rec=CR.find(function(r){return r.d===idOrDate;});
+  if(!rec){toast('記録が見つかりません',true);return;}
+  var gs=0;G.forEach(function(g){if(g.st==='done'&&g.d===rec.d)gs+=g.pr;});
+  var mr=MS.find(function(m){return m.d===rec.d;});
+  var autoSales=gs+(mr?mr.total:0);
+  askConfirm(rec.d+' の売上を最新の来店・物販データ（'+yn(autoSales)+'）に更新しますか？',function(){
+    logAction('金種売上を再計算',rec.d+' '+yn(rec.sales)+' → '+yn(autoSales));
+    rec.sales=autoSales;
+    sv();saveCashToSupa(rec);
+    rCash();toast('売上を更新しました');
+  });
+}
 function delCash(idOrDate){
   var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
   // 旧データ（idなし）は日付で1件だけ探す
@@ -1984,7 +1998,7 @@ function rCash(){
     // あるべき金額 = 前日残高 ＋ 本日売上 − 持ち帰り
     var expected=prevNet+daySales-(r.carry||0);
     var diff=prevRec?(todayNet-expected):0;
-    var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('+'+yn(diff)+' 多い'):diff<0?(yn(Math.abs(diff))+' 不足'):'✅ ぴったり';
+    var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('⚠️ +'+yn(diff)+' 多い'):diff<0?('⚠️ '+yn(Math.abs(diff))+' 不足'):'✅ ぴったり';
     h+='<div class="card" style="margin-bottom:8px;">';
     // 日付・担当者・実際の金庫
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:14px;font-weight:700;">'+r.d+(r.staff?' <span style="font-size:11px;color:var(--tx2);font-weight:400;">／'+r.staff+'</span>':'')+'</div></div>';
@@ -1997,12 +2011,15 @@ function rCash(){
     h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金庫</span><b style="font-size:16px;color:var(--ac);">'+yn(todayNet)+'</b></div>';
     h+='</div>';
     // 判定
-    var diffStyle=dc==='plus'?'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);';
+    var diffStyle=dc==='plus'?'background:#fff8e8;border:1px solid var(--wn);color:#a06010;':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);';
     h+='<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">';
     h+='<span style="font-size:12px;padding:3px 12px;border-radius:16px;font-weight:700;'+diffStyle+'">'+(prevRec?dl:'前日記録なし')+'</span>';
     if(r.memo)h+='<span class="tag">📝 '+r.memo+'</span>';
     h+='</div>';
     h+='<div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">';
+    if(typeof r.sales==='number' && r.sales!==autoSales){
+      h+='<button onclick="syncCashSales(\''+(r.id||r.d)+'\')" style="background:#fff8e8;border:1px solid var(--wn);color:#a06010;padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🔄 最新の売上に更新（'+yn(autoSales)+'）</button>';
+    }
     h+='<button onclick="editCash(\''+(r.id||r.d)+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">✏️ 編集</button>';
     h+='<button onclick="delCash(\''+(r.id||r.d)+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;font-family:\'Zen Maru Gothic\',sans-serif;">🗑 削除</button>';
     h+='</div>';
