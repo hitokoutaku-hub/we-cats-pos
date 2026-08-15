@@ -1797,7 +1797,8 @@ function syncCashSales(idOrDate){
   if(!rec){toast('記録が見つかりません',true);return;}
   var gs=0;G.forEach(function(g){if(g.st==='done'&&g.d===rec.d)gs+=g.pr;});
   var mr=MS.find(function(m){return m.d===rec.d;});
-  var autoSales=gs+(mr?mr.total:0);
+  var cs=0;Cheki.forEach(function(c){if(c.d===rec.d)cs+=c.total;});
+  var autoSales=gs+(mr?mr.total:0)+cs;
   askConfirm(rec.d+' の売上を最新の来店・物販データ（'+yn(autoSales)+'）に更新しますか？',function(){
     logAction('金種売上を再計算',rec.d+' '+yn(rec.sales)+' → '+yn(autoSales));
     rec.sales=autoSales;
@@ -1845,9 +1846,11 @@ function rcCash(){
   var grand=dt+sup;
   // 実際の金庫の金額 = 数えた金種合計そのもの（持ち帰りは「あるべき金額」の計算にだけ使う）
   var net=grand;
-  // 本日の売上：自動集計（来店料金＋物販）
+  // 本日の売上：自動集計（来店料金＋物販＋チェキ）
   var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
-  var mr=MS.find(function(m){return m.d===date;});var autoTot=gs+(mr?mr.total:0);
+  var mr=MS.find(function(m){return m.d===date;});
+  var cs=0;Cheki.forEach(function(c){if(c.d===date)cs+=c.total;});
+  var autoTot=gs+(mr?mr.total:0)+cs;
   // 訂正欄に値があればそれを使う。空なら自動集計値を欄に反映
   var salesEl=document.getElementById('k-sales');
   var tot;
@@ -1982,6 +1985,8 @@ function rCash(){
   G.forEach(function(g){if(g.st==='done'){gSalesByDate[g.d]=(gSalesByDate[g.d]||0)+g.pr;}});
   var msByDate={};
   MS.forEach(function(m){msByDate[m.d]=m;});
+  var chekiSalesByDate={};
+  Cheki.forEach(function(c){chekiSalesByDate[c.d]=(chekiSalesByDate[c.d]||0)+c.total;});
   var h='';
   // 表示は新しい日付が上に来るように並び替え。最初は直近7件だけ描画し、
   // 「もっと見る」ボタンで残りをまとめて表示する（件数が多い月でも軽くするため）
@@ -1998,7 +2003,7 @@ function rCash(){
     var todayNet=r.grand||r.net;
     // 本日の売上
     var gs=gSalesByDate[r.d]||0;
-    var mr=msByDate[r.d];var autoSales=gs+(mr?mr.total:0);
+    var mr=msByDate[r.d];var cs=chekiSalesByDate[r.d]||0;var autoSales=gs+(mr?mr.total:0)+cs;
     var daySales=(typeof r.sales==='number' && r.sales>0)?r.sales:autoSales;
     // あるべき金額 = 前日残高 ＋ 本日売上 − 持ち帰り
     var expected=prevNet+daySales-(r.carry||0);
