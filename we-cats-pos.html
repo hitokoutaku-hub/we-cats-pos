@@ -47,6 +47,7 @@
     </div>
   </div>
   <div class="hdate" id="hdate"></div>
+  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260815e</div>
 </div>
 
 <div class="nav">
@@ -213,7 +214,7 @@
     <div class="tag ac" id="ts-z" onclick="stab('z')" style="cursor:pointer;white-space:nowrap;padding:7px 12px;">📊 分析</div>
   </div>
   <div id="s-d">
-    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="d-lbl"></div><button onclick="openCal('d-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 日付選択</button><input type="date" id="d-cal" onchange="jumpD(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="d-lbl"></div><input type="date" id="d-cal" onchange="jumpD(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:150px;"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
     <div class="sr2">
       <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="d-g">0</div><div class="su">名</div></div>
       <div class="sc gr"><div class="sl">売上合計</div><div class="sv g" id="d-s">0</div><div class="su">円</div></div>
@@ -222,7 +223,7 @@
     <div id="d-list"></div>
   </div>
   <div id="s-m" style="display:none;">
-    <div class="mnav"><button class="mnbtn" onclick="chM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="m-lbl"></div><button onclick="openCal('m-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="m-cal" onchange="jumpM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chM(1)">翌月＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="m-lbl"></div><input type="month" id="m-cal" onchange="jumpM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"></div><button class="mnbtn" onclick="chM(1)">翌月＞</button></div>
     <div class="sr2">
       <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="m-g">0</div><div class="su">名</div></div>
       <div class="sc gr"><div class="sl">月間売上</div><div class="sv g" id="m-s">0</div><div class="su">円</div></div>
@@ -248,7 +249,7 @@
     <div id="pd-list"></div>
   </div>
   <div id="s-a" style="display:none;">
-    <div class="mnav"><button class="mnbtn" onclick="chAM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="am-lbl"></div><button onclick="openCal('am-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="am-cal" onchange="jumpAM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chAM(1)">翌月＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chAM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="am-lbl"></div><input type="month" id="am-cal" onchange="jumpAM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"></div><button class="mnbtn" onclick="chAM(1)">翌月＞</button></div>
     <div class="card"><div class="ct">📍 来店きっかけ</div><div id="ch-tri"></div></div>
     <div class="card"><div class="ct">🐱 猫カフェ経験</div><div id="ch-exp"></div></div>
     <div class="card"><div class="ct">🐾 人気の猫ランキング（アンケート）</div><div id="ch-cat"></div></div>
@@ -277,7 +278,7 @@
       <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-d-merch"></div></div>
     </div>
     <div id="z-m" style="display:none;">
-      <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="z-m-lbl"></div><button onclick="openCal('z-m-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="z-m-cal" onchange="jumpZM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
+      <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="z-m-lbl"></div><input type="month" id="z-m-cal" onchange="jumpZM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-m-type"></div></div>
       <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-m-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-m-pattern"></div></div>
@@ -349,7 +350,7 @@
 
 <!-- ===== CASH ===== -->
 <div class="pg" id="p-k">
-  <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="k-lbl"></div><button onclick="openCal('k-cal')" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 月選択</button><input type="month" id="k-cal" onchange="jumpKM(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
+  <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="k-lbl"></div><input type="month" id="k-cal" onchange="jumpKM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
   <button class="btn bp bf" onclick="oCash()" style="margin-bottom:12px;">＋ 金種登録</button>
   <div class="card"><div class="ct">📈 月内残高推移</div><div class="chart-wrap"><canvas id="k-chart"></canvas></div></div>
   <div id="k-list"></div>
@@ -738,6 +739,6 @@
 </div></div>
 
 
-<script src="app.js?v=20260815c"></script>
+<script src="app.js?v=20260815e"></script>
 </body>
 </html>
