@@ -171,7 +171,7 @@ function loadFromSupabase() {
       var cloudG = guests.filter(function(g){return !pendingDelG[String(g.id)];}).map(function(g){return {
         id:g.id, d:g.date, tp:g.type, pt:g.pattern, member:g.member||'', operator:g.operator||'',
         a:g.adults, c:g.children, ci:g.checkin, co:g.checkout,
-        pr:g.price, st:g.status, fn:g.free_nyan,
+        pr:g.price, tkt:g.gift_cert||0, st:g.status, fn:g.free_nyan,
         bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
       };});
       var cloudGIds={};cloudG.forEach(function(g){cloudGIds[String(g.id)]=true;});
@@ -285,7 +285,7 @@ function saveGuestToSupa(g) {
   supaUpsert('pos_guests',{
     id:String(g.id), date:g.d, type:g.tp, pattern:g.pt, member:g.member||'', operator:g.operator||'',
     adults:g.a, children:g.c, checkin:g.ci, checkout:g.co||'',
-    price:g.pr, status:g.st, free_nyan:g.fn,
+    price:g.pr, gift_cert:g.tkt||0, status:g.st, free_nyan:g.fn,
     binder_color:g.bc||'', binder_name:g.bcn||'',
     memo:g.mo||'', survey:g.aq||{}
   });
@@ -1063,7 +1063,7 @@ function confCO(){
   var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined);isKD=g.kd?true:isSat(g.d);
   var mo=document.getElementById('co-mo').value;
   if(otha>0)mo=(mo?mo+' ':'')+(othn||'その他割引')+' -¥'+otha.toLocaleString();
-  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-tkt-sup-otha);g.mo=mo;g.st='done';g.fn=window._coFN;
+  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-sup-otha);g.tkt=tkt;g.mo=mo;g.st='done';g.fn=window._coFN;
   sv();
   cModal('m-co');
   rfAll();
@@ -1795,7 +1795,7 @@ function syncCashSales(idOrDate){
   var rec=CR.find(function(r){return String(r.id)===String(idOrDate);});
   if(!rec)rec=CR.find(function(r){return r.d===idOrDate;});
   if(!rec){toast('記録が見つかりません',true);return;}
-  var gs=0;G.forEach(function(g){if(g.st==='done'&&g.d===rec.d)gs+=g.pr;});
+  var gs=0;G.forEach(function(g){if(g.st==='done'&&g.d===rec.d)gs+=(g.pr-(g.tkt||0));});
   var mr=MS.find(function(m){return m.d===rec.d;});
   var cs=0;Cheki.forEach(function(c){if(c.d===rec.d)cs+=c.total;});
   var autoSales=gs+(mr?mr.total:0)+cs;
@@ -1847,7 +1847,7 @@ function rcCash(){
   // 実際の金庫の金額 = 数えた金種合計そのもの（持ち帰りは「あるべき金額」の計算にだけ使う）
   var net=grand;
   // 本日の売上：自動集計（来店料金＋物販＋チェキ）
-  var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=dg[j].pr;
+  var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=(dg[j].pr-(dg[j].tkt||0));
   var mr=MS.find(function(m){return m.d===date;});
   var cs=0;Cheki.forEach(function(c){if(c.d===date)cs+=c.total;});
   var autoTot=gs+(mr?mr.total:0)+cs;
@@ -1982,7 +1982,8 @@ function rCash(){
   // 全期間分を毎回スキャンしないよう、事前に1回だけ整理しておく（記録が増えても重くならないように）
   var crSorted=CR.slice().sort(function(a,b){return a.d.localeCompare(b.d);});
   var gSalesByDate={};
-  G.forEach(function(g){if(g.st==='done'){gSalesByDate[g.d]=(gSalesByDate[g.d]||0)+g.pr;}});
+  var giftCertByDate={};
+  G.forEach(function(g){if(g.st==='done'){gSalesByDate[g.d]=(gSalesByDate[g.d]||0)+(g.pr-(g.tkt||0));giftCertByDate[g.d]=(giftCertByDate[g.d]||0)+(g.tkt||0);}});
   var msByDate={};
   MS.forEach(function(m){msByDate[m.d]=m;});
   var chekiSalesByDate={};
@@ -2016,6 +2017,7 @@ function rCash(){
     h+='<div style="font-size:13px;line-height:2;background:var(--sf2);border-radius:10px;padding:10px 12px;margin-bottom:8px;">';
     h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">前日の金庫</span><b>'+(prevRec?yn(prevNet):'記録なし')+'</b></div>';
     h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">＋ 売上</span><b style="color:var(--ok);">'+yn(daySales)+'</b></div>';
+    if(giftCertByDate[r.d]>0)h+='<div style="display:flex;justify-content:space-between;padding-left:10px;"><span style="color:var(--tx2);font-size:12px;">内、商品券（現金影響分）</span><span style="color:#a06010;font-size:12px;">▲'+yn(giftCertByDate[r.d])+'</span></div>';
     if(r.carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">－ 持ち帰り（'+(r.carryName||'')+'）</span><b style="color:#a06010;">'+yn(r.carry)+'</b></div>';
     h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:2px;padding-top:2px;"><span style="font-weight:700;">あるべき金額</span><b>'+(prevRec?yn(expected):'—')+'</b></div>';
     h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金庫</span><b style="font-size:16px;color:var(--ac);">'+yn(todayNet)+'</b></div>';
@@ -2110,6 +2112,7 @@ function oGEdit(id){
   for(var ei=0;ei<exps.length;ei++){exps[ei].classList.remove('on');if(exps[ei].getAttribute('data-v')===eaqCh.exp)exps[ei].classList.add('on');}
   oModal('m-gedit');
 }
+function isGiftCertName(name){return /商品券|振興券/.test(name||'');}
 function saveGEdit(){
   var id=document.getElementById('ge-id').value;
   // idが空なら新規追加
@@ -2124,12 +2127,16 @@ function saveGEdit(){
     var pr=prInput!==''?parseInt(prInput):0;
     if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,!!window._geFN,window._geKD?true:undefined);pr=r.t;}
     var discAmt2=parseInt(document.getElementById('ge-disc-amt').value)||0;
-    if(discAmt2>0)pr=Math.max(0,pr-discAmt2);
     var discName2=document.getElementById('ge-disc-name').value.trim();
+    var tkt2=0;
+    if(discAmt2>0){
+      if(isGiftCertName(discName2)){tkt2=discAmt2;}
+      else{pr=Math.max(0,pr-discAmt2);}
+    }
     var moVal2=document.getElementById('ge-mo').value;
     if(discName2&&discAmt2>0)moVal2=(moVal2?moVal2+' ':'')+discName2+' -¥'+discAmt2.toLocaleString();
     var expEl0=document.querySelector('#eaq-exp .chip.on');var exp0=expEl0?expEl0.getAttribute('data-v'):'';
-    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,mo:moVal2,st:co?'done':'stay',fn:!!window._geFN,kd:!!window._geKD,bc:'',bcn:'',aq:{tri:eaqCh.tri.slice(),exp:exp0,cats:eaqCh.cats.slice()}};
+    var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,tkt:tkt2,mo:moVal2,st:co?'done':'stay',fn:!!window._geFN,kd:!!window._geKD,bc:'',bcn:'',aq:{tri:eaqCh.tri.slice(),exp:exp0,cats:eaqCh.cats.slice()}};
     G.push(newG);sv();saveGuestToSupa(newG);rfAll();
     // 連続入力のためフォームをリセット（日付は保持）。モーダルは開いたまま
     resetPastForm(dateAttr);
@@ -2141,11 +2148,15 @@ function saveGEdit(){
   var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
   if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,!!window._geFN,window._geKD?true:undefined);pr=r.t;}
   var discAmt=parseInt(document.getElementById('ge-disc-amt').value)||0;
-  if(discAmt>0)pr=Math.max(0,pr-discAmt);
   var discName=document.getElementById('ge-disc-name').value.trim();
+  var tktE=0;
+  if(discAmt>0){
+    if(isGiftCertName(discName)){tktE=discAmt;}
+    else{pr=Math.max(0,pr-discAmt);}
+  }
   var moVal=document.getElementById('ge-mo').value;
   if(discName&&discAmt>0)moVal=(moVal?moVal+' ':'')+discName+' -¥'+discAmt.toLocaleString();
-  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.mo=moVal;g.st=co?'done':'stay';g.fn=!!window._geFN;g.kd=!!window._geKD;
+  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.tkt=tktE;g.mo=moVal;g.st=co?'done':'stay';g.fn=!!window._geFN;g.kd=!!window._geKD;
   var expElE=document.querySelector('#eaq-exp .chip.on');g.aq={tri:eaqCh.tri.slice(),exp:expElE?expElE.getAttribute('data-v'):'',cats:eaqCh.cats.slice()};
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
