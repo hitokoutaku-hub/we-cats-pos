@@ -47,7 +47,7 @@
     </div>
   </div>
   <div class="hdate" id="hdate"></div>
-  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260815e</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260815h</div>
 </div>
 
 <div class="nav">
@@ -375,7 +375,7 @@
     <div class="ct" onclick="toggleSection('co-discount-body',this)" style="cursor:pointer;padding:12px 14px;margin:0;font-size:12px;user-select:none;">🎫 割引・クーポンなど <span style="float:right;font-size:12px;color:var(--tx2);">▼</span></div>
     <div id="co-discount-body" style="display:none;padding:0 14px 14px;">
       <div class="fg"><label class="fl">割引クーポン（金額）</label><input type="number" class="fc" id="co-cup" value="0" min="0" oninput="rcCO()"></div>
-      <div class="fg"><label class="fl">地域振興券・商品券</label><input type="number" class="fc" id="co-tkt" value="0" min="0" oninput="rcCO()"></div>
+      <div class="fg"><label class="fl">地域振興券・商品券（受け取った額面の合計）</label><input type="number" class="fc" id="co-tkt" value="0" min="0" oninput="rcCO()"><div style="font-size:11px;color:var(--tx2);margin-top:4px;">お釣りを現金で渡す場合も、券の額面通りの金額を入れてください（例：会計¥3,600に¥5,000券→「5000」と入力。差額はお釣りとして自動で辻褄が合います）</div></div>
       <div class="fg"><label class="fl">応援券</label><input type="number" class="fc" id="co-sup" value="0" min="0" oninput="rcCO()"></div>
       <div class="fg"><label class="fl">その他の割引（名称）</label><input type="text" class="fc" id="co-othn" placeholder="例：推し猫ランキング1位" oninput="rcCO()"></div>
       <div class="fg"><label class="fl">その他の割引（金額）</label><input type="number" class="fc" id="co-otha" value="0" min="0" oninput="rcCO()"></div>
@@ -739,6 +739,6 @@
 </div></div>
 
 
-<script src="app.js?v=20260815e"></script>
+<script src="app.js?v=20260815h"></script>
 </body>
 </html>
