@@ -1164,7 +1164,7 @@ function rGuests(){
       var gd=done[l];var bcS2=gd.bc?'border-left:4px solid '+gd.bc+';':'';
       dh+='<div class="gi done" style="'+bcS2+'" onclick="oDet(\''+gd.id+'\')">';
       dh+='<div class="gtop"><span class="gname">'+(gd.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="gprice">'+yn(gd.pr)+'</span></div>';
-      dh+='<div class="gmeta"><span class="tag">'+gd.pt+'</span><span class="tag gr">大人'+gd.a+'名'+(gd.c>0?'・子'+gd.c+'名':'')+'</span><span class="tag">'+gd.ci+' → '+gd.co+'</span>'+(gd.mo?'<span class="tag">'+gd.mo+'</span>':'')+'</div>';
+      dh+='<div class="gmeta"><span class="tag">'+gd.pt+'</span><span class="tag gr">大人'+gd.a+'名'+(gd.c>0?'・子'+gd.c+'名':'')+'</span><span class="tag">'+gd.ci+' → '+gd.co+'</span>'+(gd.tkt>0?'<span class="tag" style="background:#fff3d6;color:#a06010;">🎫 商品券 '+yn(gd.tkt)+'</span>':'')+(gd.mo?'<span class="tag">'+gd.mo+'</span>':'')+'</div>';
       dh+='<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn bso bsm" onclick="event.stopPropagation();oGEdit(\''+gd.id+'\')" >✏️ 編集・削除</button></div>';
       dh+='</div>';
     }
@@ -1484,10 +1484,16 @@ function rDay(){
   dg.sort(function(a,b){return (a.ci||'').localeCompare(b.ci||'');});
   var p=0;for(var i=0;i<dg.length;i++)p+=dg[i].a+dg[i].c;
   var s=0;for(var j=0;j<dg.length;j++)s+=dg[j].pr;
+  var tkTotal=0;dg.forEach(function(g){tkTotal+=(g.tkt||0);});
   var m=MS.find(function(x){return x.d===ds;});
   var dc=Cheki.filter(function(c){return c.d===ds;});
   var tc=0;dc.forEach(function(c){tc+=c.total;});
   document.getElementById('d-g').textContent=p;document.getElementById('d-s').textContent=(s+(m?m.total:0)+tc).toLocaleString();
+  var tkEl=document.getElementById('d-tk');
+  if(tkEl){
+    if(tkTotal>0){tkEl.style.display='block';tkEl.innerHTML='<div class="card" style="border-top:3px solid var(--wn);margin-bottom:10px;padding:12px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;font-weight:700;color:#a06010;">🎫 本日の地域振興券・商品券 合計</span><span style="font-size:16px;font-weight:700;color:#a06010;font-family:\'Noto Sans JP\',sans-serif;">'+yn(tkTotal)+'</span></div></div>';}
+    else{tkEl.style.display='none';tkEl.innerHTML='';}
+  }
   var me=document.getElementById('d-ms'),md=document.getElementById('d-md');
   if((m&&m.i.some(function(i){return i.q>0;}))||dc.length>0){
     me.style.display='block';var mh='';
@@ -1512,7 +1518,7 @@ function rDay(){
     lh+='<td>'+g.a+(g.c>0?'+子'+g.c:'')+'</td>';
     lh+='<td>'+g.ci+'</td>';
     lh+='<td>'+(g.co||'-')+'</td>';
-    lh+='<td class="amt">'+yn(g.pr)+'</td>';
+    lh+='<td class="amt">'+yn(g.pr)+(g.tkt>0?'<div style="font-size:9px;color:#a06010;font-weight:400;white-space:nowrap;">🎫商品券'+yn(g.tkt)+'</div>':'')+'</td>';
     lh+='<td style="white-space:nowrap;">';
     lh+='<button onclick="oGEdit(\''+String(g.id)+'\')" style="background:var(--sf2);border:1px solid var(--bd);color:var(--tx2);padding:2px 7px;border-radius:8px;font-size:10px;cursor:pointer;margin-right:3px;">✏️</button>';
     lh+='<button onclick="dayDelGuest(\''+String(g.id)+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:2px 7px;border-radius:8px;font-size:10px;cursor:pointer;">🗑</button>';
@@ -1530,16 +1536,22 @@ function rMon(){
   var mc=Cheki.filter(function(c){var d=new Date(c.d);return d.getFullYear()===yr&&d.getMonth()===mo;});
   var sc=0;for(var ci=0;ci<mc.length;ci++)sc+=mc[ci].total;
   document.getElementById('m-g').textContent=p;document.getElementById('m-s').textContent=(sb+sm+sc).toLocaleString();
+  var tkMonth=0;mg.forEach(function(g){tkMonth+=(g.tkt||0);});
+  var tkMEl=document.getElementById('m-tk');
+  if(tkMEl){
+    if(tkMonth>0){tkMEl.style.display='block';tkMEl.innerHTML='<div class="card" style="border-top:3px solid var(--wn);margin-bottom:10px;padding:12px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;font-weight:700;color:#a06010;">🎫 今月の地域振興券・商品券 合計</span><span style="font-size:16px;font-weight:700;color:#a06010;font-family:\'Noto Sans JP\',sans-serif;">'+yn(tkMonth)+'</span></div></div>';}
+    else{tkMEl.style.display='none';tkMEl.innerHTML='';}
+  }
   var bd={};
-  for(var l=0;l<mg.length;l++){var g=mg[l];if(!bd[g.d])bd[g.d]={c:0,s:0};bd[g.d].c+=g.a+g.c;bd[g.d].s+=g.pr;}
-  for(var n=0;n<mm.length;n++){var mx=mm[n];if(!bd[mx.d])bd[mx.d]={c:0,s:0};bd[mx.d].s+=mx.total;}
-  for(var ni=0;ni<mc.length;ni++){var cx=mc[ni];if(!bd[cx.d])bd[cx.d]={c:0,s:0};bd[cx.d].s+=cx.total;}
+  for(var l=0;l<mg.length;l++){var g=mg[l];if(!bd[g.d])bd[g.d]={c:0,s:0,tk:0};bd[g.d].c+=g.a+g.c;bd[g.d].s+=g.pr;bd[g.d].tk+=(g.tkt||0);}
+  for(var n=0;n<mm.length;n++){var mx=mm[n];if(!bd[mx.d])bd[mx.d]={c:0,s:0,tk:0};bd[mx.d].s+=mx.total;}
+  for(var ni=0;ni<mc.length;ni++){var cx=mc[ni];if(!bd[cx.d])bd[cx.d]={c:0,s:0,tk:0};bd[cx.d].s+=cx.total;}
   var dates=Object.keys(bd).sort();
   var le=document.getElementById('m-list');
   if(dates.length===0){le.innerHTML='<div class="empty"><div class="ei">📅</div>記録なし</div>';return;}
   var lh='<table class="st"><thead><tr><th>日付</th><th>人数</th><th style="text-align:right;">売上</th><th></th></tr></thead><tbody>';
   for(var q=0;q<dates.length;q++){
-    lh+='<tr><td>'+dates[q]+'</td><td>'+bd[dates[q]].c+'名</td><td class="amt">'+yn(bd[dates[q]].s)+'</td>';
+    lh+='<tr><td>'+dates[q]+'</td><td>'+bd[dates[q]].c+'名</td><td class="amt">'+yn(bd[dates[q]].s)+(bd[dates[q]].tk>0?'<div style="font-size:9px;color:#a06010;font-weight:400;white-space:nowrap;">🎫商品券'+yn(bd[dates[q]].tk)+'</div>':'')+'</td>';
     lh+='<td style="white-space:nowrap;"><button onclick="editMonDay(\''+dates[q]+'\')" style="background:#fef0ec;border:1px solid var(--ac);color:var(--ac);padding:3px 7px;border-radius:10px;font-size:11px;cursor:pointer;margin-right:4px;">✏️</button>';
     lh+='<button onclick="delMonDay(\''+dates[q]+'\')" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:3px 8px;border-radius:10px;font-size:11px;cursor:pointer;">🗑</button></td></tr>';
   }
