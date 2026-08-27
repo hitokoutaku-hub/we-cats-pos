@@ -329,6 +329,16 @@ try{
   if(Array.isArray(savedStaff) && savedStaff.length>0) StaffList = savedStaff;
 }catch(e){}
 var CurrentOperator = localStorage.getItem('wc_operator') || '';
+// 日付が変わったら「今日の担当者」を再選択してもらう（前日の名前のまま残らないように）
+(function(){
+  var savedDate=localStorage.getItem('wc_operator_date');
+  var today=new Date().toDateString();
+  if(savedDate!==today){
+    CurrentOperator='';
+    localStorage.removeItem('wc_operator');
+    localStorage.setItem('wc_operator_date',today);
+  }
+})();
 
 // ===== 今アクセス中の表示 =====
 function deviceId(){
@@ -410,6 +420,7 @@ function buildOperatorSelect(){
 function setOperator(name){
   CurrentOperator=name;
   localStorage.setItem('wc_operator',name);
+  localStorage.setItem('wc_operator_date',new Date().toDateString());
   if(typeof heartbeatPresence==='function')heartbeatPresence();
   if(name)logAction('入室',name);
 }
@@ -467,6 +478,25 @@ function delCat(idx){
   });
 }
 function openStaffModal(){ rStaffList(); oModal('m-staff'); }
+function openOperatorPicker(){
+  var list = (Array.isArray(StaffList)&&StaffList.length>0) ? StaffList : DEFAULT_STAFF;
+  var h='';
+  for(var i=0;i<list.length;i++){
+    h+='<button class="btn bso bf" onclick="pickOperator(\''+list[i]+'\')">'+list[i]+'</button>';
+  }
+  document.getElementById('op-pick-list').innerHTML=h;
+  oModal('m-operator-pick');
+}
+function pickOperator(name){
+  setOperator(name);
+  buildOperatorBadge();
+  cModal('m-operator-pick');
+  toast('👤 '+name+' さん、おつかれさまです！');
+}
+function buildOperatorBadge(){
+  var el=document.getElementById('operator-badge');if(!el)return;
+  el.textContent=CurrentOperator?('👤 '+CurrentOperator):'👤 選択';
+}
 var AccessLogCache=[];
 async function openAccessLog(){
   oModal('m-access-log');
@@ -2841,7 +2871,9 @@ function init(){
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
   buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();buildMemberSelects();
   buildTimeSelect('r-time');buildTimeSelect('co-ci','rcCO()');buildTimeSelect('co-co','rcCO()');buildTimeSelect('ge-ci');buildTimeSelect('ge-co');
-  if(CurrentOperator)logAction('入室',CurrentOperator);
+  buildOperatorBadge();
+  if(CurrentOperator){logAction('入室',CurrentOperator);}
+  else{setTimeout(openOperatorPicker,300);}
   // Supabaseからデータロード
   loadFromSupabase();
   startPresenceLoop();
