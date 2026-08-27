@@ -42,12 +42,13 @@
     <div style="display:flex;align-items:center;gap:8px;">
       <div id="save-status" style="font-size:11px;color:#fff;background:rgba(255,255,255,.25);padding:5px 10px;border-radius:14px;white-space:nowrap;">💾 —</div>
       <button onclick="manualRefresh()" id="refresh-btn" style="font-size:14px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;">🔄</button>
+      <div id="operator-badge" style="font-size:11px;color:#fff;background:rgba(255,255,255,.25);padding:5px 10px;border-radius:14px;cursor:pointer;white-space:nowrap;" onclick="openOperatorPicker()">👤 選択</div>
       <div id="presence-badge" style="display:none;font-size:11px;color:#fff;background:rgba(255,255,255,.25);padding:5px 10px;border-radius:14px;cursor:pointer;" onclick="oModal('m-menu')"></div>
       <button class="btn bso bsm" onclick="oModal('m-menu')" style="padding:7px 11px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;">⚙️</button>
     </div>
   </div>
   <div class="hdate" id="hdate"></div>
-  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260826b</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260827a</div>
 </div>
 
 <div class="nav">
@@ -578,6 +579,12 @@
 </div></div>
 
 <!-- STAFF MANAGE -->
+<div class="ov" id="m-operator-pick"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>👤 あなたは誰ですか？</span><button class="mc" onclick="cModal('m-operator-pick')">✕</button></div>
+  <div id="op-pick-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div></div>
+
+<!-- STAFF MANAGE -->
 <div class="ov" id="m-staff"><div class="modal"><span class="mh"></span>
   <div class="mt"><span>👥 スタッフ管理</span><button class="mc" onclick="cModal('m-staff')">✕</button></div>
   <div id="staff-list"></div>
@@ -751,6 +758,6 @@
 </div></div>
 
 
-<script src="app.js?v=20260826b"></script>
+<script src="app.js?v=20260827a"></script>
 </body>
 </html>
