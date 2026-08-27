@@ -411,6 +411,7 @@ function setOperator(name){
   CurrentOperator=name;
   localStorage.setItem('wc_operator',name);
   if(typeof heartbeatPresence==='function')heartbeatPresence();
+  if(name)logAction('入室',name);
 }
 function saveStaffList(){ localStorage.setItem('wc_staff',JSON.stringify(StaffList)); saveSettingToSupa('staff_list',StaffList); }
 function rStaffList(){
@@ -466,6 +467,34 @@ function delCat(idx){
   });
 }
 function openStaffModal(){ rStaffList(); oModal('m-staff'); }
+var AccessLogCache=[];
+async function openAccessLog(){
+  oModal('m-access-log');
+  document.getElementById('al-list').innerHTML='読み込み中...';
+  var data=await supaLoad('pos_logs');
+  AccessLogCache=(data||[]).filter(function(l){return l.action==='入室';}).sort(function(a,b){return parseInt(b.id)-parseInt(a.id);});
+  var names=Array.from(new Set(AccessLogCache.map(function(l){return l.operator;}))).filter(Boolean).sort();
+  var sel=document.getElementById('al-filter');
+  var cur=sel.value;
+  sel.innerHTML='<option value="">全員</option>'+names.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  sel.value=cur;
+  renderAccessLog();
+}
+function renderAccessLog(){
+  var f=document.getElementById('al-filter').value;
+  var list=f?AccessLogCache.filter(function(l){return l.operator===f;}):AccessLogCache;
+  var el=document.getElementById('al-list');
+  if(list.length===0){el.innerHTML='<div class="empty"><div class="ei">📋</div>記録がありません</div>';return;}
+  var h='';
+  for(var i=0;i<Math.min(list.length,200);i++){
+    var l=list[i];
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid var(--bd);">';
+    h+='<span style="font-size:13px;font-weight:700;">👤 '+(l.operator||'未選択')+'</span>';
+    h+='<span style="font-size:12px;color:var(--tx2);">'+(l.ts||'')+'</span>';
+    h+='</div>';
+  }
+  el.innerHTML=h;
+}
 function openCatModal(){ rCatList(); oModal('m-cat'); }
 
 
@@ -2812,6 +2841,7 @@ function init(){
   var ts=MS.find(function(m){return m.d===td();});if(ts){for(var j=0;j<ts.i.length;j++)MQ[ts.i[j].id]=ts.i[j].q;}
   buildDenomRows();buildBCChips();buildAqChips();updateMenuPriceView();buildOperatorSelect();buildMemberSelects();
   buildTimeSelect('r-time');buildTimeSelect('co-ci','rcCO()');buildTimeSelect('co-co','rcCO()');buildTimeSelect('ge-ci');buildTimeSelect('ge-co');
+  if(CurrentOperator)logAction('入室',CurrentOperator);
   // Supabaseからデータロード
   loadFromSupabase();
   startPresenceLoop();
