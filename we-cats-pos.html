@@ -47,7 +47,7 @@
     </div>
   </div>
   <div class="hdate" id="hdate"></div>
-  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260826a</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260826b</div>
 </div>
 
 <div class="nav">
@@ -544,6 +544,7 @@
     <input type="file" id="imp-f" accept=".json" style="display:none;" onchange="impData(event)">
     <div class="sep"></div>
     <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px;">👥 今アクセス中</div>
+    <button class="btn bso bf" onclick="cModal('m-menu');openAccessLog()" style="margin-bottom:4px;">📋 入室履歴を見る</button>
     <div class="sep"></div>
     <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px;">🎌 特別休日料金の期間（夏休み・お盆・年末年始など）</div>
     <div id="ch-list" style="margin-bottom:8px;"></div>
@@ -565,6 +566,15 @@
     <div id="presence-view" style="font-size:12px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);margin-bottom:8px;">読み込み中...</div>
     <div id="menu-price-view" style="font-size:11px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);"></div>
   </div>
+</div></div>
+
+<!-- STAFF MANAGE -->
+<div class="ov" id="m-access-log"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>📋 入室履歴</span><button class="mc" onclick="cModal('m-access-log')">✕</button></div>
+  <div style="display:flex;gap:6px;margin-bottom:10px;">
+    <select id="al-filter" class="fc" style="flex:1;" onchange="renderAccessLog()"><option value="">全員</option></select>
+  </div>
+  <div id="al-list" style="max-height:60vh;overflow-y:auto;"></div>
 </div></div>
 
 <!-- STAFF MANAGE -->
@@ -741,6 +751,6 @@
 </div></div>
 
 
-<script src="app.js?v=20260826a"></script>
+<script src="app.js?v=20260826b"></script>
 </body>
 </html>
