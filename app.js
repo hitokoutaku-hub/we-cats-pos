@@ -182,7 +182,7 @@ function loadFromSupabase() {
     }
     if(merch) {
       var pendingDelMS=getPendingDeleteIds('pos_merch');
-      var cloudMS = merch.filter(function(m){return !pendingDelMS[String(m.date)];}).map(function(m){return {id:m.id,d:m.date,i:m.items,total:m.total};});
+      var cloudMS = merch.filter(function(m){return !pendingDelMS[String(m.date)];}).map(function(m){return {id:m.id,d:m.date,i:m.items,total:m.total,tkt:m.gift_cert||0};});
       var cloudMSDates={};cloudMS.forEach(function(m){cloudMSDates[m.d]=true;});
       var pendingMS=getPendingSyncKeys('pos_merch');
       var localMSOnly=JSON.parse(localStorage.getItem('wc_ms')||'[]').filter(function(m){return !cloudMSDates[m.d]&&pendingMS[m.d];});
@@ -291,7 +291,7 @@ function saveGuestToSupa(g) {
   });
 }
 function saveMerchToSupa(m) {
-  supaUpsert('pos_merch',{id:m.d,date:m.d,items:m.i,total:m.total});
+  supaUpsert('pos_merch',{id:m.d,date:m.d,items:m.i,total:m.total,gift_cert:m.tkt||0});
 }
 function saveMerchItemsToSupa() {
   MI.forEach(function(item,i){
@@ -1469,15 +1469,20 @@ function saveMerchCombined(){
   }
 
   var total=0;for(var j=0;j<items.length;j++)total+=items[j].q*items[j].p;
-  MS=MS.filter(function(m){return m.d!==t;});MS.push({id:t,d:t,i:items,total:total});
+  // 地域振興券・商品券（物販分）：金額からは引かず、現金照合の時だけ除外するために別で保持する
+  var tktEl=document.getElementById('merch-tkt');
+  var newTkt=tktEl?(parseInt(tktEl.value)||0):0;
+  var tkt=(existingRec?(existingRec.tkt||0):0)+newTkt;
+  MS=MS.filter(function(m){return m.d!==t;});MS.push({id:t,d:t,i:items,total:total,tkt:tkt});
   sv();saveMerchToSupa(MS.find(function(m){return m.d===t;}));
-  logAction('物販保存','日付:'+t+' 合計:'+yn(total)+(ncOn?' (夜カフェ'+ncTktN+'枚含む)':''));
+  logAction('物販保存','日付:'+t+' 合計:'+yn(total)+(ncOn?' (夜カフェ'+ncTktN+'枚含む)':'')+(newTkt>0?' (商品券'+yn(newTkt)+')':''));
   var wasEdit=window._editMerchDate;window._editMerchDate=null;
   for(var r=0;r<MI.length;r++)MQ[String(MI[r].id)]=0;
   if(ncOn){
     ncTktN=1;document.getElementById('nc-tkt-qty').textContent='1';document.getElementById('nc-tkt-qty2').textContent='1';document.getElementById('nc-tkt-total').textContent=yn(3000);
     document.getElementById('nc-tkt-on').checked=false;document.getElementById('nc-tkt-body').style.display='none';
   }
+  if(tktEl)tktEl.value=0;
   rMerch();rGuests();
   toast(wasEdit?(wasEdit+' の物販を保存しました 🛍️'):'物販を保存しました 🛍️');
 }
@@ -1545,6 +1550,7 @@ function rDay(){
   var s=0;for(var j=0;j<dg.length;j++)s+=dg[j].pr;
   var tkTotal=0;dg.forEach(function(g){tkTotal+=(g.tkt||0);});
   var m=MS.find(function(x){return x.d===ds;});
+  tkTotal+=(m&&m.tkt)?m.tkt:0;
   var dc=Cheki.filter(function(c){return c.d===ds;});
   var tc=0;dc.forEach(function(c){tc+=c.total;});
   document.getElementById('d-g').textContent=p;document.getElementById('d-s').textContent=(s+(m?m.total:0)+tc).toLocaleString();
@@ -1596,6 +1602,7 @@ function rMon(){
   var sc=0;for(var ci=0;ci<mc.length;ci++)sc+=mc[ci].total;
   document.getElementById('m-g').textContent=p;document.getElementById('m-s').textContent=(sb+sm+sc).toLocaleString();
   var tkMonth=0;mg.forEach(function(g){tkMonth+=(g.tkt||0);});
+  mm.forEach(function(m){tkMonth+=(m.tkt||0);});
   var tkMEl=document.getElementById('m-tk');
   if(tkMEl){
     if(tkMonth>0){tkMEl.style.display='block';tkMEl.innerHTML='<div class="card" style="border-top:3px solid var(--wn);margin-bottom:10px;padding:12px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:13px;font-weight:700;color:#a06010;">🎫 今月の地域振興券・商品券 合計</span><span style="font-size:16px;font-weight:700;color:#a06010;font-family:\'Noto Sans JP\',sans-serif;">'+yn(tkMonth)+'</span></div></div>';}
@@ -1869,7 +1876,7 @@ function syncCashSales(idOrDate){
   var gs=0;G.forEach(function(g){if(g.st==='done'&&g.d===rec.d)gs+=(g.pr-(g.tkt||0));});
   var mr=MS.find(function(m){return m.d===rec.d;});
   var cs=0;Cheki.forEach(function(c){if(c.d===rec.d)cs+=c.total;});
-  var autoSales=gs+(mr?mr.total:0)+cs;
+  var autoSales=gs+(mr?(mr.total-(mr.tkt||0)):0)+cs;
   askConfirm(rec.d+' の売上を最新の来店・物販データ（'+yn(autoSales)+'）に更新しますか？',function(){
     logAction('金種売上を再計算',rec.d+' '+yn(rec.sales)+' → '+yn(autoSales));
     rec.sales=autoSales;
@@ -1921,7 +1928,7 @@ function rcCash(){
   var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=(dg[j].pr-(dg[j].tkt||0));
   var mr=MS.find(function(m){return m.d===date;});
   var cs=0;Cheki.forEach(function(c){if(c.d===date)cs+=c.total;});
-  var autoTot=gs+(mr?mr.total:0)+cs;
+  var autoTot=gs+(mr?(mr.total-(mr.tkt||0)):0)+cs;
   // 訂正欄に値があればそれを使う。空なら自動集計値を欄に反映
   var salesEl=document.getElementById('k-sales');
   var tot;
@@ -2055,6 +2062,7 @@ function rCash(){
   var gSalesByDate={};
   var giftCertByDate={};
   G.forEach(function(g){if(g.st==='done'){gSalesByDate[g.d]=(gSalesByDate[g.d]||0)+(g.pr-(g.tkt||0));giftCertByDate[g.d]=(giftCertByDate[g.d]||0)+(g.tkt||0);}});
+  MS.forEach(function(m){if(m.tkt>0)giftCertByDate[m.d]=(giftCertByDate[m.d]||0)+m.tkt;});
   var msByDate={};
   MS.forEach(function(m){msByDate[m.d]=m;});
   var chekiSalesByDate={};
@@ -2075,7 +2083,7 @@ function rCash(){
     var todayNet=r.grand||r.net;
     // 本日の売上
     var gs=gSalesByDate[r.d]||0;
-    var mr=msByDate[r.d];var cs=chekiSalesByDate[r.d]||0;var autoSales=gs+(mr?mr.total:0)+cs;
+    var mr=msByDate[r.d];var cs=chekiSalesByDate[r.d]||0;var autoSales=gs+(mr?(mr.total-(mr.tkt||0)):0)+cs;
     var daySales=(typeof r.sales==='number' && r.sales>0)?r.sales:autoSales;
     // あるべき金額 = 前日残高 ＋ 本日売上 − 持ち帰り
     var expected=prevNet+daySales-(r.carry||0);
