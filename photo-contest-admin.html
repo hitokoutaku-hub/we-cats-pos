@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>フォトコン管理｜WE CATS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff5f6;--sf:#fff;--sf2:#fdeef0;--bd:#f6d3d8;
+  --ac:#e8838f;--ac-d:#c9606d;--ac2:#8a7fd6;--tx:#5c3a3e;--tx2:#a07c82;
+  --ok:#3f8a66;--wn:#b9831a;--ng:#d65f5f;--r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);height:100%}
+body{color:var(--tx);font-family:'Noto Sans JP',system-ui,sans-serif;font-size:14px;line-height:1.6;
+  padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+button,input,select,textarea{font-family:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+h1,h2,h3{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;font-weight:700}
+
+.top{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.top h1{font-size:19px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--bd);background:var(--sf);font-size:18px;
+  display:flex;align-items:center;justify-content:center}
+.who{font-size:12px;color:var(--tx2);margin:-8px 0 14px}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:10px;text-align:center}
+.stat b{display:block;font-size:24px;font-weight:700;line-height:1.2}
+.stat span{font-size:11px;color:var(--tx2)}
+.stat.nom b{color:var(--ac-d)}
+.stat.rev b{color:var(--wn)}
+
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.chip{flex-shrink:0;border:1.5px solid var(--bd);background:var(--sf);border-radius:20px;padding:6px 14px;font-size:13px}
+.chip[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:500}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ent{background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;overflow:hidden;text-align:left;padding:0;display:block;width:100%}
+.ent.nominated{border:2.5px solid var(--ac)}
+.ent.hidden{opacity:.5}
+.ph{aspect-ratio:1/1;background:var(--sf2);position:relative}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.no{position:absolute;top:6px;left:6px;background:rgba(255,255,255,.92);border-radius:6px;padding:1px 7px;font-size:11px;font-weight:500}
+.bd{padding:7px 9px 9px}
+.nm{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm{font-size:12px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.6em}
+.tag{display:inline-block;font-size:11px;border-radius:6px;padding:1px 7px;margin-top:4px;font-weight:500}
+.tag.nominated{background:var(--sf2);color:var(--ac-d)}
+.tag.review{background:#fbf0d9;color:var(--wn)}
+.tag.hidden{background:#eee;color:#777}
+.tag.new{background:transparent;color:var(--tx2);padding-left:0}
+.empty{text-align:center;color:var(--tx2);padding:40px 10px}
+
+/* モーダル */
+.ov{position:fixed;inset:0;background:rgba(92,58,62,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50;
+  padding-top:env(safe-area-inset-top,0)}
+.sheet{background:var(--sf);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;
+  padding:18px 18px calc(22px + env(safe-area-inset-bottom,0))}
+@media (min-width:640px){.ov{align-items:center}.sheet{border-radius:20px}}
+.sh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sh-top h2{font-size:18px}
+.big{width:100%;border-radius:12px;display:block;background:var(--sf2);max-height:60vh;object-fit:contain}
+.rows{margin:12px 0}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--sf2);font-size:13px}
+.row>span:first-child{color:var(--tx2);flex-shrink:0}
+.row>span:last-child{text-align:right;word-break:break-all}
+.comment{background:var(--sf2);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px;white-space:pre-wrap}
+.acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.btn{border:1.5px solid var(--bd);background:var(--sf);border-radius:22px;padding:11px 10px;font-size:13px;font-weight:500}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn.full{width:100%}
+.lock-link{color:var(--ac-d);background:none;border:none;font-size:13px;font-weight:500;text-decoration:underline;padding:0}
+
+.f{margin-bottom:14px}
+.f label{display:block;font-size:12px;color:var(--tx2);margin-bottom:5px;font-weight:500}
+.in{width:100%;background:var(--sf2);border:1.5px solid var(--bd);padding:11px 12px;border-radius:11px;font-size:16px;outline:none}
+.in:focus{border-color:var(--ac);background:var(--sf)}
+textarea.in{min-height:220px;font-size:13px;line-height:1.7;resize:vertical}
+.err{color:var(--ng);font-size:13px;margin-top:6px;min-height:0}
+.err:empty{display:none}
+.sec{border-top:1px solid var(--bd);margin-top:18px;padding-top:16px}
+.sec h3{font-size:15px;margin-bottom:10px}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:6px 0 14px}
+.sw input{width:48px;height:28px;accent-color:var(--ac)}
+.pwrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:8px}
+.log{font-size:12px;padding:6px 0;border-bottom:1px solid var(--sf2);display:flex;justify-content:space-between;gap:8px}
+.log span:last-child{color:var(--tx2);flex-shrink:0}
+
+.gate{max-width:360px;margin:12vh auto 0;background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:24px 20px}
+.gate h1{font-size:20px;margin-bottom:4px}
+.gate p{color:var(--tx2);font-size:13px;margin-bottom:18px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0));transform:translateX(-50%);background:var(--tx);color:#fff;
+  padding:10px 18px;border-radius:22px;font-size:13px;z-index:80;max-width:90vw}
+/* 印刷用レイアウト */
+#print-area{display:none}
+body.printmode #app,body.printmode #gate{display:none!important}
+body.printmode #print-area{display:block}
+.ptool{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:8px;justify-content:center;padding:12px 16px;border-bottom:1px solid var(--bd)}
+.ptool .btn{min-width:120px}
+.phint{text-align:center;font-size:12px;color:var(--tx2);padding:10px 16px 0}
+.pages{padding:16px 0 40px}
+.page{width:210mm;height:297mm;background:#fff;color:#5c3a3e;padding:12mm;margin:0 auto 16px;display:flex;flex-direction:column;gap:8mm;overflow:hidden;box-shadow:0 2px 14px rgba(92,58,62,.14)}
+.pe{flex:1;min-height:0;display:flex;flex-direction:column;gap:4mm;border:.6mm solid #f6d3d8;border-radius:5mm;padding:6mm}
+.pe-head{display:flex;align-items:center;gap:4mm}
+.pe-n{width:16mm;height:16mm;border-radius:50%;background:#e8838f;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:9mm;flex-shrink:0}
+.pe-nick{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:7mm;line-height:1.3}
+.pe-t{font-size:3.2mm;color:#a07c82}
+.pe-ph{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#fdeef0;border-radius:3mm;overflow:hidden}
+.pe-ph img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.pe-cm{font-size:5mm;line-height:1.5;text-align:center}
+.pe-vote p{font-size:3.6mm;color:#a07c82;margin-bottom:2mm;text-align:center}
+.dots{display:grid;grid-template-columns:repeat(10,13mm);gap:2.5mm;justify-content:center}
+.dot{width:13mm;height:13mm;border-radius:50%;border:.5mm dashed #e8838f;display:block}
+.per2 .pe{gap:3mm;padding:5mm}
+.per2 .pe-n{width:12mm;height:12mm;font-size:6.5mm}
+.per2 .pe-nick{font-size:5.5mm}
+.per2 .pe-cm{font-size:4mm}
+.per2 .dots{grid-template-columns:repeat(10,11mm);gap:2mm}
+.per2 .dot{width:11mm;height:11mm}
+.guide{justify-content:center;align-items:center;text-align:center;gap:10mm}
+.g-sub{font-size:6mm;color:#a07c82}
+.g-h{font-family:'Zen Maru Gothic',sans-serif;font-size:22mm;line-height:1.2;color:#c9606d}
+.g-lead{font-size:7mm}
+.g-row{display:flex;align-items:baseline;gap:6mm;font-size:7mm}
+.g-row span{font-size:5mm;color:#a07c82}
+.g-note{font-size:6mm;line-height:1.8;white-space:pre-wrap;max-width:160mm;background:#fdeef0;border-radius:5mm;padding:8mm 10mm}
+.g-dot{display:flex;align-items:center;gap:4mm;font-size:5mm;color:#a07c82}
+.tally h2{font-size:9mm}
+.tally p{font-size:4mm;color:#a07c82;margin-top:-4mm}
+.tally table{width:100%;border-collapse:collapse;font-size:5mm}
+.tally th,.tally td{border:.3mm solid #e9c3c9;padding:4.5mm 3mm;text-align:left}
+.tally th{background:#fdeef0;font-size:4mm;padding:3mm}
+.tally td.v{width:55mm}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#fff!important;padding:0!important}
+  .ptool,.phint,.ov,.toast{display:none!important}
+  .pages{padding:0!important;zoom:1!important}
+  .page{margin:0!important;box-shadow:none!important;break-after:page}
+  .page:last-child{break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- スタッフ用パスワード -->
+<section class="gate" id="gate">
+  <h1>フォトコン管理</h1>
+  <p>スタッフ用パスワードを入力してください</p>
+  <div class="f">
+    <label for="staff-name">あなたの名前</label>
+    <select class="in" id="staff-name"></select>
+  </div>
+  <div class="f">
+    <label for="staff-pw">スタッフ用パスワード</label>
+    <input class="in" id="staff-pw" type="password" autocomplete="current-password">
+    <p class="err" id="gate-err"></p>
+  </div>
+  <button class="btn pri full" id="gate-go" type="button">開く</button>
+</section>
+
+<!-- 一覧 -->
+<main class="wrap" id="app" hidden>
+  <div class="top">
+    <a class="ib" href="we-cats-pos.html" aria-label="POSに戻る" style="text-decoration:none">←</a>
+    <h1 id="title">フォトコンテスト</h1>
+    <button class="ib" id="open-print" type="button" aria-label="印刷用レイアウト">🖨️</button>
+    <button class="ib" id="reload" type="button" aria-label="再読み込み">🔄</button>
+    <button class="ib" id="open-owner" type="button" aria-label="オーナー設定">⚙️</button>
+  </div>
+  <p class="who" id="who"></p>
+  <div class="stats">
+    <div class="stat"><b id="s-all">0</b><span>応募</span></div>
+    <div class="stat nom"><b id="s-nom">0</b><span>ノミネート</span></div>
+    <div class="stat rev"><b id="s-rev">0</b><span>要確認</span></div>
+  </div>
+  <div class="chips" role="group" aria-label="表示の絞り込み">
+    <button class="chip" data-f="all" aria-pressed="true">すべて</button>
+    <button class="chip" data-f="new" aria-pressed="false">未選考</button>
+    <button class="chip" data-f="nominated" aria-pressed="false">ノミネート</button>
+    <button class="chip" data-f="review" aria-pressed="false">要確認</button>
+    <button class="chip" data-f="hidden" aria-pressed="false">非表示</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty" hidden></p>
+</main>
+
+<!-- 詳細 -->
+<div class="ov" id="detail" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="d-title">
+    <div class="sh-top"><h2 id="d-title"></h2><button class="ib" data-close type="button" aria-label="閉じる">✕</button></div>
+    <img class="big" id="d-img" alt="">
+    <div class="rows">
+      <div class="row"><span>ニックネーム</span><span id="d-nick"></span></div>
+      <div class="row"><span>応募日時</span><span id="d-date"></span></div>
+      <div class="row"><span>規約への同意</span><span id="d-terms"></span></div>
+      <div class="row"><span>連絡先</span><span id="d-contact"></span></div>
+    </div>
+    <p class="err" id="d-err"></p>
+    <div class="comment" id="d-comment"></div>
+    <div class="acts" id="d-acts"></div>
+  </div>
+</div>
+
+<!-- 連絡先パスワード -->
+<div class="ov" id="cpw" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cpw-title">
+    <div class="sh-top"><h2 id="cpw-title">連絡先を表示</h2><button class="ib" data-close type="button" aria-label="閉じる">✕</button></div>
+    <div class="f">
+      <label for="cpw-in">連絡先閲覧パスワード</label>
+      <input class="in" id="cpw-in" type="password" autocomplete="off">
+      <p class="err" id="cpw-err"></p>
+    </div>
+    <p style="font-size:12px;color:var(--tx2);margin-bottom:14px">表示した記録（名前と日時）がオーナーに残ります。</p>
+    <button class="btn pri full" id="cpw-go" type="button">表示する</button>
+  </div>
+</div>
+
+<!-- オーナー設定 -->
+<div class="ov" id="owner" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="o-title">
+    <div class="sh-top"><h2 id="o-title">オーナー設定</h2><button class="ib" data-close type="button" aria-label="閉じる">✕</button></div>
+
+    <div id="o-gate">
+      <div class="f">
+        <label for="o-pw">オーナー用パスワード</label>
+        <input class="in" id="o-pw" type="password" autocomplete="off">
+        <p class="err" id="o-gate-err"></p>
+      </div>
+      <button class="btn pri full" id="o-go" type="button">開く</button>
+    </div>
+
+    <div id="o-body" hidden>
+      <div class="f">
+        <label for="o-title-in">コンテスト名（応募ページに表示）</label>
+        <input class="in" id="o-title-in" type="text" maxlength="40">
+      </div>
+      <label class="sw"><span>応募を受け付ける</span><input type="checkbox" id="o-accept"></label>
+      <div class="f">
+        <label for="o-terms">応募規約 <span id="o-ver"></span></label>
+        <textarea class="in" id="o-terms"></textarea>
+        <p style="font-size:12px;color:var(--tx2);margin-top:4px">変更すると新しい版として保存され、以降の応募者は新しい規約に同意します。</p>
+      </div>
+      <button class="btn pri full" id="o-save" type="button">保存する</button>
+      <p class="err" id="o-save-err"></p>
+
+      <div class="sec">
+        <h3>パスワードの変更</h3>
+        <div class="f" style="margin-bottom:8px">
+          <label for="o-pw-kind">変更するパスワード</label>
+          <select class="in" id="o-pw-kind">
+            <option value="contact">連絡先閲覧用</option>
+            <option value="staff">スタッフ用</option>
+            <option value="owner">オーナー用</option>
+          </select>
+        </div>
+        <div class="pwrow">
+          <input class="in" id="o-pw-new" type="password" placeholder="新しいパスワード（4文字以上）" autocomplete="new-password">
+          <button class="btn" id="o-pw-save" type="button">変更</button>
+        </div>
+        <p style="font-size:12px;color:var(--tx2)">連絡先を見せる人を外したいときは、連絡先閲覧用を変更して、残す人にだけ新しいパスワードを伝えてください。</p>
+        <p class="err" id="o-pw-err"></p>
+      </div>
+
+      <div class="sec">
+        <h3>連絡先の閲覧記録</h3>
+        <div id="o-logs"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 印刷の設定 -->
+<div class="ov" id="printset" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="p-title">
+    <div class="sh-top"><h2 id="p-title">印刷用レイアウト</h2><button class="ib" data-close type="button" aria-label="閉じる">✕</button></div>
+    <p style="font-size:13px;color:var(--tx2);margin-bottom:14px">ノミネート中の<b id="p-count"></b>を、シール投票用に並べます。</p>
+    <div class="f">
+      <label for="p-layout">1ページの作品数</label>
+      <select class="in" id="p-layout"><option value="1">A4に1作品（大きく貼り出す）</option><option value="2">A4に2作品（省スペース）</option></select>
+    </div>
+    <div class="f">
+      <label for="p-dots">シールを貼る枠の数（1作品あたり）</label>
+      <select class="in" id="p-dots"><option value="10">10個</option><option value="20">20個</option><option value="30">30個</option><option value="50">50個</option></select>
+      <p style="font-size:12px;color:var(--tx2);margin-top:4px">A4に2作品のときは20個までになります。枠が埋まったら、紙の余白に貼ってもらえば大丈夫です。</p>
+    </div>
+    <div class="f">
+      <label for="p-order">並び順</label>
+      <select class="in" id="p-order"><option value="no">応募番号順</option><option value="shuffle">ランダム（順番による有利をなくす）</option></select>
+    </div>
+    <label class="sw"><span>投票の案内ページを付ける</span><input type="checkbox" id="p-guide"></label>
+    <div id="p-guide-box">
+      <div class="f"><label for="p-period">投票期間</label><input class="in" id="p-period" type="text" placeholder="10月5日（月）〜10月25日（日）"></div>
+      <div class="f"><label for="p-announce">結果発表</label><input class="in" id="p-announce" type="text" placeholder="10月31日（土）店内とInstagramで発表"></div>
+      <div class="f"><label for="p-note">案内文</label><textarea class="in" id="p-note" style="min-height:90px"></textarea></div>
+    </div>
+    <label class="sw"><span>スタッフ用の集計表を付ける</span><input type="checkbox" id="p-tally"></label>
+    <button class="btn pri full" id="p-go" type="button">プレビューを表示</button>
+  </div>
+</div>
+
+<!-- 印刷プレビュー -->
+<div id="print-area">
+  <div class="ptool"><button class="btn" id="print-back" type="button">戻る</button><button class="btn pri" id="print-go" type="button">印刷する</button></div>
+  <p class="phint">印刷の設定は「用紙A4・縦・倍率100%・余白なし」にしてください。</p>
+  <div class="pages" id="pages"></div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// ===== 設定（POSと同じSupabase） =====
+var SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
+var BUCKET = 'contest-photos';
+
+var $ = function(id){ return document.getElementById(id); };
+var staffPw = '', staffName = '', contactPw = '', ownerPw = '';
+var entries = [], filter = 'all', current = null, shownContacts = {};
+
+var STATUS = {new:'未選考', nominated:'ノミネート', review:'要確認', hidden:'非表示'};
+var ERRMSG = {wrong_password:'パスワードが違います。', locked:'間違いが続いたため10分間ロック中です。', too_short:'4文字以上にしてください。'};
+
+function rpc(fn, args){
+  return fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {
+    method:'POST',
+    headers:{apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json'},
+    body:JSON.stringify(args || {})
+  }).then(function(r){
+    if(!r.ok) return r.text().then(function(t){ throw new Error(t); });
+    return r.json();
+  });
+}
+function imgUrl(path){ return SUPA_URL + '/storage/v1/object/public/' + BUCKET + '/' + path; }
+function errText(res){ return ERRMSG[res && res.error] || '処理できませんでした。通信状況を確認してください。'; }
+function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+function ss(k, v){ try{ if(v === undefined) return sessionStorage.getItem(k); if(v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); }catch(e){ return null; } }
+function fmt(d){ var t = new Date(d); return (t.getMonth()+1) + '/' + t.getDate() + ' ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0'); }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function toast(msg){ var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function(){ t.hidden = true; }, 2200); }
+
+function openOv(id){ $(id).hidden = false; document.body.style.overflow = 'hidden'; }
+function closeOv(id){ $(id).hidden = true; if(!document.querySelector('.ov:not([hidden])')) document.body.style.overflow = ''; }
+document.querySelectorAll('.ov').forEach(function(ov){
+  ov.addEventListener('click', function(e){ if(e.target === ov || e.target.closest('[data-close]')) closeOv(ov.id); });
+});
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  var open = document.querySelectorAll('.ov:not([hidden])');
+  if(open.length) closeOv(open[open.length - 1].id);
+});
+
+// ---------- 入口（POSのスタッフ一覧を利用） ----------
+(function(){
+  var list = [];
+  try{ list = JSON.parse(ls('wc_staff') || '[]'); }catch(e){}
+  if(!Array.isArray(list)) list = [];
+  var sel = $('staff-name'), cur = ls('wc_operator') || ls('wc_contest_name') || '';
+  sel.innerHTML = '<option value="">選択してください</option>' +
+    list.map(function(n){ return '<option' + (n === cur ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('') +
+    '<option value="__other">その他（名前を入力）</option>';
+})();
+$('staff-name').addEventListener('change', function(){
+  if(this.value !== '__other') return;
+  var n = (prompt('名前を入力してください') || '').trim();
+  if(!n){ this.value = ''; return; }
+  var o = document.createElement('option'); o.textContent = n; o.selected = true;
+  this.insertBefore(o, this.lastElementChild);
+});
+
+function enter(pw, name){
+  return rpc('contest_staff_list', {p_pw:pw}).then(function(res){
+    if(!res.ok){ $('gate-err').textContent = errText(res); return false; }
+    staffPw = pw; staffName = name;
+    ss('wc_contest_spw', pw); ss('wc_contest_sname', name); ls('wc_contest_name', name);
+    entries = res.entries || [];
+    $('gate').hidden = true; $('app').hidden = false;
+    $('who').textContent = name + ' さんとして操作中';
+    render();
+    rpc('contest_public_info').then(function(i){ if(i && i.title) $('title').textContent = i.title; }).catch(function(){});
+    return true;
+  });
+}
+$('gate-go').addEventListener('click', function(){
+  var name = $('staff-name').value, pw = $('staff-pw').value;
+  $('gate-err').textContent = '';
+  if(!name || name === '__other'){ $('gate-err').textContent = '名前を選んでください。'; return; }
+  if(!pw){ $('gate-err').textContent = 'パスワードを入力してください。'; return; }
+  enter(pw, name).catch(function(){ $('gate-err').textContent = '通信できませんでした。'; });
+});
+$('staff-pw').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('gate-go').click(); });
+
+// ---------- 一覧 ----------
+function load(){
+  return rpc('contest_staff_list', {p_pw:staffPw}).then(function(res){
+    if(!res.ok){ toast(errText(res)); return; }
+    entries = res.entries || []; render();
+  });
+}
+function render(){
+  $('s-all').textContent = entries.length;
+  $('s-nom').textContent = entries.filter(function(e){ return e.status === 'nominated'; }).length;
+  $('s-rev').textContent = entries.filter(function(e){ return e.status === 'review'; }).length;
+  var list = entries.filter(function(e){
+    return filter === 'all' ? e.status !== 'hidden' : e.status === filter;
+  });
+  $('grid').innerHTML = list.map(function(e){
+    return '<button class="ent ' + e.status + '" data-id="' + e.id + '" type="button">' +
+      '<div class="ph"><img loading="lazy" src="' + imgUrl(e.image_path) + '" alt=""><span class="no">No.' + e.no + '</span></div>' +
+      '<div class="bd"><div class="nm">' + esc(e.nickname) + '</div><div class="cm">' + esc(e.comment || '') + '</div>' +
+      '<span class="tag ' + e.status + '">' + STATUS[e.status] + '</span></div></button>';
+  }).join('');
+  var empty = $('empty');
+  empty.hidden = list.length > 0;
+  empty.textContent = entries.length === 0
+    ? 'まだ応募はありません。応募ページのQRコードを店内に置いてみましょう。'
+    : 'この条件の写真はありません。';
+}
+document.querySelectorAll('.chip').forEach(function(c){
+  c.addEventListener('click', function(){
+    filter = c.dataset.f;
+    document.querySelectorAll('.chip').forEach(function(x){ x.setAttribute('aria-pressed', String(x === c)); });
+    render();
+  });
+});
+$('grid').addEventListener('click', function(e){
+  var b = e.target.closest('.ent'); if(!b) return;
+  current = entries.find(function(x){ return x.id === b.dataset.id; });
+  if(current) openDetail();
+});
+$('reload').addEventListener('click', function(){ load().then(function(){ toast('最新の状態にしました'); }).catch(function(){ toast('通信できませんでした'); }); });
+
+// ---------- 詳細 ----------
+function openDetail(){
+  var e = current;
+  $('d-title').textContent = 'No.' + e.no;
+  $('d-img').src = imgUrl(e.image_path);
+  $('d-img').alt = e.nickname + ' さんの応募写真';
+  $('d-nick').textContent = e.nickname;
+  $('d-date').textContent = fmt(e.created_at);
+  $('d-terms').textContent = '同意済み（規約 v' + e.terms_version + '）';
+  $('d-comment').textContent = e.comment || 'コメントなし';
+  $('d-err').textContent = '';
+  renderContact();
+  var a = [];
+  a.push(e.status === 'nominated'
+    ? '<button class="btn" data-s="new" type="button">ノミネートを外す</button>'
+    : '<button class="btn pri" data-s="nominated" type="button">ノミネートする</button>');
+  a.push(e.status === 'review'
+    ? '<button class="btn" data-s="new" type="button">確認済みにする</button>'
+    : '<button class="btn" data-s="review" type="button">要確認にする</button>');
+  a.push(e.status === 'hidden'
+    ? '<button class="btn" data-s="new" type="button">表示に戻す</button>'
+    : '<button class="btn" data-s="hidden" type="button">非表示にする</button>');
+  $('d-acts').innerHTML = a.join('');
+  openOv('detail');
+}
+function renderContact(){
+  var c = shownContacts[current.id];
+  $('d-contact').innerHTML = c != null
+    ? esc(c)
+    : '<button class="lock-link" id="show-contact" type="button">🔒 表示する</button>';
+  var b = $('show-contact');
+  if(b) b.addEventListener('click', function(){ contactPw ? fetchContact(contactPw) : askContactPw(); });
+}
+function askContactPw(){ $('cpw-in').value = ''; $('cpw-err').textContent = ''; openOv('cpw'); setTimeout(function(){ $('cpw-in').focus(); }, 50); }
+function fetchContact(pw){
+  return rpc('contest_get_contact', {p_pw:pw, p_id:current.id, p_staff_name:staffName}).then(function(res){
+    if(!res.ok){ contactPw = ''; if($('cpw').hidden) askContactPw(); $('cpw-err').textContent = errText(res); return; }
+    contactPw = pw; shownContacts[current.id] = res.contact || '（登録なし）';
+    closeOv('cpw'); renderContact();
+  }).catch(function(){ $('cpw-err').textContent = '通信できませんでした。'; });
+}
+$('cpw-go').addEventListener('click', function(){
+  var pw = $('cpw-in').value;
+  if(!pw){ $('cpw-err').textContent = 'パスワードを入力してください。'; return; }
+  fetchContact(pw);
+});
+$('cpw-in').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('cpw-go').click(); });
+
+$('d-acts').addEventListener('click', function(ev){
+  var b = ev.target.closest('[data-s]'); if(!b) return;
+  var s = b.dataset.s;
+  b.disabled = true;
+  rpc('contest_staff_set_status', {p_pw:staffPw, p_id:current.id, p_status:s}).then(function(res){
+    if(!res.ok){ $('d-err').textContent = errText(res); b.disabled = false; return; }
+    current.status = s; render(); openDetail();
+    toast(STATUS[s] === '未選考' ? '元に戻しました' : STATUS[s] + 'にしました');
+  }).catch(function(){ $('d-err').textContent = '通信できませんでした。'; b.disabled = false; });
+});
+
+// ---------- オーナー設定 ----------
+$('open-owner').addEventListener('click', function(){
+  $('o-gate').hidden = !!ownerPw ? true : false;
+  $('o-body').hidden = !ownerPw;
+  $('o-pw').value = ''; $('o-gate-err').textContent = '';
+  openOv('owner');
+  if(ownerPw) loadOwner(ownerPw);
+});
+function loadOwner(pw){
+  return rpc('contest_owner_get', {p_pw:pw}).then(function(res){
+    if(!res.ok){ ownerPw = ''; $('o-gate').hidden = false; $('o-body').hidden = true; $('o-gate-err').textContent = errText(res); return; }
+    ownerPw = pw;
+    $('o-gate').hidden = true; $('o-body').hidden = false;
+    $('o-title-in').value = res.title || '';
+    $('o-accept').checked = !!res.accepting;
+    $('o-terms').value = res.terms_body || '';
+    $('o-ver').textContent = '（現在 v' + res.terms_version + '）';
+    $('o-logs').innerHTML = (res.logs || []).length
+      ? res.logs.map(function(l){
+          return '<div class="log"><span>' + esc(l.staff_name || '名前なし') + ' が No.' + esc(l.entry_no) + '（' + esc(l.nickname || '削除済み') + '）を表示</span><span>' + fmt(l.viewed_at) + '</span></div>';
+        }).join('')
+      : '<p style="font-size:13px;color:var(--tx2)">まだ記録はありません。</p>';
+  }).catch(function(){ $('o-gate-err').textContent = '通信できませんでした。'; });
+}
+$('o-go').addEventListener('click', function(){
+  var pw = $('o-pw').value;
+  if(!pw){ $('o-gate-err').textContent = 'パスワードを入力してください。'; return; }
+  loadOwner(pw);
+});
+$('o-pw').addEventListener('keydown', function(e){ if(e.key === 'Enter') $('o-go').click(); });
+$('o-save').addEventListener('click', function(){
+  $('o-save-err').textContent = '';
+  rpc('contest_owner_save', {p_pw:ownerPw, p_title:$('o-title-in').value, p_accepting:$('o-accept').checked, p_terms_body:$('o-terms').value})
+    .then(function(res){
+      if(!res.ok){ $('o-save-err').textContent = errText(res); return; }
+      $('o-ver').textContent = '（現在 v' + res.terms_version + '）';
+      $('title').textContent = $('o-title-in').value || $('title').textContent;
+      toast('保存しました');
+    }).catch(function(){ $('o-save-err').textContent = '通信できませんでした。'; });
+});
+$('o-pw-save').addEventListener('click', function(){
+  var kind = $('o-pw-kind').value, nw = $('o-pw-new').value;
+  $('o-pw-err').textContent = '';
+  if(nw.length < 4){ $('o-pw-err').textContent = '4文字以上にしてください。'; return; }
+  if(!confirm($('o-pw-kind').selectedOptions[0].textContent + 'のパスワードを変更します。よろしいですか？')) return;
+  rpc('contest_owner_set_password', {p_pw:ownerPw, p_kind:kind, p_new:nw}).then(function(res){
+    if(!res.ok){ $('o-pw-err').textContent = errText(res); return; }
+    $('o-pw-new').value = '';
+    if(kind === 'owner') ownerPw = nw;
+    if(kind === 'contact'){ contactPw = ''; shownContacts = {}; }
+    if(kind === 'staff'){ staffPw = nw; ss('wc_contest_spw', nw); }
+    toast('パスワードを変更しました');
+  }).catch(function(){ $('o-pw-err').textContent = '通信できませんでした。'; });
+});
+
+// ---------- 印刷用レイアウト ----------
+var PDEF = {layout:'1', dots:'50', order:'shuffle', guide:true, period:'', announce:'', tally:true,
+  note:'お会計のときにお渡しするシールを、いちばん好きな写真の下に貼ってください。\nシールはお一人さま1枚です。'};
+function pget(){ var o = {}; try{ o = JSON.parse(ls('wc_contest_print') || '{}') || {}; }catch(e){} return Object.assign({}, PDEF, o); }
+function nominees(){ return entries.filter(function(e){ return e.status === 'nominated'; }).sort(function(a, b){ return a.no - b.no; }); }
+
+$('open-print').addEventListener('click', function(){
+  var n = nominees().length;
+  if(!n){ toast('ノミネート作品がまだありません'); return; }
+  var p = pget();
+  $('p-count').textContent = n + '作品';
+  $('p-layout').value = p.layout; $('p-dots').value = p.dots; $('p-order').value = p.order;
+  $('p-guide').checked = p.guide; $('p-period').value = p.period; $('p-announce').value = p.announce;
+  $('p-note').value = p.note; $('p-tally').checked = p.tally;
+  $('p-guide-box').hidden = !p.guide;
+  openOv('printset');
+});
+$('p-guide').addEventListener('change', function(){ $('p-guide-box').hidden = !this.checked; });
+$('p-layout').addEventListener('change', function(){
+  if(this.value === '2' && +$('p-dots').value > 20) $('p-dots').value = '20';
+});
+
+$('p-go').addEventListener('click', function(){
+  var p = {layout:$('p-layout').value, dots:$('p-dots').value, order:$('p-order').value,
+    guide:$('p-guide').checked, period:$('p-period').value.trim(), announce:$('p-announce').value.trim(),
+    note:$('p-note').value, tally:$('p-tally').checked};
+  ls('wc_contest_print', JSON.stringify(p));
+  closeOv('printset');
+  buildPrint(p);
+});
+
+function dotsHtml(n){ var s = ''; for(var i = 0; i < n; i++) s += '<span class="dot"></span>'; return '<div class="dots">' + s + '</div>'; }
+
+function buildPrint(p){
+  var title = $('title').textContent, per = p.layout === '2' ? 2 : 1;
+  var dots = per === 2 ? Math.min(20, +p.dots) : +p.dots;
+  var list = nominees();
+  if(p.order === 'shuffle'){
+    for(var i = list.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = list[i]; list[i] = list[j]; list[j] = t; }
+  }
+  var pages = [];
+
+  if(p.guide){
+    pages.push('<section class="page guide">' +
+      '<p class="g-sub">' + esc(title) + '</p>' +
+      '<h2 class="g-h">フォト総選挙</h2>' +
+      '<p class="g-lead">いちばん好きな写真に、シールで投票してください</p>' +
+      (p.period ? '<div class="g-row"><span>投票期間</span><b>' + esc(p.period) + '</b></div>' : '') +
+      (p.announce ? '<div class="g-row"><span>結果発表</span><b>' + esc(p.announce) + '</b></div>' : '') +
+      (p.note.trim() ? '<p class="g-note">' + esc(p.note.trim()) + '</p>' : '') +
+      '<div class="g-dot"><span class="dot"></span><span>この丸の中にシールを貼ってね</span></div>' +
+      '</section>');
+  }
+
+  for(var k = 0; k < list.length; k += per){
+    pages.push('<section class="page per' + per + '">' + list.slice(k, k + per).map(function(e, m){
+      var n = k + m + 1;
+      return '<article class="pe">' +
+        '<header class="pe-head"><span class="pe-n">' + n + '</span><div>' +
+          '<p class="pe-nick">' + esc(e.nickname) + ' さん</p><p class="pe-t">' + esc(title) + '</p></div></header>' +
+        '<div class="pe-ph"><img src="' + imgUrl(e.image_path) + '" alt=""></div>' +
+        (e.comment ? '<p class="pe-cm">' + esc(e.comment) + '</p>' : '') +
+        '<div class="pe-vote"><p>' + n + '番の写真に投票する人は、ここにシールを貼ってね</p>' + dotsHtml(dots) + '</div>' +
+        '</article>';
+    }).join('') + '</section>');
+  }
+
+  if(p.tally){
+    pages.push('<section class="page tally"><h2>集計表</h2><p>投票番号は貼り出した紙の番号です。応募No.は管理ページの番号です。</p>' +
+      '<table><thead><tr><th>投票番号</th><th>応募No.</th><th>ニックネーム</th><th>票数</th></tr></thead><tbody>' +
+      list.map(function(e, i){
+        return '<tr><td>' + (i + 1) + '</td><td>No.' + e.no + '</td><td>' + esc(e.nickname) + '</td><td class="v"></td></tr>';
+      }).join('') + '</tbody></table></section>');
+  }
+
+  $('pages').innerHTML = pages.join('');
+  document.body.classList.add('printmode');
+  fitPages(); window.scrollTo(0, 0);
+
+  var btn = $('print-go'), imgs = Array.prototype.slice.call($('pages').querySelectorAll('img'));
+  btn.disabled = true; btn.textContent = '写真を読み込み中…';
+  Promise.all(imgs.map(function(img){
+    return img.complete ? null : new Promise(function(r){ img.onload = img.onerror = r; });
+  })).then(function(){ btn.disabled = false; btn.textContent = '印刷する'; });
+}
+function fitPages(){
+  var w = 210 * 96 / 25.4;
+  $('pages').style.zoom = Math.min(1, (window.innerWidth - 24) / w);
+}
+window.addEventListener('resize', function(){ if(document.body.classList.contains('printmode')) fitPages(); });
+$('print-back').addEventListener('click', function(){ document.body.classList.remove('printmode'); $('pages').innerHTML = ''; });
+$('print-go').addEventListener('click', function(){ window.print(); });
+
+// ---------- 再読み込み時はそのまま入る ----------
+(function(){
+  var pw = ss('wc_contest_spw'), name = ss('wc_contest_sname');
+  if(pw && name) enter(pw, name).then(function(ok){ if(!ok) ss('wc_contest_spw', null); }).catch(function(){});
+})();
+</script>
+</body>
+</html>
