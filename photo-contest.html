@@ -1,0 +1,318 @@
+-- =====================================================
+-- WE CATS フォトコンテスト  Supabase セットアップ
+-- Supabase の SQL Editor に全文を貼り付けて Run してください。
+-- 実行前に、下の「初期パスワード」の3か所を必ず書き換えてください。
+-- =====================================================
+
+create extension if not exists pgcrypto with schema extensions;
+
+-- ---------- テーブル ----------
+create table if not exists public.contest_settings (
+  id int primary key default 1 check (id = 1),
+  title text not null default 'WE CATS フォトコンテスト',
+  accepting boolean not null default true,
+  owner_pw_hash text not null,
+  staff_pw_hash text not null,
+  contact_pw_hash text not null,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.contest_terms (
+  version int primary key,
+  body text not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.photo_entries (
+  id uuid primary key default gen_random_uuid(),
+  entry_no int generated always as identity,
+  nickname text not null,
+  comment text,
+  image_path text not null unique,
+  terms_version int not null references public.contest_terms(version),
+  status text not null default 'new'
+    check (status in ('new','nominated','review','hidden')),
+  created_at timestamptz not null default now()
+);
+
+-- 連絡先は別テーブル（専用パスワードがないと読めない）
+create table if not exists public.photo_entry_contacts (
+  entry_id uuid primary key references public.photo_entries(id) on delete cascade,
+  contact text not null
+);
+
+create table if not exists public.contact_view_logs (
+  id bigint generated always as identity primary key,
+  entry_id uuid references public.photo_entries(id) on delete set null,
+  staff_name text,
+  viewed_at timestamptz not null default now()
+);
+
+create table if not exists public.contest_auth_failures (
+  id bigint generated always as identity primary key,
+  kind text not null,
+  at timestamptz not null default now()
+);
+
+-- どのテーブルも直接は読み書き不可。すべて下の関数経由にする
+alter table public.contest_settings       enable row level security;
+alter table public.contest_terms          enable row level security;
+alter table public.photo_entries          enable row level security;
+alter table public.photo_entry_contacts   enable row level security;
+alter table public.contact_view_logs      enable row level security;
+alter table public.contest_auth_failures  enable row level security;
+
+revoke all on public.contest_settings, public.contest_terms, public.photo_entries,
+  public.photo_entry_contacts, public.contact_view_logs, public.contest_auth_failures
+  from anon, authenticated;
+
+-- ---------- 初期パスワード（★ここを書き換え★） ----------
+insert into public.contest_settings (id, owner_pw_hash, staff_pw_hash, contact_pw_hash)
+values (
+  1,
+  extensions.crypt('WECATS0103',   extensions.gen_salt('bf')),  -- オーナー用（設定・規約・パスワード変更）
+  extensions.crypt('WECATS',   extensions.gen_salt('bf')),  -- スタッフ用（一覧・ノミネート）
+  extensions.crypt('WECATS', extensions.gen_salt('bf'))   -- 連絡先閲覧用（見せたい人にだけ教える）
+)
+on conflict (id) do nothing;
+
+-- ---------- 初期の応募規約（あとで管理画面から編集できます） ----------
+insert into public.contest_terms (version, body) values (1,
+'1. 応募できるのは、応募者ご本人が当店で撮影した写真に限ります。他人が撮影した写真や、インターネット上の画像などは応募できません。
+2. 写真の著作権は撮影者ご本人に帰属します。
+3. 応募写真は、当店が以下の目的で無償で使用できるものとします。店内での掲示および総選挙での展示、当店のSNS・ウェブサイト・販促物への掲載。掲載時に写真のサイズ調整や切り抜きを行う場合があります。
+4. 応募者は、上記の使用について著作者人格権を行使しないものとします。
+5. 他のお客様やスタッフなど、人物が写り込んでいる写真は、写っているご本人の同意を得たうえでご応募ください。
+6. 未成年の方は、保護者の同意を得たうえでご応募ください。
+7. 規約に反する写真、公序良俗に反する写真、猫に負担をかけて撮影されたと判断される写真は、選考の対象外とさせていただく場合があります。
+8. 掲載時は、ご記入いただいたニックネームを表示します。連絡先は入賞のご連絡にのみ使用し、他の目的には使用しません。
+9. 第三者との間で権利に関するトラブルが生じた場合は、応募者の責任で解決していただきます。')
+on conflict (version) do nothing;
+
+-- ---------- パスワード確認（内部用） ----------
+-- 10分間に10回間違えると、その種類のパスワードは10分ロック
+-- オーナー用パスワードはスタッフ用・連絡先用の代わりにも使えます
+create or replace function public._contest_pw(p_kind text, p_pw text)
+returns text language plpgsql security definer
+set search_path = public, extensions as $$
+declare s public.contest_settings; h text; fails int;
+begin
+  select count(*) into fails from contest_auth_failures
+   where kind = p_kind and at > now() - interval '10 minutes';
+  if fails >= 10 then return 'locked'; end if;
+
+  select * into s from contest_settings where id = 1;
+  h := case p_kind when 'owner' then s.owner_pw_hash
+                   when 'staff' then s.staff_pw_hash
+                   when 'contact' then s.contact_pw_hash end;
+
+  if p_pw is not null and h is not null and crypt(p_pw, h) = h then return 'ok'; end if;
+  if p_kind <> 'owner' and p_pw is not null and crypt(p_pw, s.owner_pw_hash) = s.owner_pw_hash then
+    return 'ok';
+  end if;
+
+  insert into contest_auth_failures(kind) values (p_kind);
+  return 'wrong_password';
+end $$;
+
+-- ---------- お客さん用 ----------
+create or replace function public.contest_public_info()
+returns json language sql security definer stable
+set search_path = public as $$
+  select json_build_object(
+    'title', s.title,
+    'accepting', s.accepting,
+    'terms_version', t.version,
+    'terms_body', t.body)
+  from contest_settings s
+  left join lateral (
+    select version, body from contest_terms order by version desc limit 1
+  ) t on true
+  where s.id = 1;
+$$;
+
+create or replace function public.contest_submit(
+  p_nickname text, p_contact text, p_comment text,
+  p_image_path text, p_terms_version int, p_consent boolean)
+returns json language plpgsql security definer
+set search_path = public as $$
+declare v_id uuid; v_no int; v_latest int; v_open boolean; v_recent int;
+begin
+  select accepting into v_open from contest_settings where id = 1;
+  if not coalesce(v_open, false) then return json_build_object('ok', false, 'error', 'closed'); end if;
+  if p_consent is not true then return json_build_object('ok', false, 'error', 'consent'); end if;
+
+  p_nickname := btrim(coalesce(p_nickname, ''));
+  p_contact  := btrim(coalesce(p_contact, ''));
+  p_comment  := nullif(btrim(coalesce(p_comment, '')), '');
+
+  if char_length(p_nickname) not between 1 and 30 then return json_build_object('ok', false, 'error', 'nickname'); end if;
+  if char_length(p_contact) not between 3 and 100 then return json_build_object('ok', false, 'error', 'contact'); end if;
+  if char_length(coalesce(p_comment, '')) > 200 then return json_build_object('ok', false, 'error', 'comment'); end if;
+  if p_image_path !~ '^entries/[0-9a-f-]{36}\.jpg$' then return json_build_object('ok', false, 'error', 'image'); end if;
+
+  select max(version) into v_latest from contest_terms;
+  if p_terms_version is distinct from v_latest then
+    return json_build_object('ok', false, 'error', 'terms_changed');
+  end if;
+
+  select count(*) into v_recent from photo_entries where created_at > now() - interval '10 minutes';
+  if v_recent >= 60 then return json_build_object('ok', false, 'error', 'busy'); end if;
+
+  insert into photo_entries (nickname, comment, image_path, terms_version)
+  values (p_nickname, p_comment, p_image_path, p_terms_version)
+  returning id, entry_no into v_id, v_no;
+
+  insert into photo_entry_contacts (entry_id, contact) values (v_id, p_contact);
+  return json_build_object('ok', true, 'entry_no', v_no);
+exception when unique_violation then
+  return json_build_object('ok', false, 'error', 'duplicate');
+end $$;
+
+-- ---------- スタッフ用 ----------
+create or replace function public.contest_staff_list(p_pw text)
+returns json language plpgsql security definer
+set search_path = public as $$
+declare r text;
+begin
+  r := _contest_pw('staff', p_pw);
+  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
+  return json_build_object('ok', true, 'entries', coalesce((
+    select json_agg(json_build_object(
+      'id', e.id, 'no', e.entry_no, 'nickname', e.nickname, 'comment', e.comment,
+      'image_path', e.image_path, 'status', e.status,
+      'terms_version', e.terms_version, 'created_at', e.created_at)
+      order by e.created_at desc)
+    from photo_entries e), '[]'::json));
+end $$;
+
+create or replace function public.contest_staff_set_status(p_pw text, p_id uuid, p_status text)
+returns json language plpgsql security definer
+set search_path = public as $$
+declare r text;
+begin
+  r := _contest_pw('staff', p_pw);
+  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
+  if p_status not in ('new','nominated','review','hidden') then
+    return json_build_object('ok', false, 'error', 'status');
+  end if;
+  update photo_entries set status = p_status where id = p_id;
+  return json_build_object('ok', found);
+end $$;
+
+create or replace function public.contest_get_contact(p_pw text, p_id uuid, p_staff_name text)
+returns json language plpgsql security definer
+set search_path = public as $$
+declare r text; v text;
+begin
+  r := _contest_pw('contact', p_pw);
+  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
+  select contact into v from photo_entry_contacts where entry_id = p_id;
+  insert into contact_view_logs (entry_id, staff_name)
+  values (p_id, left(nullif(btrim(coalesce(p_staff_name, '')), ''), 30));
+  return json_build_object('ok', true, 'contact', v);
+end $$;
+
+-- ---------- オーナー用 ----------
+create or replace function public.contest_owner_get(p_pw text)
+returns json language plpgsql security definer
+set search_path = public as $$
+declare r text;
+begin
+  r := _contest_pw('owner', p_pw);
+  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
+  return (
+    select json_build_object(
+      'ok', true,
+      'title', s.title,
+      'accepting', s.accepting,
+      'terms_version', t.version,
+      'terms_body', t.body,
+      'logs', coalesce((
+        select json_agg(json_build_object(
+          'viewed_at', l.viewed_at, 'staff_name', l.staff_name,
+          'entry_no', e.entry_no, 'nickname', e.nickname) order by l.viewed_at desc)
+        from (select * from contact_view_logs order by viewed_at desc limit 100) l
+        left join photo_entries e on e.id = l.entry_id), '[]'::json))
+    from contest_settings s
+    left join lateral (select version, body from contest_terms order by version desc limit 1) t on true
+    where s.id = 1);
+end $$;
+
+create or replace function public.contest_owner_save(
+  p_pw text, p_title text, p_accepting boolean, p_terms_body text)
+returns json language plpgsql security definer
+set search_path = public as $$
+declare r text; v_cur text; v_ver int;
+begin
+  r := _contest_pw('owner', p_pw);
+  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
+
+  update contest_settings
+     set title = coalesce(nullif(btrim(p_title), ''), title),
+         accepting = coalesce(p_accepting, accepting),
+         updated_at = now()
+   where id = 1;
+
+  select version, body into v_ver, v_cur from contest_terms order by version desc limit 1;
+  if p_terms_body is not null and btrim(p_terms_body) <> '' and p_terms_body is distinct from v_cur then
+    v_ver := coalesce(v_ver, 0) + 1;
+    insert into contest_terms (version, body) values (v_ver, p_terms_body);
+  end if;
+  return json_build_object('ok', true, 'terms_version', v_ver);
+end $$;
+
+create or replace function public.contest_owner_set_password(p_pw text, p_kind text, p_new text)
+returns json language plpgsql security definer
+set search_path = public, extensions as $$
+declare r text;
+begin
+  r := _contest_pw('owner', p_pw);
+  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
+  if p_new is null or char_length(p_new) < 4 then return json_build_object('ok', false, 'error', 'too_short'); end if;
+  if p_kind = 'owner' then
+    update contest_settings set owner_pw_hash = crypt(p_new, gen_salt('bf')), updated_at = now() where id = 1;
+  elsif p_kind = 'staff' then
+    update contest_settings set staff_pw_hash = crypt(p_new, gen_salt('bf')), updated_at = now() where id = 1;
+  elsif p_kind = 'contact' then
+    update contest_settings set contact_pw_hash = crypt(p_new, gen_salt('bf')), updated_at = now() where id = 1;
+  else
+    return json_build_object('ok', false, 'error', 'kind');
+  end if;
+  return json_build_object('ok', true);
+end $$;
+
+-- ---------- 関数の実行権限 ----------
+revoke all on function public._contest_pw(text, text) from public, anon, authenticated;
+
+revoke all on function public.contest_public_info() from public;
+revoke all on function public.contest_submit(text, text, text, text, int, boolean) from public;
+revoke all on function public.contest_staff_list(text) from public;
+revoke all on function public.contest_staff_set_status(text, uuid, text) from public;
+revoke all on function public.contest_get_contact(text, uuid, text) from public;
+revoke all on function public.contest_owner_get(text) from public;
+revoke all on function public.contest_owner_save(text, text, boolean, text) from public;
+revoke all on function public.contest_owner_set_password(text, text, text) from public;
+
+grant execute on function public.contest_public_info() to anon, authenticated;
+grant execute on function public.contest_submit(text, text, text, text, int, boolean) to anon, authenticated;
+grant execute on function public.contest_staff_list(text) to anon, authenticated;
+grant execute on function public.contest_staff_set_status(text, uuid, text) to anon, authenticated;
+grant execute on function public.contest_get_contact(text, uuid, text) to anon, authenticated;
+grant execute on function public.contest_owner_get(text) to anon, authenticated;
+grant execute on function public.contest_owner_save(text, text, boolean, text) to anon, authenticated;
+grant execute on function public.contest_owner_set_password(text, text, text) to anon, authenticated;
+
+-- ---------- 写真の保存場所 ----------
+-- 写真URLはランダムな名前なので推測できず、一覧取得も許可していません
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('contest-photos', 'contest-photos', true, 5242880, array['image/jpeg'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "contest photos: upload only" on storage.objects;
+create policy "contest photos: upload only" on storage.objects
+  for insert to anon, authenticated
+  with check (bucket_id = 'contest-photos' and name ~ '^entries/[0-9a-f-]{36}\.jpg$');
