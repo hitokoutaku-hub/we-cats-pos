@@ -1,318 +1,287 @@
--- =====================================================
--- WE CATS フォトコンテスト  Supabase セットアップ
--- Supabase の SQL Editor に全文を貼り付けて Run してください。
--- 実行前に、下の「初期パスワード」の3か所を必ず書き換えてください。
--- =====================================================
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WE CATS フォトコンテスト</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff5f6;--sf:#fff;--sf2:#fdeef0;--bd:#f6d3d8;
+  --ac:#e8838f;--ac-d:#c9606d;--tx:#5c3a3e;--tx2:#a07c82;--ng:#d65f5f;--ok:#5c9e7e;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg)}
+body{color:var(--tx);font-family:'Noto Sans JP',system-ui,sans-serif;font-size:15px;line-height:1.7;
+  padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:480px;margin:0 auto;padding:28px 18px 48px}
+h1{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;font-weight:700;font-size:24px;line-height:1.4;text-align:center}
+.lead{text-align:center;color:var(--tx2);font-size:13px;margin:6px 0 24px}
 
-create extension if not exists pgcrypto with schema extensions;
+/* チェキ風の写真フレーム */
+.cheki{display:block;width:78%;max-width:300px;margin:0 auto 28px;background:var(--sf);
+  padding:14px 14px 0;border-radius:4px;transform:rotate(-1.5deg);cursor:pointer;
+  box-shadow:0 10px 24px rgba(200,90,110,.16),0 2px 4px rgba(200,90,110,.10);transition:transform .2s}
+.cheki:active{transform:rotate(-1.5deg) scale(.98)}
+.cheki:focus-within{outline:3px solid var(--ac);outline-offset:4px}
+.shot{aspect-ratio:1/1;background:var(--sf2);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;color:var(--ac-d);font-size:14px;font-weight:500;overflow:hidden;position:relative}
+.shot svg{width:42px;height:42px}
+.shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.caption{height:62px;display:flex;align-items:center;justify-content:center;
+  font-family:'Zen Maru Gothic',sans-serif;font-size:17px;color:var(--tx);padding:0 6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.caption.empty{color:var(--tx2);font-size:13px}
+#photo{position:absolute;width:1px;height:1px;opacity:0}
 
--- ---------- テーブル ----------
-create table if not exists public.contest_settings (
-  id int primary key default 1 check (id = 1),
-  title text not null default 'WE CATS フォトコンテスト',
-  accepting boolean not null default true,
-  owner_pw_hash text not null,
-  staff_pw_hash text not null,
-  contact_pw_hash text not null,
-  updated_at timestamptz not null default now()
-);
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:18px;padding:20px 18px}
+.f{margin-bottom:18px}
+.f label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:500;margin-bottom:6px}
+.req{font-size:11px;color:var(--ac-d);font-weight:500}
+.opt{font-size:11px;color:var(--tx2);font-weight:400}
+input[type=text],input[type=email],textarea{width:100%;background:var(--sf2);border:1.5px solid var(--bd);color:var(--tx);
+  padding:12px;border-radius:12px;font-size:16px;font-family:inherit;outline:none;-webkit-appearance:none}
+input:focus,textarea:focus{border-color:var(--ac);background:var(--sf)}
+textarea{resize:vertical;min-height:84px}
+.hint{font-size:12px;color:var(--tx2);margin-top:4px}
+.count{text-align:right}
+.terms{background:var(--sf2);border-radius:12px;padding:14px;font-size:12.5px;line-height:1.8;white-space:pre-wrap;
+  max-height:190px;overflow-y:auto;border:1px solid var(--bd)}
+.agree{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:14px;cursor:pointer}
+.agree input{width:22px;height:22px;accent-color:var(--ac);flex-shrink:0;margin-top:2px}
+.err{color:var(--ng);font-size:13px;margin-top:6px;display:none}
+.err.on{display:block}
+button.send{width:100%;margin-top:22px;padding:16px;border:none;border-radius:28px;background:var(--ac);color:#fff;
+  font-family:'Zen Maru Gothic',sans-serif;font-size:17px;font-weight:700;cursor:pointer}
+button.send:active{transform:scale(.98)}
+button.send[aria-busy=true]{opacity:.7;cursor:wait}
+button.send:focus-visible{outline:3px solid var(--ac-d);outline-offset:3px}
+.state{text-align:center;padding:30px 8px}
+.state h2{font-family:'Zen Maru Gothic',sans-serif;font-size:21px;margin-bottom:8px}
+.state p{color:var(--tx2);font-size:14px}
+.no{display:inline-block;margin:16px 0 4px;font-family:'Zen Maru Gothic',sans-serif;font-size:40px;font-weight:700;color:var(--ac-d)}
+.again{margin-top:22px;background:none;border:1.5px solid var(--bd);color:var(--tx);padding:11px 22px;border-radius:24px;font-size:14px;font-family:inherit;cursor:pointer}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.cheki{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1 id="title">WE CATS フォトコンテスト</h1>
+  <p class="lead">お店で撮った猫たちの写真を送ってください</p>
 
-create table if not exists public.contest_terms (
-  version int primary key,
-  body text not null,
-  created_at timestamptz not null default now()
-);
+  <p id="loading" class="state">読み込み中…</p>
 
-create table if not exists public.photo_entries (
-  id uuid primary key default gen_random_uuid(),
-  entry_no int generated always as identity,
-  nickname text not null,
-  comment text,
-  image_path text not null unique,
-  terms_version int not null references public.contest_terms(version),
-  status text not null default 'new'
-    check (status in ('new','nominated','review','hidden')),
-  created_at timestamptz not null default now()
-);
+  <section id="closed" class="state" hidden>
+    <h2>応募受付は終了しました</h2>
+    <p>たくさんのご応募ありがとうございました。</p>
+  </section>
 
--- 連絡先は別テーブル（専用パスワードがないと読めない）
-create table if not exists public.photo_entry_contacts (
-  entry_id uuid primary key references public.photo_entries(id) on delete cascade,
-  contact text not null
-);
+  <section id="done" class="state" hidden>
+    <h2>応募が完了しました</h2>
+    <p>あなたの応募番号</p>
+    <div class="no" id="done-no"></div>
+    <p>結果はお店でお知らせします。</p>
+    <button class="again" type="button" id="again">もう1枚応募する</button>
+  </section>
 
-create table if not exists public.contact_view_logs (
-  id bigint generated always as identity primary key,
-  entry_id uuid references public.photo_entries(id) on delete set null,
-  staff_name text,
-  viewed_at timestamptz not null default now()
-);
+  <form id="form" novalidate hidden>
+    <label class="cheki" for="photo">
+      <span class="shot" id="shot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        写真を選ぶ
+      </span>
+      <span class="caption empty" id="caption">ニックネームがここに入ります</span>
+      <input type="file" id="photo" accept="image/*">
+    </label>
+    <p class="err" id="e-photo" style="text-align:center;margin:-16px 0 18px"></p>
 
-create table if not exists public.contest_auth_failures (
-  id bigint generated always as identity primary key,
-  kind text not null,
-  at timestamptz not null default now()
-);
+    <div class="card">
+      <div class="f">
+        <label for="nickname">ニックネーム <span class="req">必須</span></label>
+        <input type="text" id="nickname" maxlength="30" autocomplete="nickname" placeholder="ねこまる">
+        <p class="err" id="e-nickname"></p>
+      </div>
+      <div class="f">
+        <label for="contact">連絡先 <span class="req">必須</span></label>
+        <input type="text" id="contact" maxlength="100" autocomplete="email" placeholder="メールアドレスまたは電話番号">
+        <p class="hint">入賞時のご連絡にだけ使います。公開はされません。</p>
+        <p class="err" id="e-contact"></p>
+      </div>
+      <div class="f">
+        <label for="comment">ひとことコメント <span class="opt">任意</span></label>
+        <textarea id="comment" maxlength="200" placeholder="あくびの瞬間が撮れました"></textarea>
+        <p class="hint count"><span id="ccount">0</span> / 200</p>
+      </div>
+      <div class="f" style="margin-bottom:0">
+        <label>応募規約</label>
+        <div class="terms" id="terms" tabindex="0"></div>
+        <label class="agree"><input type="checkbox" id="consent"> 応募規約に同意して応募する</label>
+        <p class="err" id="e-consent"></p>
+      </div>
+    </div>
 
--- どのテーブルも直接は読み書き不可。すべて下の関数経由にする
-alter table public.contest_settings       enable row level security;
-alter table public.contest_terms          enable row level security;
-alter table public.photo_entries          enable row level security;
-alter table public.photo_entry_contacts   enable row level security;
-alter table public.contact_view_logs      enable row level security;
-alter table public.contest_auth_failures  enable row level security;
+    <button class="send" type="submit" id="send">応募する</button>
+    <p class="err" id="e-send" style="text-align:center"></p>
+  </form>
+</main>
 
-revoke all on public.contest_settings, public.contest_terms, public.photo_entries,
-  public.photo_entry_contacts, public.contact_view_logs, public.contest_auth_failures
-  from anon, authenticated;
+<script>
+// ===== 設定（POSと同じSupabase） =====
+var SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
+var BUCKET = 'contest-photos';
+var MAX_SIDE = 1600;
 
--- ---------- 初期パスワード（★ここを書き換え★） ----------
-insert into public.contest_settings (id, owner_pw_hash, staff_pw_hash, contact_pw_hash)
-values (
-  1,
-  extensions.crypt('WECATS0103',   extensions.gen_salt('bf')),  -- オーナー用（設定・規約・パスワード変更）
-  extensions.crypt('WECATS',   extensions.gen_salt('bf')),  -- スタッフ用（一覧・ノミネート）
-  extensions.crypt('WECATS', extensions.gen_salt('bf'))   -- 連絡先閲覧用（見せたい人にだけ教える）
-)
-on conflict (id) do nothing;
+var $ = function(id){ return document.getElementById(id); };
+var termsVersion = null, photoBlob = null, sending = false;
 
--- ---------- 初期の応募規約（あとで管理画面から編集できます） ----------
-insert into public.contest_terms (version, body) values (1,
-'1. 応募できるのは、応募者ご本人が当店で撮影した写真に限ります。他人が撮影した写真や、インターネット上の画像などは応募できません。
-2. 写真の著作権は撮影者ご本人に帰属します。
-3. 応募写真は、当店が以下の目的で無償で使用できるものとします。店内での掲示および総選挙での展示、当店のSNS・ウェブサイト・販促物への掲載。掲載時に写真のサイズ調整や切り抜きを行う場合があります。
-4. 応募者は、上記の使用について著作者人格権を行使しないものとします。
-5. 他のお客様やスタッフなど、人物が写り込んでいる写真は、写っているご本人の同意を得たうえでご応募ください。
-6. 未成年の方は、保護者の同意を得たうえでご応募ください。
-7. 規約に反する写真、公序良俗に反する写真、猫に負担をかけて撮影されたと判断される写真は、選考の対象外とさせていただく場合があります。
-8. 掲載時は、ご記入いただいたニックネームを表示します。連絡先は入賞のご連絡にのみ使用し、他の目的には使用しません。
-9. 第三者との間で権利に関するトラブルが生じた場合は、応募者の責任で解決していただきます。')
-on conflict (version) do nothing;
+function rpc(fn, args){
+  return fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {
+    method:'POST',
+    headers:{apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json'},
+    body:JSON.stringify(args || {})
+  }).then(function(r){
+    if(!r.ok) return r.text().then(function(t){ throw new Error(t); });
+    return r.json();
+  });
+}
 
--- ---------- パスワード確認（内部用） ----------
--- 10分間に10回間違えると、その種類のパスワードは10分ロック
--- オーナー用パスワードはスタッフ用・連絡先用の代わりにも使えます
-create or replace function public._contest_pw(p_kind text, p_pw text)
-returns text language plpgsql security definer
-set search_path = public, extensions as $$
-declare s public.contest_settings; h text; fails int;
-begin
-  select count(*) into fails from contest_auth_failures
-   where kind = p_kind and at > now() - interval '10 minutes';
-  if fails >= 10 then return 'locked'; end if;
+function uuid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  var b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  var h = Array.prototype.map.call(b, function(x){ return (x + 256).toString(16).slice(1); }).join('');
+  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+}
 
-  select * into s from contest_settings where id = 1;
-  h := case p_kind when 'owner' then s.owner_pw_hash
-                   when 'staff' then s.staff_pw_hash
-                   when 'contact' then s.contact_pw_hash end;
+function showErr(key, msg){ var el = $('e-' + key); el.textContent = msg; el.classList.add('on'); }
+function clearErr(key){ var el = $('e-' + key); el.textContent = ''; el.classList.remove('on'); }
 
-  if p_pw is not null and h is not null and crypt(p_pw, h) = h then return 'ok'; end if;
-  if p_kind <> 'owner' and p_pw is not null and crypt(p_pw, s.owner_pw_hash) = s.owner_pw_hash then
-    return 'ok';
-  end if;
+// ---------- 写真の縮小 ----------
+function loadImage(file){
+  return new Promise(function(res, rej){
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){ res(img); };
+    img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error('decode')); };
+    img.src = url;
+  });
+}
+function shrink(file){
+  var getSrc = window.createImageBitmap
+    ? createImageBitmap(file, {imageOrientation:'from-image'}).catch(function(){ return loadImage(file); })
+    : loadImage(file);
+  return getSrc.then(function(src){
+    var w = src.width, h = src.height, s = Math.min(1, MAX_SIDE / Math.max(w, h));
+    var c = document.createElement('canvas');
+    c.width = Math.round(w * s); c.height = Math.round(h * s);
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    return new Promise(function(res){ c.toBlob(res, 'image/jpeg', 0.85); });
+  });
+}
 
-  insert into contest_auth_failures(kind) values (p_kind);
-  return 'wrong_password';
-end $$;
+$('photo').addEventListener('change', function(){
+  var f = this.files && this.files[0];
+  clearErr('photo');
+  if(!f) return;
+  $('shot').setAttribute('aria-busy', 'true');
+  shrink(f).then(function(blob){
+    if(!blob) throw new Error('blob');
+    photoBlob = blob;
+    var old = $('shot').querySelector('img'); if(old) old.remove();
+    var img = document.createElement('img');
+    img.alt = '選んだ写真';
+    img.src = URL.createObjectURL(blob);
+    $('shot').appendChild(img);
+  }).catch(function(){
+    photoBlob = null;
+    showErr('photo', 'この写真は読み込めませんでした。別の写真を選んでください。');
+  }).then(function(){ $('shot').removeAttribute('aria-busy'); });
+});
 
--- ---------- お客さん用 ----------
-create or replace function public.contest_public_info()
-returns json language sql security definer stable
-set search_path = public as $$
-  select json_build_object(
-    'title', s.title,
-    'accepting', s.accepting,
-    'terms_version', t.version,
-    'terms_body', t.body)
-  from contest_settings s
-  left join lateral (
-    select version, body from contest_terms order by version desc limit 1
-  ) t on true
-  where s.id = 1;
-$$;
+$('nickname').addEventListener('input', function(){
+  var v = this.value.trim();
+  $('caption').textContent = v || 'ニックネームがここに入ります';
+  $('caption').classList.toggle('empty', !v);
+  clearErr('nickname');
+});
+$('contact').addEventListener('input', function(){ clearErr('contact'); });
+$('consent').addEventListener('change', function(){ clearErr('consent'); });
+$('comment').addEventListener('input', function(){ $('ccount').textContent = this.value.length; });
 
-create or replace function public.contest_submit(
-  p_nickname text, p_contact text, p_comment text,
-  p_image_path text, p_terms_version int, p_consent boolean)
-returns json language plpgsql security definer
-set search_path = public as $$
-declare v_id uuid; v_no int; v_latest int; v_open boolean; v_recent int;
-begin
-  select accepting into v_open from contest_settings where id = 1;
-  if not coalesce(v_open, false) then return json_build_object('ok', false, 'error', 'closed'); end if;
-  if p_consent is not true then return json_build_object('ok', false, 'error', 'consent'); end if;
+// ---------- 送信 ----------
+var ERR = {
+  closed:'応募受付は終了しました。',
+  consent:'応募規約への同意が必要です。',
+  nickname:'ニックネームは30文字以内で入力してください。',
+  contact:'連絡先を正しく入力してください。',
+  comment:'コメントは200文字以内で入力してください。',
+  image:'写真の送信に失敗しました。もう一度お試しください。',
+  terms_changed:'応募規約が更新されました。ページを再読み込みして、新しい規約を確認してください。',
+  busy:'ただいま応募が集中しています。少し時間をおいてお試しください。',
+  duplicate:'この写真はすでに送信されています。'
+};
 
-  p_nickname := btrim(coalesce(p_nickname, ''));
-  p_contact  := btrim(coalesce(p_contact, ''));
-  p_comment  := nullif(btrim(coalesce(p_comment, '')), '');
+$('form').addEventListener('submit', function(e){
+  e.preventDefault();
+  if(sending) return;
+  clearErr('send');
+  var nick = $('nickname').value.trim(), contact = $('contact').value.trim(), ok = true;
+  if(!photoBlob){ showErr('photo', '写真を選んでください。'); ok = false; }
+  if(!nick){ showErr('nickname', 'ニックネームを入力してください。'); ok = false; }
+  if(contact.length < 3){ showErr('contact', '連絡先を入力してください。'); ok = false; }
+  if(!$('consent').checked){ showErr('consent', '応募規約に同意してください。'); ok = false; }
+  if(!ok) return;
 
-  if char_length(p_nickname) not between 1 and 30 then return json_build_object('ok', false, 'error', 'nickname'); end if;
-  if char_length(p_contact) not between 3 and 100 then return json_build_object('ok', false, 'error', 'contact'); end if;
-  if char_length(coalesce(p_comment, '')) > 200 then return json_build_object('ok', false, 'error', 'comment'); end if;
-  if p_image_path !~ '^entries/[0-9a-f-]{36}\.jpg$' then return json_build_object('ok', false, 'error', 'image'); end if;
+  sending = true;
+  var btn = $('send');
+  btn.setAttribute('aria-busy', 'true'); btn.textContent = '送信中…';
+  var path = 'entries/' + uuid() + '.jpg';
 
-  select max(version) into v_latest from contest_terms;
-  if p_terms_version is distinct from v_latest then
-    return json_build_object('ok', false, 'error', 'terms_changed');
-  end if;
+  fetch(SUPA_URL + '/storage/v1/object/' + BUCKET + '/' + path, {
+    method:'POST',
+    headers:{apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'image/jpeg', 'x-upsert':'false'},
+    body:photoBlob
+  }).then(function(r){
+    if(!r.ok) throw new Error('upload');
+    return rpc('contest_submit', {
+      p_nickname:nick, p_contact:contact, p_comment:$('comment').value,
+      p_image_path:path, p_terms_version:termsVersion, p_consent:true
+    });
+  }).then(function(res){
+    if(!res || !res.ok){ showErr('send', ERR[res && res.error] || '送信できませんでした。もう一度お試しください。'); return; }
+    $('done-no').textContent = 'No.' + res.entry_no;
+    $('form').hidden = true; $('done').hidden = false;
+    window.scrollTo(0, 0);
+  }).catch(function(){
+    showErr('send', '送信できませんでした。電波の良い場所でもう一度お試しください。');
+  }).then(function(){
+    sending = false; btn.removeAttribute('aria-busy'); btn.textContent = '応募する';
+  });
+});
 
-  select count(*) into v_recent from photo_entries where created_at > now() - interval '10 minutes';
-  if v_recent >= 60 then return json_build_object('ok', false, 'error', 'busy'); end if;
+$('again').addEventListener('click', function(){
+  photoBlob = null;
+  var img = $('shot').querySelector('img'); if(img) img.remove();
+  $('photo').value = ''; $('comment').value = ''; $('ccount').textContent = '0';
+  $('consent').checked = false;
+  $('done').hidden = true; $('form').hidden = false;
+  window.scrollTo(0, 0);
+});
 
-  insert into photo_entries (nickname, comment, image_path, terms_version)
-  values (p_nickname, p_comment, p_image_path, p_terms_version)
-  returning id, entry_no into v_id, v_no;
-
-  insert into photo_entry_contacts (entry_id, contact) values (v_id, p_contact);
-  return json_build_object('ok', true, 'entry_no', v_no);
-exception when unique_violation then
-  return json_build_object('ok', false, 'error', 'duplicate');
-end $$;
-
--- ---------- スタッフ用 ----------
-create or replace function public.contest_staff_list(p_pw text)
-returns json language plpgsql security definer
-set search_path = public as $$
-declare r text;
-begin
-  r := _contest_pw('staff', p_pw);
-  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
-  return json_build_object('ok', true, 'entries', coalesce((
-    select json_agg(json_build_object(
-      'id', e.id, 'no', e.entry_no, 'nickname', e.nickname, 'comment', e.comment,
-      'image_path', e.image_path, 'status', e.status,
-      'terms_version', e.terms_version, 'created_at', e.created_at)
-      order by e.created_at desc)
-    from photo_entries e), '[]'::json));
-end $$;
-
-create or replace function public.contest_staff_set_status(p_pw text, p_id uuid, p_status text)
-returns json language plpgsql security definer
-set search_path = public as $$
-declare r text;
-begin
-  r := _contest_pw('staff', p_pw);
-  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
-  if p_status not in ('new','nominated','review','hidden') then
-    return json_build_object('ok', false, 'error', 'status');
-  end if;
-  update photo_entries set status = p_status where id = p_id;
-  return json_build_object('ok', found);
-end $$;
-
-create or replace function public.contest_get_contact(p_pw text, p_id uuid, p_staff_name text)
-returns json language plpgsql security definer
-set search_path = public as $$
-declare r text; v text;
-begin
-  r := _contest_pw('contact', p_pw);
-  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
-  select contact into v from photo_entry_contacts where entry_id = p_id;
-  insert into contact_view_logs (entry_id, staff_name)
-  values (p_id, left(nullif(btrim(coalesce(p_staff_name, '')), ''), 30));
-  return json_build_object('ok', true, 'contact', v);
-end $$;
-
--- ---------- オーナー用 ----------
-create or replace function public.contest_owner_get(p_pw text)
-returns json language plpgsql security definer
-set search_path = public as $$
-declare r text;
-begin
-  r := _contest_pw('owner', p_pw);
-  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
-  return (
-    select json_build_object(
-      'ok', true,
-      'title', s.title,
-      'accepting', s.accepting,
-      'terms_version', t.version,
-      'terms_body', t.body,
-      'logs', coalesce((
-        select json_agg(json_build_object(
-          'viewed_at', l.viewed_at, 'staff_name', l.staff_name,
-          'entry_no', e.entry_no, 'nickname', e.nickname) order by l.viewed_at desc)
-        from (select * from contact_view_logs order by viewed_at desc limit 100) l
-        left join photo_entries e on e.id = l.entry_id), '[]'::json))
-    from contest_settings s
-    left join lateral (select version, body from contest_terms order by version desc limit 1) t on true
-    where s.id = 1);
-end $$;
-
-create or replace function public.contest_owner_save(
-  p_pw text, p_title text, p_accepting boolean, p_terms_body text)
-returns json language plpgsql security definer
-set search_path = public as $$
-declare r text; v_cur text; v_ver int;
-begin
-  r := _contest_pw('owner', p_pw);
-  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
-
-  update contest_settings
-     set title = coalesce(nullif(btrim(p_title), ''), title),
-         accepting = coalesce(p_accepting, accepting),
-         updated_at = now()
-   where id = 1;
-
-  select version, body into v_ver, v_cur from contest_terms order by version desc limit 1;
-  if p_terms_body is not null and btrim(p_terms_body) <> '' and p_terms_body is distinct from v_cur then
-    v_ver := coalesce(v_ver, 0) + 1;
-    insert into contest_terms (version, body) values (v_ver, p_terms_body);
-  end if;
-  return json_build_object('ok', true, 'terms_version', v_ver);
-end $$;
-
-create or replace function public.contest_owner_set_password(p_pw text, p_kind text, p_new text)
-returns json language plpgsql security definer
-set search_path = public, extensions as $$
-declare r text;
-begin
-  r := _contest_pw('owner', p_pw);
-  if r <> 'ok' then return json_build_object('ok', false, 'error', r); end if;
-  if p_new is null or char_length(p_new) < 4 then return json_build_object('ok', false, 'error', 'too_short'); end if;
-  if p_kind = 'owner' then
-    update contest_settings set owner_pw_hash = crypt(p_new, gen_salt('bf')), updated_at = now() where id = 1;
-  elsif p_kind = 'staff' then
-    update contest_settings set staff_pw_hash = crypt(p_new, gen_salt('bf')), updated_at = now() where id = 1;
-  elsif p_kind = 'contact' then
-    update contest_settings set contact_pw_hash = crypt(p_new, gen_salt('bf')), updated_at = now() where id = 1;
-  else
-    return json_build_object('ok', false, 'error', 'kind');
-  end if;
-  return json_build_object('ok', true);
-end $$;
-
--- ---------- 関数の実行権限 ----------
-revoke all on function public._contest_pw(text, text) from public, anon, authenticated;
-
-revoke all on function public.contest_public_info() from public;
-revoke all on function public.contest_submit(text, text, text, text, int, boolean) from public;
-revoke all on function public.contest_staff_list(text) from public;
-revoke all on function public.contest_staff_set_status(text, uuid, text) from public;
-revoke all on function public.contest_get_contact(text, uuid, text) from public;
-revoke all on function public.contest_owner_get(text) from public;
-revoke all on function public.contest_owner_save(text, text, boolean, text) from public;
-revoke all on function public.contest_owner_set_password(text, text, text) from public;
-
-grant execute on function public.contest_public_info() to anon, authenticated;
-grant execute on function public.contest_submit(text, text, text, text, int, boolean) to anon, authenticated;
-grant execute on function public.contest_staff_list(text) to anon, authenticated;
-grant execute on function public.contest_staff_set_status(text, uuid, text) to anon, authenticated;
-grant execute on function public.contest_get_contact(text, uuid, text) to anon, authenticated;
-grant execute on function public.contest_owner_get(text) to anon, authenticated;
-grant execute on function public.contest_owner_save(text, text, boolean, text) to anon, authenticated;
-grant execute on function public.contest_owner_set_password(text, text, text) to anon, authenticated;
-
--- ---------- 写真の保存場所 ----------
--- 写真URLはランダムな名前なので推測できず、一覧取得も許可していません
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('contest-photos', 'contest-photos', true, 5242880, array['image/jpeg'])
-on conflict (id) do update
-  set public = excluded.public,
-      file_size_limit = excluded.file_size_limit,
-      allowed_mime_types = excluded.allowed_mime_types;
-
-drop policy if exists "contest photos: upload only" on storage.objects;
-create policy "contest photos: upload only" on storage.objects
-  for insert to anon, authenticated
-  with check (bucket_id = 'contest-photos' and name ~ '^entries/[0-9a-f-]{36}\.jpg$');
+// ---------- 初期読み込み ----------
+rpc('contest_public_info').then(function(info){
+  $('loading').hidden = true;
+  if(info && info.title){ $('title').textContent = info.title; document.title = info.title; }
+  if(!info || !info.accepting){ $('closed').hidden = false; return; }
+  termsVersion = info.terms_version;
+  $('terms').textContent = info.terms_body || '';
+  $('form').hidden = false;
+}).catch(function(){
+  $('loading').textContent = '読み込めませんでした。ページを再読み込みしてください。';
+});
+</script>
+</body>
+</html>
