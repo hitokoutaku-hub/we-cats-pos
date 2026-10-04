@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="推し猫カード">
+<meta name="theme-color" content="#fff5f6">
+<title>WE CATS 推し猫カード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff5f6;--sf:#fff;--sf2:#fdeef0;--bd:#f6d3d8;--ac:#e8838f;--ac-d:#c9606d;--tx:#5c3a3e;--tx2:#a07c82;--ng:#d65f5f;--gold:#d9a441}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg)}
+body{color:var(--tx);font-family:'Noto Sans JP',system-ui,sans-serif;font-size:15px;line-height:1.7;
+  padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+button,input{font-family:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.wrap{max-width:460px;margin:0 auto;padding:22px 18px 48px}
+h1,h2,.maru{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;font-weight:700}
+.head{text-align:center;margin-bottom:18px}
+.head .kick{font-size:12px;color:var(--tx2);letter-spacing:.08em}
+.head h1{font-size:25px;color:var(--ac-d);line-height:1.35}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:20px;padding:20px 18px;margin-bottom:14px}
+.center{text-align:center}
+.muted{color:var(--tx2);font-size:13px}
+.big{font-size:21px;line-height:1.45;margin-bottom:6px}
+.btn{display:block;width:100%;border:none;border-radius:28px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;
+  font-family:'Zen Maru Gothic',sans-serif;background:var(--ac);color:#fff;margin-top:14px}
+.btn.sub{background:var(--sf);color:var(--tx);border:1.5px solid var(--bd)}
+.btn[aria-busy=true]{opacity:.7}
+.btn:active{transform:scale(.98)}
+.f{margin-bottom:16px}
+.f>label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:500;margin-bottom:6px}
+.req{font-size:11px;color:var(--ac-d)}.opt{font-size:11px;color:var(--tx2);font-weight:400}
+.in{width:100%;background:var(--sf2);border:1.5px solid var(--bd);padding:12px;border-radius:12px;font-size:16px;outline:none;-webkit-appearance:none}
+.in:focus{border-color:var(--ac);background:var(--sf)}
+.hint{font-size:12px;color:var(--tx2);margin-top:4px}
+.err{color:var(--ng);font-size:13px;margin-top:6px}
+.err:empty{display:none}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer;margin-top:10px}
+.f>label.chk{justify-content:flex-start;font-weight:400;font-size:14px}
+.chk input{width:22px;height:22px;accent-color:var(--ac);flex-shrink:0;margin-top:2px}
+
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cat{background:var(--sf);border:2px solid var(--bd);border-radius:16px;padding:0;overflow:hidden;cursor:pointer;text-align:center}
+.cat[aria-pressed=true]{border-color:var(--ac);box-shadow:0 0 0 3px rgba(232,131,143,.25)}
+.cat .ph{aspect-ratio:1/1;background:var(--sf2);display:flex;align-items:center;justify-content:center}
+.cat .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.cat .nm{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:15px;padding:7px 4px 9px}
+.paw{width:42%;height:42%;color:var(--ac)}
+
+/* 推し活カード */
+.oshi{background:var(--sf);border-radius:22px;overflow:hidden;border:1px solid var(--bd)}
+.oshi .top{display:flex;gap:14px;align-items:center;padding:16px;background:var(--sf2)}
+.oshi .av{width:84px;height:84px;border-radius:50%;overflow:hidden;background:#fff;flex-shrink:0;border:3px solid #fff;display:flex;align-items:center;justify-content:center}
+.oshi .av img{width:100%;height:100%;object-fit:cover}
+.oshi .lbl{font-size:12px;color:var(--tx2)}
+.oshi .cn{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:22px;line-height:1.3}
+.oshi .me{font-size:12px;color:var(--tx2)}
+.oshi .body{padding:16px}
+.pts{display:flex;align-items:baseline;justify-content:space-between}
+.pts b{font-family:'Zen Maru Gothic',sans-serif;font-size:34px;color:var(--ac-d);line-height:1}
+.pts b small{font-size:15px;margin-left:3px}
+.stamps{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:12px 0 4px}
+.stamps span{aspect-ratio:1/1;border-radius:50%;border:1.5px dashed var(--bd);display:flex;align-items:center;justify-content:center}
+.stamps span.on{border:none;background:var(--ac)}
+.stamps span.on svg{width:66%;height:66%;color:#fff}
+.left{display:flex;justify-content:space-between;font-size:13px;border-top:1px dashed var(--bd);margin-top:12px;padding-top:10px}
+.vstats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+.vstats div{background:var(--sf2);border-radius:14px;padding:8px 10px;text-align:center}
+.vstats span{display:block;font-size:11px;color:var(--tx2)}
+.vstats b{font-family:'Zen Maru Gothic',sans-serif;font-size:26px;color:var(--ac-d);line-height:1.2}
+.vstats b small{font-size:13px;margin-left:2px}
+.bonus{font-size:12px;color:#9a6a0e;background:#fbf0d9;border-radius:8px;padding:2px 8px;display:inline-block;margin-top:6px}
+.grad{display:inline-block;font-size:11px;background:#fbf0d9;color:#9a6a0e;border-radius:6px;padding:0 6px;margin-left:4px;vertical-align:3px}
+
+.hero{font-size:44px;line-height:1;margin-bottom:6px}
+.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.rules{font-size:12.5px;line-height:1.8;background:var(--sf2);border-radius:12px;padding:12px 14px}
+.rules li{margin-left:1.1em;margin-bottom:3px}
+.ov{position:fixed;inset:0;background:rgba(92,58,62,.45);display:flex;align-items:flex-end;justify-content:center;z-index:30}
+.sheet{background:var(--sf);width:100%;max-width:460px;border-radius:22px 22px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0))}
+.link{background:none;border:none;color:var(--ac-d);text-decoration:underline;font-size:14px;cursor:pointer;margin-top:12px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="head">
+    <p class="kick">cat cafe WE CATS</p>
+    <h1 id="title">WE CATS 猫総選挙</h1>
+  </div>
+  <div id="view"><p class="center muted" style="padding:40px 0">読み込み中…</p></div>
+</main>
+
+<div class="ov" id="confirm" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cf-title">
+    <h2 class="maru" id="cf-title" style="font-size:19px;margin-bottom:8px">推し猫の確認</h2>
+    <p id="cf-text" style="font-size:15px"></p>
+    <p class="muted" style="margin-top:6px">推し猫はあとから変更できません。</p>
+    <button class="btn" id="cf-ok" type="button">この子を推す</button>
+    <button class="btn sub" id="cf-no" type="button">選び直す</button>
+  </div>
+</div>
+
+<script>
+// ===== 設定（POSと同じSupabase） =====
+var SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
+
+var $ = function(id){ return document.getElementById(id); };
+var info = null, ticket = null, member = null, device = null;
+var PAW = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="6" cy="9" rx="2.2" ry="2.8"/><ellipse cx="10" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="14.5" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="18.5" cy="9" rx="2.2" ry="2.8"/><path d="M12 11c-3.3 0-6.5 3.6-6.5 6.4 0 2 1.6 2.9 3.4 2.6 1.2-.2 2-.8 3.1-.8s1.9.6 3.1.8c1.8.3 3.4-.6 3.4-2.6 0-2.8-3.2-6.4-6.5-6.4z"/></svg>';
+
+function rpc(fn, args){
+  return fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {
+    method:'POST',
+    headers:{apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json'},
+    body:JSON.stringify(args || {})
+  }).then(function(r){ if(!r.ok) throw new Error('http ' + r.status); return r.json(); });
+}
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function photo(p){ return p ? SUPA_URL + '/storage/v1/object/public/election-cats/' + p : ''; }
+function catImg(p, cls){ return p ? '<img src="' + photo(p) + '" alt="" loading="lazy">' : '<span class="paw ' + (cls||'') + '">' + PAW + '</span>'; }
+function store(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } }
+function uuid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  var b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+  var h = Array.prototype.map.call(b, function(x){ return (x + 256).toString(16).slice(1); }).join('');
+  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+}
+function md(d){ if(!d) return ''; var t = new Date(d + 'T00:00:00'); return (t.getMonth()+1) + '月' + t.getDate() + '日'; }
+function show(html){ $('view').innerHTML = html; window.scrollTo(0, 0); }
+function fail(msg){ show('<div class="card center"><p class="big maru">うまくいきませんでした</p><p class="muted">' + esc(msg) + '</p></div>'); }
+function isOpen(){ return info && info.period === 'open'; }
+function setTitle(){
+  if(!info) return;
+  var t = info.period === 'open' ? (info.title || 'WE CATS 猫総選挙') : 'WE CATS 推し猫カード';
+  $('title').textContent = t; document.title = t;
+}
+// 総選挙の予告（開始前で日付が決まっているとき）
+function soonText(){
+  if(!info || info.period !== 'before' || !info.start_date) return '';
+  return '<p class="muted" style="margin-top:8px">🗳️ ' + esc(info.title || '猫総選挙') + 'は ' + md(info.start_date) + ' スタート！<br>期間中は来店するたびに推し猫に1ポイント入ります。</p>';
+}
+
+// ---------- 推し活カード ----------
+function oshiCard(me){
+  var election = me.period !== 'before' || me.points > 0;
+  var n = election ? me.points : me.year_visits;
+  var shown = Math.min(n, 30), slots = Math.max(10, Math.ceil(shown / 10) * 10), st = '';
+  for(var i = 0; i < slots; i++) st += i < shown ? '<span class="on">' + PAW + '</span>' : '<span></span>';
+  var grad = me.cat.status === 'graduated' ? '<span class="grad">🎓 卒業</span>' : '';
+  var left = me.period === 'open' ? 'あと <b>' + me.days_left + '</b> 日'
+           : me.period === 'ended' ? '終了しました'
+           : me.start_date ? md(me.start_date) + ' スタート' : 'おたのしみに';
+  return '<div class="oshi">' +
+    '<div class="top"><div class="av">' + catImg(me.cat.photo) + '</div><div>' +
+      '<p class="lbl">わたしの推し猫</p><p class="cn">' + esc(me.cat.name) + grad + '</p>' +
+      '<p class="me">' + esc(me.nickname) + ' さん ・ No.' + me.member_no + '</p></div></div>' +
+    '<div class="body"><div class="vstats">' +
+      '<div><span>今年のご来店</span><b>' + me.year_visits + '<small>回</small></b></div>' +
+      '<div><span>' + '総選挙の応援ポイント' + '</span><b>' + (election ? me.points + '<small>pt</small>' : '<small>開始前</small>') + '</b></div></div>' +
+    (me.bonus_today > 0 && me.period === 'open' ? '<p class="center"><span class="bonus">🎁 今日のボーナス +' + me.bonus_today + 'pt</span></p>' : '') +
+    '<div class="stamps" aria-hidden="true">' + st + '</div>' +
+    (n > 30 ? '<p class="muted" style="text-align:right">ほか ' + (n - 30) + (election ? 'pt' : '回') + '</p>' : '') +
+    '<p class="muted" style="text-align:right;font-size:11px">' + (election ? '肉球1つ＝応援1ポイント' : '肉球1つ＝ご来店1回') + '</p>' +
+    '<div class="left"><span class="muted">総選挙' + (me.period === 'before' ? '' : '終了まで') + '</span><span>' + left + '</span></div></div></div>';
+}
+var HOME_TIP = '<p class="muted center" style="margin-top:14px">このページを「ホーム画面に追加」しておくと、いつでも推し猫カードを見られます。</p>';
+
+// ---------- 画面 ----------
+function showIntro(){
+  show('<div class="card center"><p class="hero">🐾</p><p class="big maru">推し猫カードをつくろう！</p>' +
+    '<p>お店に来たら、入口のQRコードを読み取るだけ。<br>来店の回数が記録されていきます。</p>' +
+    (isOpen() ? '<p style="margin-top:8px">いまは<b>' + esc(info.title) + '</b>の期間中！<br>来店するたびに、推し猫に1ポイント入ります。</p>' : soonText()) +
+    '<p class="muted" style="margin-top:10px">登録・記録は、お店の入口にあるQRコードから行えます。</p></div>' + rulesBox());
+}
+function showMine(me){
+  show(oshiCard(me) +
+    '<div class="card center" style="margin-top:14px"><p class="muted">ご来店のときに、入口のQRコードを読み取ってください。' +
+    (me.period === 'open' ? '<br>推し猫に1ポイント入ります。順位は結果発表までのお楽しみです。' : '') + '</p>' + soonText() + '</div>' + HOME_TIP);
+}
+function visitLine(me){ return '<p class="muted">今年 <b>' + me.year_visits + '</b> 回目のご来店です。</p>'; }
+function showVoted(me){
+  show('<div class="card center pop"><p class="hero">💗</p><p class="big maru">' + esc(me.cat.name) + 'に<br>1ポイント入りました！</p>' +
+    visitLine(me) + '<p class="muted">来てくれてありがとう。また会いに来てね。</p></div>' + oshiCard(me) + HOME_TIP);
+}
+function showVisited(me, isNew){
+  show('<div class="card center pop"><p class="hero">🐾</p><p class="big maru">' + (isNew ? 'ようこそ！<br>来店を記録しました' : '今日の来店は<br>記録ずみです') + '</p>' +
+    visitLine(me) + soonText() + '</div>' + oshiCard(me) + HOME_TIP);
+}
+function showNotice(title, text, me){
+  show('<div class="card center"><p class="big maru">' + title + '</p><p class="muted">' + text + '</p></div>' + (me ? oshiCard(me) : ''));
+}
+
+function rulesBox(){
+  return '<div class="card"><p class="maru" style="margin-bottom:8px">参加のルール</p><ul class="rules">' +
+    '<li>お店の入口のQRコードを読み取ると、来店が記録されます（1日1回）</li>' +
+    '<li>総選挙の期間中は、来店1回（1日1回）につき推し猫に1ポイント。お店が決めた商品（ガチャなど）をご利用の日は、ボーナスポイントが入ることがあります</li>' +
+    '<li>記録・投票はお店のQRコードからだけ。1台のスマホで記録できるのは1日1人までです</li>' +
+    '<li>推し猫は登録後に変更できません（推し猫が卒業したときだけ選び直せます）</li>' +
+    '<li>順位やほかの方のポイントは、結果発表まで非公開です</li>' +
+    '<li>総選挙1位の猫を最も応援した方を「最優秀サポーター」として表彰します（同点の場合は全員）。年間の来店回数に応じた表彰を行うこともあります</li>' +
+    '<li>ご登録の連絡先は、入賞のご連絡と登録の復元にだけ使います</li>' +
+    '<li>「常連さん情報と連携する」にチェックした方は、お店の来店記録と照らし合わせ、来店特典のご案内などに使います</li>' +
+    '<li>1年以上ご来店がない方の情報は削除します（「お知らせを受け取る」「常連さん情報と連携する」にチェックした方を除く）</li>' +
+    '</ul></div>';
+}
+
+function showWelcome(note){
+  show((note ? '<div class="card center"><p class="muted">' + note + '</p></div>' : '') +
+    '<div class="card center"><p class="hero">🐾</p><p class="big maru">' + (isOpen() ? 'ようこそ、猫総選挙へ！' : 'ようこそ、WE CATSへ！') + '</p>' +
+    (isOpen() ? '<p>来店1回につき、推し猫に1ポイント。<br>あなたの応援で1位を決めよう！</p>'
+              : '<p>推し猫を1匹えらんで、推し猫カードをつくろう。<br>来店するたびに回数が記録されます。</p>' + soonText()) +
+    '<button class="btn" id="go-reg" type="button">はじめて登録する</button>' +
+    '<button class="btn sub" id="go-res" type="button">前に登録した</button></div>');
+  $('go-reg').onclick = showRegister;
+  $('go-res').onclick = function(){ showRestore(); };
+}
+
+// ---------- 登録 ----------
+var pickedCat = null;
+function regLabel(){ return isOpen() ? '登録して投票する' : '登録する'; }
+function showRegister(){
+  pickedCat = null;
+  var cats = (info.cats || []).map(function(c){
+    return '<button class="cat" type="button" data-id="' + c.id + '" aria-pressed="false"><div class="ph">' + catImg(c.photo) + '</div><div class="nm">' + esc(c.name) + '</div></button>';
+  }).join('');
+  show('<div class="card"><p class="maru" style="font-size:18px;margin-bottom:10px">推し猫を1匹えらんでね</p><div class="cats" id="cats">' + (cats || '<p class="muted">猫の登録がまだです。スタッフに声をかけてください。</p>') + '</div><p class="err" id="e-cat"></p></div>' +
+    '<div class="card">' +
+      '<div class="f"><label for="nick">ニックネーム <span class="req">必須</span></label><input class="in" id="nick" maxlength="20" autocomplete="nickname" placeholder="ねこまる"><p class="err" id="e-nick"></p></div>' +
+      '<p class="muted" style="margin-bottom:10px">電話番号かInstagramの、どちらか1つ以上を入力してください</p>' +
+      '<div class="f"><label for="phone">電話番号</label><input class="in" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="090-1234-5678"></div>' +
+      '<div class="f"><label for="insta">Instagram</label><input class="in" id="insta" autocomplete="off" autocapitalize="off" placeholder="@wecats_fan">' +
+        '<label class="chk" id="share-row" hidden><input type="checkbox" id="share"> 結果発表で@を紹介してもOK</label></div>' +
+      '<p class="hint" style="margin-top:-8px">入賞のご連絡と、登録の復元にだけ使います。公開されることはありません。</p><p class="err" id="e-contact"></p>' +
+      '<label class="chk"><input type="checkbox" id="notice"> 次回のイベントや会員サービスのお知らせを受け取る（任意）</label>' +
+      '<label class="chk"><input type="checkbox" id="poslink"> お店の常連さん情報（来店記録）と連携する（任意）</label>' +
+      '<p class="hint" style="margin-left:32px">年間の来店回数に応じた特典のご案内などに使います。電話番号などの連絡先は連携しません。</p>' +
+    '</div>' + rulesBox() +
+    '<div class="card"><label class="chk" style="margin-top:0"><input type="checkbox" id="consent"> 参加のルールに同意する</label><p class="err" id="e-consent"></p>' +
+    '<button class="btn" id="reg-go" type="button">' + regLabel() + '</button><p class="err" id="e-send"></p></div>');
+  $('cats').addEventListener('click', function(e){
+    var b = e.target.closest('.cat'); if(!b) return;
+    pickedCat = +b.dataset.id;
+    document.querySelectorAll('.cat').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+    $('e-cat').textContent = '';
+  });
+  $('insta').addEventListener('input', function(){ $('share-row').hidden = !this.value.trim(); });
+  $('reg-go').onclick = function(){
+    ['e-cat','e-nick','e-contact','e-consent','e-send'].forEach(function(id){ $(id).textContent = ''; });
+    var ok = true;
+    if(!pickedCat){ $('e-cat').textContent = '推し猫を選んでください。'; ok = false; }
+    if(!$('nick').value.trim()){ $('e-nick').textContent = 'ニックネームを入力してください。'; ok = false; }
+    if(!$('phone').value.trim() && !$('insta').value.trim()){ $('e-contact').textContent = '電話番号かInstagramを入力してください。'; ok = false; }
+    if(!$('consent').checked){ $('e-consent').textContent = '参加のルールへの同意が必要です。'; ok = false; }
+    if(!ok){ var f = document.querySelector('.err:not(:empty)'); if(f) f.scrollIntoView({block:'center', behavior:'smooth'}); return; }
+    var cat = info.cats.find(function(c){ return c.id === pickedCat; });
+    $('cf-text').innerHTML = 'あなたの推し猫は <b>' + esc(cat.name) + '</b> ちゃんです。';
+    $('confirm').hidden = false;
+  };
+}
+$('cf-no').onclick = function(){ $('confirm').hidden = true; };
+$('cf-ok').onclick = function(){
+  $('confirm').hidden = true;
+  if(typeof cfAction === 'function'){ var a = cfAction; cfAction = null; a(); return; }
+  var b = $('reg-go'); b.setAttribute('aria-busy', 'true'); b.textContent = '登録中…';
+  rpc('el_register', {p_ticket:ticket, p_device:device, p_nickname:$('nick').value, p_phone:$('phone').value,
+    p_insta:$('insta').value, p_cat:pickedCat, p_notice:$('notice').checked, p_insta_share:$('share').checked, p_consent:true, p_pos_link:$('poslink').checked})
+  .then(function(r){
+    if(!r.ok){
+      b.removeAttribute('aria-busy'); b.textContent = regLabel();
+      var M = {exists:'この電話番号またはInstagramは、すでに登録されています。下の「前に登録した」から復元してください。',
+        phone:'電話番号を正しく入力してください。', insta:'Instagramのアカウント名を正しく入力してください（英数字・ピリオド・アンダーバー）。',
+        nickname:'ニックネームは20文字以内で入力してください。', cat:'その猫は選べなくなりました。別の猫を選んでください。',
+        contact:'電話番号かInstagramを入力してください。',
+        device_used:'このスマホでは、今日すでに別の方の来店が記録されています。ご自身のスマホで登録してください。'};
+      if(r.error === 'qr_expired') return showExpired();
+      $('e-send').innerHTML = esc(M[r.error] || '登録できませんでした。') +
+        (r.error === 'exists' ? '<br><button class="link" type="button" onclick="showRestore()">前に登録した方はこちら</button>' : '');
+      return;
+    }
+    member = {id:r.member_id, secret:r.secret};
+    store('el_member', JSON.stringify(member));
+    handleCheckin(r.checkin);
+  }).catch(function(){ b.removeAttribute('aria-busy'); b.textContent = regLabel(); $('e-send').textContent = '通信できませんでした。電波の良い場所でもう一度お試しください。'; });
+};
+var cfAction = null;
+
+// ---------- 復元 ----------
+function showRestore(){
+  show('<div class="card"><p class="maru" style="font-size:18px">前に登録した方</p>' +
+    '<p class="muted" style="margin-bottom:14px">登録したときのニックネームと、電話番号またはInstagramを入力してください。</p>' +
+    '<div class="f"><label for="r-nick">ニックネーム</label><input class="in" id="r-nick" maxlength="20"></div>' +
+    '<div class="f"><label for="r-contact">電話番号またはInstagram</label><input class="in" id="r-contact" autocapitalize="off" placeholder="090-1234-5678 / @wecats_fan"></div>' +
+    '<button class="btn" id="r-go" type="button">復元する</button><p class="err" id="r-err"></p>' +
+    '<div id="code-box" hidden style="border-top:1px dashed var(--bd);margin-top:18px;padding-top:14px">' +
+      '<p class="muted" style="margin-bottom:10px">見つからない場合は、スタッフに声をかけてください。スタッフが確認して6桁のコードをお伝えします。</p>' +
+      '<div class="f"><label for="r-code">スタッフから聞いた6桁のコード</label><input class="in" id="r-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>' +
+      '<button class="btn sub" id="c-go" type="button">コードで復元する</button><p class="err" id="c-err"></p></div>' +
+    '</div><button class="link" type="button" onclick="showWelcome()">← 戻る</button>');
+  $('r-go').onclick = function(){
+    $('r-err').textContent = '';
+    if(!$('r-nick').value.trim() || !$('r-contact').value.trim()){ $('r-err').textContent = '両方を入力してください。'; return; }
+    restoreWith('el_restore', {p_ticket:ticket, p_nickname:$('r-nick').value, p_contact:$('r-contact').value}, 'r-err');
+  };
+  $('c-go').onclick = function(){
+    $('c-err').textContent = '';
+    if(!/^\d{6}$/.test($('r-code').value.trim())){ $('c-err').textContent = '6桁の数字を入力してください。'; return; }
+    restoreWith('el_restore_code', {p_ticket:ticket, p_code:$('r-code').value.trim()}, 'c-err');
+  };
+}
+function restoreWith(fn, args, errId){
+  rpc(fn, args).then(function(r){
+    if(!r.ok){
+      if(r.error === 'qr_expired') return showExpired();
+      $(errId).textContent = r.error === 'locked' ? '時間をおいてからお試しください。' : '登録が見つかりませんでした。';
+      $('code-box').hidden = false;
+      return;
+    }
+    member = {id:r.member_id, secret:r.secret};
+    store('el_member', JSON.stringify(member));
+    checkin(null);
+  }).catch(function(){ $(errId).textContent = '通信できませんでした。'; });
+}
+
+// ---------- 来店チェックイン ----------
+function checkin(newCat){
+  show('<p class="center muted" style="padding:40px 0">記録しています…</p>');
+  rpc('el_checkin', {p_member:member.id, p_secret:member.secret, p_ticket:ticket, p_device:device, p_new_cat:newCat})
+    .then(handleCheckin).catch(function(){ fail('通信できませんでした。電波の良い場所で、もう一度QRコードを読み取ってください。'); });
+}
+function handleCheckin(r){
+  if(r.ok){
+    if(r.vote === 'voted') return showVoted(r.me);
+    if(r.vote === 'already') return showNotice('今日の投票は完了しています', '投票は1日1回までです。<br>また会いに来てね！', r.me);
+    if(r.vote === 'device_used') return showNotice('来店を記録しました', 'このスマホでは今日すでに別の方が投票しているため、投票はできませんでした。<br>投票は1台のスマホにつき1日1回までです。', r.me);
+    return showVisited(r.me, r.new_visit);
+  }
+  switch(r.error){
+    case 'device_used': return showNotice('このスマホでは今日すでに記録されています', '別の方の来店がこのスマホで記録されています。<br>来店の記録は、1台のスマホにつき1日1人までです。', r.me);
+    case 'graduated': return showGraduated(r);
+    case 'qr_expired': return showExpired();
+    case 'auth':
+      member = null; store('el_member', null);
+      return showWelcome('このスマホの登録情報が見つかりませんでした。「前に登録した」から復元してください。');
+    default: return fail('もう一度QRコードを読み取ってください。');
+  }
+}
+function showGraduated(r){
+  var cats = (r.cats || []).map(function(c){
+    return '<button class="cat" type="button" data-id="' + c.id + '" data-name="' + esc(c.name) + '" aria-pressed="false"><div class="ph">' + catImg(c.photo) + '</div><div class="nm">' + esc(c.name) + '</div></button>';
+  }).join('');
+  show('<div class="card center"><p class="hero">🎓</p><p class="big maru">' + esc(r.old_cat) + 'が<br>卒業しました！</p>' +
+    '<p class="muted">新しい家族のもとへ旅立ちました。これまでの応援ポイントは' + esc(r.old_cat) + 'に残ります。<br>新しい推し猫を1匹選んでください。今日の1票から新しい推し猫に入ります。</p></div>' +
+    '<div class="card"><div class="cats" id="gcats">' + cats + '</div></div>');
+  $('gcats').addEventListener('click', function(e){
+    var b = e.target.closest('.cat'); if(!b) return;
+    $('cf-text').innerHTML = '新しい推し猫は <b>' + esc(b.dataset.name) + '</b> ちゃんです。';
+    cfAction = function(){ checkin(+b.dataset.id); };
+    $('confirm').hidden = false;
+  });
+}
+function showExpired(){
+  showNotice('QRコードの有効期限が切れました', 'お手数ですが、入口のQRコードをもう一度読み取ってください。');
+}
+
+// ---------- 起動 ----------
+function boot(){
+  device = store('el_device');
+  if(!device){ device = uuid(); store('el_device', device); }
+  try{ member = JSON.parse(store('el_member') || 'null'); }catch(e){ member = null; }
+  var m = location.hash.match(/t=([0-9]+\.[0-9a-f]+)/), qr = m ? m[1] : null;
+  if(qr) history.replaceState(null, '', location.pathname);
+
+  rpc('el_public_info').then(function(i){
+    info = i; setTitle();
+    if(!qr){
+      if(!member) return showIntro();
+      return rpc('el_me', {p_member:member.id, p_secret:member.secret}).then(function(r){
+        if(r.ok) return showMine(r.me);
+        member = null; store('el_member', null); showIntro();
+      });
+    }
+    return rpc('el_exchange', {p_qr:qr}).then(function(r){
+      if(!r.ok) return showExpired();
+      ticket = r.ticket;
+      if(member) return checkin(null);
+      showWelcome();
+    });
+  }).catch(function(){ fail('通信できませんでした。ページを再読み込みしてください。'); });
+}
+// 開いたままのページでQRを読み取った場合（URLの#だけが変わる）にも対応
+window.addEventListener('hashchange', function(){ if(/t=/.test(location.hash)) boot(); });
+boot();
+</script>
+</body>
+</html>
