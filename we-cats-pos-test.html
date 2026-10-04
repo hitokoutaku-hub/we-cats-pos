@@ -842,7 +842,7 @@
     var b = box(); if(!b) return;
     if(!pw()){
       b.innerHTML = '<div class="card" style="padding:12px 14px"><div class="ct" style="margin-bottom:6px">📱 入口QRの読み取り</div>' +
-        '<div class="elc-note" style="margin-top:0">入口のQRを読み取ったお客さまをここに表示できます。総選挙のスタッフ用パスワードを1回だけ入れてください。</div>' +
+        '<div class="elc-note" style="margin-top:0">入口のQRを読み取ったお客さまを、総選挙の期間に関係なく一年中ここに表示できます。会員管理画面で決めた「スタッフ用パスワード」を1回だけ入れてください。</div>' +
         '<button class="btn bso bsm" data-act="pw" style="margin-top:8px">パスワードを入れる</button></div>';
       return;
     }
@@ -1064,7 +1064,7 @@
 
   function askStaffPw(){
     openM('🔑 入口QR連携のパスワード',
-      '<div class="elc-note" style="margin:0 0 10px">総選挙の「スタッフ用パスワード」を入れてください。このPOS端末に保存され、入口QR画面と新規画面の読み取り表示に使います。</div>' +
+      '<div class="elc-note" style="margin:0 0 10px">会員管理画面で決めた「スタッフ用パスワード」を入れてください（総選挙の期間外も使います）。このPOS端末に保存され、入口QR画面と新規画面の読み取り表示に使います。</div>' +
       '<div class="fg"><input class="fc" id="elc-pw" type="password" autocomplete="off" placeholder="スタッフ用パスワード"></div>' +
       '<div id="elc-pw-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
       '<button class="btn bp bf" type="button" id="elc-pw-go">保存する</button>' +
@@ -1097,7 +1097,7 @@
   var ownerPwMem = '';
   function openSettings(){
     openM('⚙️ 総選挙ボーナス・入口QRの設定',
-      '<div class="elc-note" style="margin:0 0 10px">総選挙の「オーナー用パスワード」で開きます。</div>' +
+      '<div class="elc-note" style="margin:0 0 10px">会員管理画面で決めた「オーナー用パスワード」で開きます。</div>' +
       '<div class="fg"><input class="fc" id="elc-opw" type="password" autocomplete="off" placeholder="オーナー用パスワード"></div>' +
       '<div id="elc-o-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
       '<button class="btn bp bf" type="button" id="elc-o-go">開く</button>');
