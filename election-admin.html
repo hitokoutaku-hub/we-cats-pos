@@ -226,7 +226,7 @@ body.printmode #print-area{display:block}
       </div>
       <div class="card">
         <h3>個人情報の削除</h3>
-        <p class="note" style="margin-top:0">1年以上来店のない会員のうち、「お知らせを受け取る」「常連さん連携」のどちらにも同意していない方の、ニックネームと連絡先を削除します。ポイントや来店の集計は残ります。年に1回ほど実行してください。</p>
+        <p class="note" style="margin-top:0">1年以上来店のない会員のうち、「常連さん連携」に同意していない方の、ニックネームと連絡先を削除します。ポイントや来店の集計は残ります。年に1回ほど実行してください。</p>
         <p style="margin:8px 0" id="o-purge-n"></p>
         <button class="btn ng full" id="o-purge" type="button">削除する</button><p class="err" id="o-purge-err"></p>
       </div>
@@ -441,7 +441,6 @@ function renderMemberSheet(votes, visits){
       (visits.length ? '<br><span class="sm">' + visits.slice(0, 12).map(md).join('、') + (visits.length > 12 ? ' …' : '') + '</span>' : '') + '</span></div>' +
     '<div class="kv"><span>登録日</span><span>' + md(m.created_at) + '</span></div>' +
     '<div class="kv"><span>登録している連絡先</span><span>' + [m.has_phone ? '電話番号' : '', m.has_insta ? 'Instagram' + (m.insta_share ? '（紹介OK）' : '') : ''].filter(Boolean).join('・') + '</span></div>' +
-    '<div class="kv"><span>お知らせ</span><span>' + (m.notice ? '受け取る' : '受け取らない') + '</span></div>' +
     '<div class="kv"><span>常連さん連携</span><span>' + (!m.pos_link_ok ? '同意なし' :
       (m.pos_customer_id ? esc(m.pos_name || '（POSに見つかりません）') + '<br>' : '同意あり・未連携<br>') +
       '<button class="lock" type="button" id="pos-link">' + (m.pos_customer_id ? '変更・解除' : 'POSの常連さんと紐づける') + '</button>') + '</span></div>' +
@@ -539,15 +538,51 @@ function loadVisits(){
         '<span class="sm">No.' + m.no + ' ・ 最初 ' + md(m.first_visit) + ' ・ 最後 ' + md(m.last_visit) + '</span></span>' +
         '<span class="num"><b>' + m.visits + '</b><span class="sm"> 回</span></span></button>';
     }).join('');
-    $('t-visits').innerHTML =
+    $('t-visits').innerHTML = '<div class="card" id="v-ins"><p class="empty">集計しています…</p></div>' +
+      '<h3 style="font-size:15px;margin:4px 0 8px">年間来店ランキング</h3>' +
       '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><select class="in" id="v-year" style="width:auto">' +
         years.map(function(y){ return '<option value="' + y + '"' + (y === r.year ? ' selected' : '') + '>' + y + '年</option>'; }).join('') + '</select>' +
         '<span class="sm">QR来店 合計 ' + r.total + '件</span></div>' +
       '<div class="card" style="padding:4px 12px">' + (rows || '<p class="empty">この年の来店記録はまだありません。</p>') + '</div>' +
       '<p class="note">入口のQRを読み取った日数（1日1回）の多い順です。同じ回数なら、先にその回数に到達した方が上になります。年間来店TOPの表彰に使えます。</p>';
+    loadInsights();
   });
 }
-$('t-visits').addEventListener('change', function(e){ if(e.target.id === 'v-year'){ visitYear = +e.target.value; loadVisits(); } });
+$('t-visits').addEventListener('change', function(e){
+  if(e.target.id === 'v-year'){ visitYear = +e.target.value; loadVisits(); }
+  if(e.target.id === 'v-month'){ insMonth = e.target.value; loadInsights(); }
+});
+// 会員とそうでないお客さんの比較
+var insMonth = '';
+function pct(a, b){ return b ? Math.round(a / b * 100) + '%' : '—'; }
+function bar(label, a, b, color){
+  var w = b ? Math.round(a / b * 100) : 0;
+  return '<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>' + label + '</span><span><b>' + pct(a, b) + '</b>（' + a + ' / ' + b + '組）</span></div>' +
+    '<div style="height:10px;border-radius:5px;background:var(--sf2);overflow:hidden"><div style="height:100%;width:' + w + '%;background:' + color + '"></div></div></div>';
+}
+function loadInsights(){
+  return rpc('el_admin_insights', {p_pw:staffPw, p_month:insMonth}).then(function(r){
+    var box = $('v-ins'); if(!box) return;
+    if(!r.ok){ box.innerHTML = '<p class="empty">' + esc(errText(r)) + '</p>'; return; }
+    insMonth = r.month;
+    var p = r.pos, m = r.members;
+    var h = '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px"><h3 style="margin:0">会員とそうでないお客さん</h3>' +
+      '<input class="in" type="month" id="v-month" value="' + esc(r.month) + '" style="width:auto;padding:6px 10px;font-size:14px"></div>';
+    if(p){
+      h += '<div class="kv"><span>来店した組（POS）</span><span>' + p.groups + '組（うち入口QRの会員がいた組 ' + p.member_groups + '組・' + pct(p.member_groups, p.groups) + '）</span></div>' +
+        '<div class="kv"><span>ご新規様が会員登録した割合</span><span><b>' + pct(p.new_registered, p.new_groups) + '</b>（' + p.new_registered + ' / ' + p.new_groups + '組）</span></div>' +
+        '<p class="sm" style="margin:10px 0 0">POSで「リピーター様」になっている組の割合</p>' +
+        bar('入口QRの会員がいた組', p.member_rep, p.member_groups, 'var(--ac)') +
+        bar('QRなしの組', p.nonmember_rep, p.nonmember_groups, 'var(--tx2)');
+    } else {
+      h += '<p class="note">POSの来店記録が見つからないため、POSとの比較は表示できません。</p>';
+    }
+    h += '<div class="kv" style="margin-top:6px"><span>会員の再来店率</span><span><b>' + pct(m.returned, m.first) + '</b>（この月にはじめて読み取った ' + m.first + '人のうち、2回目の来店があった ' + m.returned + '人）</span></div>' +
+      '<div class="kv"><span>この月の新しい会員 / QR来店</span><span>' + r.new_members + '人 / ' + r.checkins + '件</span></div>' +
+      '<p class="note">「QRなしの組」には、会員なのにPOSで結びつけ忘れた組も含まれます。「リピーター様」の割合はPOSの「お客様区分」をもとにしています。再来店率は、月が新しいほど低めに出ます（まだ2回目の来店を待っている人がいるため）。</p>';
+    box.innerHTML = h;
+  }).catch(function(){ var box = $('v-ins'); if(box) box.innerHTML = '<p class="empty">通信できませんでした。</p>'; });
+}
 $('t-visits').addEventListener('click', function(e){ var b = e.target.closest('[data-mid]'); if(b) openMember(b.dataset.mid); });
 
 // ---------- 要確認 ----------
@@ -629,7 +664,7 @@ $('o-pw-save').onclick = function(){
 };
 $('o-purge').onclick = function(){
   $('o-purge-err').textContent = '';
-  if(!confirm('1年以上来店のない会員（同意なし）のニックネームと連絡先を削除します。元に戻せません。よろしいですか？')) return;
+  if(!confirm('1年以上来店のない会員（連携の同意なし）のニックネームと連絡先を削除します。元に戻せません。よろしいですか？')) return;
   rpc('el_owner_purge', {p_pw:ownerPw}).then(function(r){
     if(!r.ok){ $('o-purge-err').textContent = errText(r); return; }
     toast(r.count + '人分を削除しました'); loadOwner(ownerPw);

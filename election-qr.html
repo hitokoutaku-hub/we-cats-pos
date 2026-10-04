@@ -102,7 +102,7 @@ function refresh(){
       $('lead').textContent = 'ご来店のたびに、スマホのカメラで読み取ってね（' + (r.title || '猫総選挙') + '開催中）';
     } else {
       $('head').textContent = 'ようこそ WE CATS へ';
-      $('lead').textContent = 'スマホのカメラで読み取って、来店を記録しよう（はじめての方も登録できます）';
+      $('lead').textContent = 'はじめての方も読み取ってね。推し猫カードを作ると、来店回数がたまります';
     }
     $('main').hidden = false; $('main-err').textContent = '';
     draw(BASE + '#t=' + r.token);
