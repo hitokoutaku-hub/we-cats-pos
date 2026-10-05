@@ -766,5 +766,405 @@
 
 
 <script src="app.js?v=20260918a"></script>
+<script>
+// =====================================================
+// WE CATS POS × 入口QR（来店チェックイン）・猫総選挙 の連携
+// we-cats-pos.html の app.js の後に読み込みます。app.js は書き換えません。
+//  ・新規画面：入口のQRを読み取った会員を表示 → タップで区分・常連さんを自動入力
+//  ・退店画面：この組に結びついた会員の表示（結びつけ忘れの修正）
+//  ・⚙️メニュー：入口QR・総選挙管理・ボーナスとQRの設定
+// =====================================================
+(function(){
+  var PW_KEY = 'wc_election_qr_pw';     // 入口QR画面と共通（総選挙のスタッフ用パスワード）
+  var HIDE_KEY = 'wc_elc_hidden';
+  var state = {checkins:[], config:null, error:'', selected:[], lastAt:null, busy:false};
+  var tickN = 0;
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } }
+  function pw(){ return ls(PW_KEY) || ''; }
+  function hm(iso){ var d = new Date(iso); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function msg(t, err){ if(typeof toast === 'function') toast(t, err); }
+  function rpc(fn, args){
+    return fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method:'POST',
+      headers:{apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json'},
+      body:JSON.stringify(args || {})}).then(function(r){ if(!r.ok) throw new Error('http ' + r.status); return r.json(); });
+  }
+  var ERR = {wrong_password:'パスワードが違います', locked:'間違いが続いたため10分間ロック中です',
+    setup_needed:'先に総選挙の管理画面でパスワードを決めてください', interval:'切り替え間隔を選んでください',
+    closed:'総選挙の期間外です', disabled:'ボーナスはオフになっています', cap:'上限を選んでください',
+    no_permission:'この設定の変更は、オーナーから許可されていません'};
+  function errText(r){ return ERR[r && r.error] || '処理できませんでした（通信状況を確認してください）'; }
+
+  // 非表示にした読み取り（今日の分だけ覚える）
+  function hidden(){ try{ var o = JSON.parse(ls(HIDE_KEY) || '{}'); return o.d === td() ? o.ids : []; }catch(e){ return []; } }
+  function hide(id){ var ids = hidden(); ids.push(id); ls(HIDE_KEY, JSON.stringify({d:td(), ids:ids})); }
+
+  // ---------- 見た目 ----------
+  var css = document.createElement('style');
+  css.textContent =
+    '#elc-box{margin-bottom:12px}' +
+    '.elc-row{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:#fff;border:1.5px solid var(--bd);border-radius:14px;padding:10px 12px;margin-top:8px;cursor:pointer;font-family:inherit;color:var(--tx)}' +
+    '.elc-row.on{border-color:var(--ac);background:#fdeef0;box-shadow:0 0 0 3px rgba(232,131,143,.18)}' +
+    '.elc-row .t{font-size:11px;color:var(--tx2);flex-shrink:0;width:38px}' +
+    '.elc-row .n{flex:1;min-width:0;font-weight:700;font-size:14px}' +
+    '.elc-row .n small{display:block;font-weight:400;font-size:11px;color:var(--tx2)}' +
+    '.elc-row .v{flex-shrink:0;font-size:12px;font-weight:700;color:var(--ac)}' +
+    '.elc-row .x{flex-shrink:0;border:none;background:none;color:var(--tx2);font-size:15px;padding:2px 4px;cursor:pointer}' +
+    '.elc-first{display:inline-block;font-size:10px;background:#fbf0dc;color:#a87a18;border-radius:8px;padding:0 6px;margin-left:4px;vertical-align:1px}' +
+    '.elc-note{font-size:11px;color:var(--tx2);margin-top:8px;line-height:1.6}' +
+    '.elc-badge{position:absolute;top:4px;right:6px;min-width:16px;height:16px;border-radius:8px;background:#e0a830;color:#fff;font-size:10px;line-height:16px;padding:0 4px;font-style:normal;font-weight:700}' +
+    '.elc-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed var(--bd)}' +
+    '.elc-item .nm{flex:1;font-size:13px}.elc-item .nm small{color:var(--tx2);font-size:11px;margin-left:4px}' +
+    '.elc-item .q{min-width:28px;text-align:center;font-weight:800;font-size:18px}' +
+    '.elc-gift{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;font-weight:700;color:#a87a18;background:#fbf0dc;border-radius:10px;padding:5px 8px}' +
+    '.elc-gift span{flex:1}.elc-gift button{border:1.5px solid #e0a830;background:#fff;color:#a87a18;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}' +
+    '.elc-ttl{display:inline-block;font-size:10px;background:#eeebfa;color:#6a5fb0;border-radius:8px;padding:0 6px;margin-left:4px;vertical-align:1px}' +
+    '.elc-link{background:none;border:none;color:var(--ac);text-decoration:underline;font-size:12px;cursor:pointer;padding:0;font-family:inherit}' +
+    '.elc-set-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 36px;gap:6px;margin-bottom:6px;align-items:center}';
+  document.head.appendChild(css);
+
+  // =====================================================
+  // 新規画面：入口QRの読み取り
+  // =====================================================
+  function box(){
+    var b = $('elc-box');
+    if(!b && $('p-r')){
+      b = document.createElement('div'); b.id = 'elc-box';
+      $('p-r').insertBefore(b, $('p-r').firstChild);
+      b.addEventListener('click', onBoxClick);
+    }
+    return b;
+  }
+  function unclaimed(){
+    var h = hidden();
+    return state.checkins.filter(function(k){ return !k.guest_id && h.indexOf(k.id) < 0; });
+  }
+  function renderBox(){
+    var b = box(); if(!b) return;
+    if(!pw()){
+      b.innerHTML = '<div class="card" style="padding:12px 14px"><div class="ct" style="margin-bottom:6px">📱 入口QRの読み取り</div>' +
+        '<div class="elc-note" style="margin-top:0">入口のQRを読み取ったお客さまを、総選挙の期間に関係なく一年中ここに表示できます。会員管理画面で決めた「スタッフ用パスワード」を1回だけ入れてください。</div>' +
+        '<button class="btn bso bsm" data-act="pw" style="margin-top:8px">パスワードを入れる</button></div>';
+      return;
+    }
+    if(state.error === 'setup_needed'){ b.innerHTML = ''; return; }
+    if(state.error === 'wrong_password' || state.error === 'locked'){
+      b.innerHTML = '<div class="card" style="padding:12px 14px"><div class="ct" style="margin-bottom:6px">📱 入口QRの読み取り</div>' +
+        '<div class="elc-note" style="margin-top:0;color:var(--ng)">' + esc(errText({error:state.error})) + '。パスワードが変わった場合は入れ直してください。</div>' +
+        '<button class="btn bso bsm" data-act="pw" style="margin-top:8px">パスワードを入れ直す</button></div>';
+      return;
+    }
+    var list = unclaimed();
+    var rows = list.map(function(k){
+      var on = state.selected.indexOf(k.id) >= 0;
+      return '<div class="elc-row' + (on ? ' on' : '') + '" role="button" tabindex="0" data-k="' + k.id + '">' +
+        '<span class="t">' + hm(k.at) + '</span>' +
+        '<span class="n">No.' + k.member_no + ' ' + esc(k.nickname) + ' さん' + (k.total_visits <= 1 ? '<span class="elc-first">はじめての読み取り</span>' : '') +
+          (k.perk && k.perk.title ? '<span class="elc-ttl">' + esc(k.perk.title) + '</span>' : '') +
+          '<small>推し猫：' + esc(k.cat) + '</small>' + giftHtml(k) + '</span>' +
+        '<span class="v">今年' + k.year_visits + '回目</span>' +
+        '<button class="x" type="button" data-hide="' + k.id + '" aria-label="この表示を消す">✕</button></div>';
+    }).join('');
+    var sel = state.checkins.filter(function(k){ return state.selected.indexOf(k.id) >= 0; });
+    b.innerHTML = '<div class="card" style="padding:12px 14px">' +
+      '<div class="ct" style="margin-bottom:0;display:flex;justify-content:space-between;align-items:center"><span>📱 入口QRを読み取った方（今日）</span>' +
+        '<span style="font-weight:400">' + (state.lastAt ? hm(state.lastAt) + ' 更新' : '') + '</span></div>' +
+      (rows || '<div class="elc-note">まだ読み取りはありません。読み取りがあると自動で出てきます。</div>') +
+      (sel.length ? '<div class="elc-note" style="color:var(--tx)">✅ ' + sel.map(function(k){ return esc(k.nickname) + '(No.' + k.member_no + ')'; }).join('、') +
+        ' を選択中。アンケートの推し猫と来店経験も自動で入れたので、会員さんには聞かなくて大丈夫です。来店パターンと人数を選んで「入店登録」すると、この組に結びつきます。</div>'
+        : (rows ? '<div class="elc-note">タップすると「お客様区分」と「常連さん」が自動で入ります。グループで何人か読み取った場合は、まとめて選べます。</div>' : '')) +
+      '</div>';
+    updateBadge();
+  }
+  // 渡していないごほうび
+  function giftHtml(k){
+    return ((k.perk && k.perk.pending) || []).map(function(r){
+      return '<div class="elc-gift"><span>🎁 ごほうび：' + esc(r.item) + '（' + r.visits + '回目）</span>' +
+        '<button type="button" data-give="' + k.id + ':' + r.visits + '">渡した</button></div>';
+    }).join('');
+  }
+  function giveReward(btn, after){
+    var p = btn.dataset.give.split(':');
+    btn.disabled = true;
+    rpc('el_pos_reward_give', {p_pw:pw(), p_checkin:+p[0], p_visits:+p[1]}).then(function(r){
+      if(!r.ok){ btn.disabled = false; return msg(errText(r), true); }
+      state.checkins.forEach(function(k){ if(k.id === +p[0]) k.perk = r.perk; });
+      if(co.data) co.data.linked.concat(co.data.unclaimed).forEach(function(k){ if(k.id === +p[0]) k.perk = r.perk; });
+      msg('ごほうびを渡した記録をつけました'); after();
+    }).catch(function(){ btn.disabled = false; msg('通信できませんでした', true); });
+  }
+  function updateBadge(){
+    var nav = $('n-r'); if(!nav) return;
+    nav.style.position = 'relative';
+    var bd = nav.querySelector('.elc-badge'), n = pw() ? unclaimed().length : 0;
+    if(!n){ if(bd) bd.remove(); return; }
+    if(!bd){ bd = document.createElement('i'); bd.className = 'elc-badge'; nav.appendChild(bd); }
+    bd.textContent = n;
+  }
+  function memberLabel(k){ return Members && Members.indexOf(k.nickname) >= 0 ? k.nickname : 'No.' + k.member_no + ' ' + k.nickname; }
+  function applySelection(){
+    var sel = state.checkins.filter(function(k){ return state.selected.indexOf(k.id) >= 0; });
+    var tp = $('r-tp'), mem = $('r-member');
+    if(!sel.length){ if(mem && /^No\.\d+ /.test(mem.value)) mem.value = ''; return; }
+    if(tp && sel.some(function(k){ return k.total_visits > 1; })) tp.value = 'rep';
+    if(mem){
+      var label = memberLabel(sel[0]);
+      if(!Array.prototype.some.call(mem.options, function(o){ return o.value === label; })){
+        var o = document.createElement('option'); o.value = label; o.textContent = label + '（入口QR）'; mem.appendChild(o);
+      }
+      mem.value = label;
+    }
+    // アンケートの「推し猫はいますか？」に会員の推し猫を入れる（POSの猫の名前と同じとき）
+    if(typeof togAqCat === 'function'){
+      sel.forEach(function(k){
+        var chip = Array.prototype.find.call(document.querySelectorAll('#aq-cats .chip'), function(c){ return c.getAttribute('data-v') === k.cat; });
+        if(chip && !chip.classList.contains('on2')) togAqCat(chip);
+      });
+    }
+    // 「猫カフェは初めてですか？」：このお店に2回以上来ている会員は自動で入れる
+    var most = Math.max.apply(null, sel.map(function(k){ return k.total_visits; }));
+    var v = most >= 4 ? 'よく来る' : most >= 2 ? '2〜3回目' : '';
+    var exp = v && Array.prototype.find.call(document.querySelectorAll('#aq-exp .chip'), function(c){ return c.getAttribute('data-v') === v; });
+    if(exp && !exp.classList.contains('on') && typeof selOne === 'function') selOne(exp, 'aq-exp');
+  }
+  function onBoxClick(e){
+    var a = e.target.closest('[data-act]');
+    if(a && a.dataset.act === 'pw') return askStaffPw();
+    var gv = e.target.closest('[data-give]');
+    if(gv){ e.stopPropagation(); return giveReward(gv, renderBox); }
+    var h = e.target.closest('[data-hide]');
+    if(h){ e.stopPropagation(); var id = +h.dataset.hide; hide(id); state.selected = state.selected.filter(function(x){ return x !== id; }); applySelection(); renderBox(); return; }
+    var r = e.target.closest('[data-k]'); if(!r) return;
+    var k = +r.dataset.k, i = state.selected.indexOf(k);
+    if(i >= 0) state.selected.splice(i, 1); else state.selected.push(k);
+    applySelection(); renderBox();
+  }
+  function poll(){
+    if(!pw() || state.busy || document.hidden) return Promise.resolve();
+    state.busy = true;
+    return rpc('el_pos_checkins', {p_pw:pw()}).then(function(r){
+      state.busy = false;
+      if(!r.ok){ state.error = r.error; state.checkins = []; renderBox(); return; }
+      state.error = ''; state.checkins = r.checkins || []; state.config = r.config; state.lastAt = new Date().toISOString();
+      var ids = state.checkins.map(function(k){ return k.id; });
+      state.selected = state.selected.filter(function(id){ return ids.indexOf(id) >= 0 && !state.checkins.find(function(k){ return k.id === id; }).guest_id; });
+      renderBox();
+    }).catch(function(){ state.busy = false; });
+  }
+  setInterval(function(){
+    tickN++;
+    var onReg = $('p-r') && $('p-r').classList.contains('active');
+    if(onReg || tickN % 6 === 0) poll();
+  }, 5000);
+
+  // 画面の切り替えで新規を開いたら、すぐ更新
+  var origSp = window.sp;
+  if(typeof origSp === 'function'){
+    window.sp = function(id){ var r = origSp.apply(this, arguments); if(id === 'p-r'){ renderBox(); poll(); } return r; };
+  }
+  // 入店登録したら、選んだ会員をこの組に結びつける
+  var origReg = window.regGuest;
+  if(typeof origReg === 'function'){
+    window.regGuest = function(){
+      var sel = state.selected.slice(), before = G.length;
+      var r = origReg.apply(this, arguments);
+      if(sel.length && G.length > before){
+        var g = G[G.length - 1];
+        rpc('el_pos_claim', {p_pw:pw(), p_ids:sel, p_guest:String(g.id)}).then(function(x){
+          if(!x.ok) return msg('会員の結びつけに失敗しました：' + errText(x), true);
+          state.checkins.forEach(function(k){ if(sel.indexOf(k.id) >= 0) k.guest_id = String(g.id); });
+          renderBox();
+        }).catch(function(){ msg('会員の結びつけに失敗しました（通信）', true); });
+        state.selected = [];
+      }
+      return r;
+    };
+  }
+
+  // =====================================================
+  // 退店画面：総選挙ボーナス
+  // =====================================================
+  var co = {guest:null, data:null};
+  function coBox(){
+    var b = $('elc-co');
+    var tot = $('co-tot'); if(!tot) return null;
+    var anchor = tot.closest('.pbox');
+    if(!b){
+      b = document.createElement('div'); b.id = 'elc-co';
+      anchor.parentNode.insertBefore(b, anchor);
+      b.addEventListener('click', onCoClick);
+    }
+    return b;
+  }
+  function loadCo(guestId){
+    co.guest = String(guestId); co.data = null;
+    var b = coBox(); if(!b) return;
+    b.innerHTML = '';
+    if(!pw()) return;
+    rpc('el_pos_guest', {p_pw:pw(), p_guest:co.guest}).then(function(r){
+      if(co.guest !== String(guestId)) return;
+      if(!r.ok){ b.innerHTML = ''; return; }
+      co.data = r; renderCo();
+    }).catch(function(){});
+  }
+  // 退店画面：この組の会員の表示と、結びつけ忘れたときの結びつけ（ボーナスはお客さんがカードで入れる）
+  function renderCo(){
+    var b = coBox(), r = co.data; if(!b || !r) return;
+    var open = (r.config || {}).period === 'open';
+    if(!r.linked.length && !r.unclaimed.length){ b.innerHTML = ''; return; }
+    var h = '<div class="card" style="padding:12px 14px;margin-bottom:12px"><div class="ct" style="margin-bottom:4px">📱 入口QRの会員</div>';
+    r.linked.forEach(function(k){
+      h += '<div style="padding:8px 0 4px;border-top:1px solid var(--bd);margin-top:6px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">No.' + k.member_no + ' ' + esc(k.nickname) + ' さん</b>' +
+        '<button class="elc-link" type="button" data-unlink="' + k.id + '">外す</button></div>' +
+        '<div style="font-size:11px;color:var(--tx2)">推し猫：' + esc(k.cat) + (k.cat_status === 'graduated' ? '（卒業）' : '') + '　今年' + k.year_visits + '回目' +
+        (open ? '　応援 ' + k.points + 'pt' + (k.bonus > 0 ? '（今日のボーナス +' + k.bonus + '）' : '') : '') +
+        (k.perk && k.perk.title ? '　🏅 ' + esc(k.perk.title) : '') + '</div>' + giftHtml(k) + '</div>';
+    });
+    if(r.unclaimed.length){
+      h += '<div class="elc-note">' + (r.linked.length ? 'ほかに今日読み取った方：' : 'この組に結びついた会員はいません。今日読み取った方から選んで結びつけられます：') + '</div>' +
+        r.unclaimed.slice(0, 8).map(function(k){
+          return '<div class="elc-row" role="button" tabindex="0" data-claim="' + k.id + '"><span class="t">' + hm(k.at) + '</span>' +
+            '<span class="n">No.' + k.member_no + ' ' + esc(k.nickname) + ' さん<small>推し猫：' + esc(k.cat) + '</small></span><span class="v">結びつける</span></div>';
+        }).join('');
+    }
+    b.innerHTML = h + '</div>';
+  }
+  function onCoClick(e){
+    var gv = e.target.closest('[data-give]');
+    if(gv) return giveReward(gv, renderCo);
+    var u = e.target.closest('[data-unlink]');
+    if(u){
+      if(!confirm('この会員の結びつけを外しますか？')) return;
+      rpc('el_pos_unlink', {p_pw:pw(), p_id:+u.dataset.unlink}).then(function(r){
+        if(!r.ok) return msg(errText(r), true);
+        msg('結びつけを外しました'); loadCo(co.guest); poll();
+      }).catch(function(){ msg('通信できませんでした', true); });
+      return;
+    }
+    var c = e.target.closest('[data-claim]');
+    if(c){
+      rpc('el_pos_claim', {p_pw:pw(), p_ids:[+c.dataset.claim], p_guest:co.guest}).then(function(r){
+        if(!r.ok) return msg(errText(r), true);
+        msg('会員を結びつけました'); loadCo(co.guest); poll();
+      }).catch(function(){ msg('通信できませんでした', true); });
+    }
+  }
+  var origOCO = window.oCO;
+  if(typeof origOCO === 'function'){
+    window.oCO = function(id){ var r = origOCO.apply(this, arguments); loadCo(id); return r; };
+  }
+
+  // =====================================================
+  // ⚙️メニュー
+  // =====================================================
+  var modal = document.createElement('div');
+  modal.className = 'ov'; modal.id = 'm-elc';
+  modal.innerHTML = '<div class="modal"><span class="mh"></span><div class="mt"><span id="elc-m-title"></span><button class="mc" type="button" onclick="cModal(\'m-elc\')">✕</button></div><div id="elc-m-body"></div></div>';
+  document.body.appendChild(modal);
+  function openM(title, html){ $('elc-m-title').textContent = title; $('elc-m-body').innerHTML = html; oModal('m-elc'); }
+
+  function askStaffPw(){
+    openM('🔑 入口QR連携のパスワード',
+      '<div class="elc-note" style="margin:0 0 10px">会員管理画面で決めた「スタッフ用パスワード」を入れてください（総選挙の期間外も使います）。このPOS端末に保存され、入口QR画面と新規画面の読み取り表示に使います。</div>' +
+      '<div class="fg"><input class="fc" id="elc-pw" type="password" autocomplete="off" placeholder="スタッフ用パスワード"></div>' +
+      '<div id="elc-pw-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
+      '<button class="btn bp bf" type="button" id="elc-pw-go">保存する</button>' +
+      (pw() ? '<button class="btn bs bf" type="button" id="elc-pw-del" style="margin-top:8px">この端末のパスワードを消す</button>' : ''));
+    setTimeout(function(){ var i = $('elc-pw'); if(i) i.focus(); }, 80);
+  }
+  modal.addEventListener('click', function(e){
+    if(e.target === modal){ cModal('m-elc'); return; }
+    var id = e.target.id;
+    if(id === 'elc-pw-go'){
+      var v = $('elc-pw').value;
+      if(!v){ $('elc-pw-err').textContent = 'パスワードを入力してください'; return; }
+      rpc('el_pos_checkins', {p_pw:v}).then(function(r){
+        if(!r.ok){ $('elc-pw-err').textContent = errText(r); return; }
+        ls(PW_KEY, v); state.error = ''; cModal('m-elc'); msg('保存しました'); poll().then(renderBox);
+      }).catch(function(){ $('elc-pw-err').textContent = '通信できませんでした'; });
+    }
+    if(id === 'elc-pw-del'){ ls(PW_KEY, null); state.checkins = []; cModal('m-elc'); renderBox(); msg('消しました'); }
+    if(id === 'elc-o-go') ownerLogin();
+    if(id === 'elc-save') saveOptions();
+  });
+  modal.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter') return;
+    if(e.target.id === 'elc-pw') $('elc-pw-go').click();
+    if(e.target.id === 'elc-opw') ownerLogin();
+  });
+
+  var ownerPwMem = '';
+  function openSettings(){
+    openM('⚙️ ボーナスカード・入口QRの設定',
+      '<div class="elc-note" style="margin:0 0 10px">会員管理画面で決めた「オーナー用」または「マネージャー用」のパスワードで開きます。</div>' +
+      '<div class="fg"><input class="fc" id="elc-opw" type="password" autocomplete="off" placeholder="オーナー用・マネージャー用パスワード"></div>' +
+      '<div id="elc-o-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
+      '<button class="btn bp bf" type="button" id="elc-o-go">開く</button>');
+    if(ownerPwMem){ $('elc-opw').value = ownerPwMem; ownerLogin(); }
+    else setTimeout(function(){ var i = $('elc-opw'); if(i) i.focus(); }, 80);
+  }
+  function ownerLogin(){
+    var v = $('elc-opw').value;
+    if(!v){ $('elc-o-err').textContent = 'パスワードを入力してください'; return; }
+    rpc('el_owner_get', {p_pw:v}).then(function(r){
+      if(!r.ok){ ownerPwMem = ''; $('elc-o-err').textContent = errText(r); return; }
+      if(r.role === 'manager' && !(r.perms && r.perms.options)){ $('elc-o-err').textContent = ERR.no_permission; return; }
+      ownerPwMem = v;
+      var iv = r.qr_interval;
+      var ivs = [[20,'20秒（おすすめ）'],[30,'30秒'],[60,'1分'],[300,'5分'],[1800,'30分']];
+      if(!ivs.some(function(x){ return x[0] === iv; })) ivs.push([iv, iv + '秒']);
+      $('elc-m-body').innerHTML =
+        '<div class="card" style="padding:12px 14px"><div class="ct">🎁 総選挙ボーナス</div>' +
+          '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px"><input type="checkbox" id="elc-b-on"' + (r.bonus_enabled ? ' checked' : '') + ' style="width:20px;height:20px"> ボーナスカードを使う</label>' +
+          '<div class="fg"><label class="fl">1人が1日にもらえるボーナスの上限</label><select class="fc" id="elc-cap">' +
+          [[1,'1日1ptまで（おすすめ）'],[2,'1日2ptまで'],[3,'1日3ptまで'],[5,'1日5ptまで'],[0,'上限なし']].map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === r.bonus_cap ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+          '<div class="fg"><label class="fl">カードの使い方</label><select class="fc" id="elc-once">' +
+            '<option value="1"' + (r.card_once !== false ? ' selected' : '') + '>使い捨て（1枚1回・お客さんが持ち帰ってOK）</option>' +
+            '<option value="0"' + (r.card_once === false ? ' selected' : '') + '>使い回し（1枚1日1回・返してもらう）</option></select></div>' +
+          '<div class="elc-note">ガチャに入れたボーナスカードを、お客さんが自分のスマホで読み取ると1pt入ります（来店を記録した日だけ）。未使用のカード：' + r.cards_unused + '枚。カードの印刷・追加は管理画面の「⚙️ 設定」から行います。</div></div>' +
+        '<div class="card" style="padding:12px 14px"><div class="ct">📱 入口QR</div>' +
+          '<div class="fg"><label class="fl">QRコードが切り替わる間隔</label><select class="fc" id="elc-iv">' +
+          ivs.map(function(x){ return '<option value="' + x[0] + '"' + (x[0] === iv ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
+          '<div class="elc-note">表示中のコードと、1つ前のコードまで読み取れます。短いほど、写真を撮って店の外から使うズルがしにくくなります。</div></div>' +
+        '<div id="elc-s-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
+        '<button class="btn bp bf" type="button" id="elc-save">保存する</button>';
+    }).catch(function(){ $('elc-o-err').textContent = '通信できませんでした'; });
+  }
+  function saveOptions(){
+    rpc('el_owner_save_options', {p_pw:ownerPwMem, p_qr_interval:+$('elc-iv').value, p_bonus_enabled:$('elc-b-on').checked, p_bonus_cap:+$('elc-cap').value, p_card_once:$('elc-once').value === '1'}).then(function(r){
+      if(!r.ok){ $('elc-s-err').textContent = errText(r); return; }
+      cModal('m-elc'); msg('保存しました'); poll();
+    }).catch(function(){ $('elc-s-err').textContent = '通信できませんでした'; });
+  }
+
+  // メニューにボタンを足す（フォトコン管理の下）
+  function addMenuButtons(){
+    var menu = $('m-menu'); if(!menu || $('elc-menu')) return;
+    var anchor = Array.prototype.find.call(menu.querySelectorAll('button'), function(b){ return /フォトコン管理/.test(b.textContent); });
+    var wrap = document.createElement('div'); wrap.id = 'elc-menu'; wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+    wrap.innerHTML =
+      '<button class="btn bso bf" type="button" data-go="election-qr.html">📱 入口QR（来店・総選挙）</button>' +
+      '<button class="btn bso bf" type="button" data-go="election-admin.html">🗳️ 総選挙・会員の管理</button>' +
+      '<button class="btn bso bf" type="button" data-m="settings">⚙️ ボーナスカード・入口QRの設定</button>' +
+      '<button class="btn bso bf" type="button" data-m="pw">🔑 入口QR連携のパスワード</button>';
+    wrap.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if(!b) return;
+      cModal('m-menu');
+      if(b.dataset.go) location.href = b.dataset.go;
+      else if(b.dataset.m === 'settings') openSettings();
+      else askStaffPw();
+    });
+    if(anchor) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
+    else (menu.querySelector('.modal > div') || menu.querySelector('.modal')).appendChild(wrap);
+  }
+
+  function init(){ addMenuButtons(); renderBox(); poll(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+</script>
 </body>
 </html>
