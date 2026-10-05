@@ -152,7 +152,17 @@ function uuid(){
   return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
 }
 function md(d){ if(!d) return ''; var t = new Date(d + 'T00:00:00'); return (t.getMonth()+1) + '月' + t.getDate() + '日'; }
-function show(html){ $('view').innerHTML = html; window.scrollTo(0, 0); }
+function show(html){ $('view').innerHTML = html; window.scrollTo(0, 0); keepKey(); }
+// ホーム画面のアイコン（Safariとは保存場所が別）からも同じカードを開けるよう、
+// カード表示中はURLに会員キーを入れておく（「ホーム画面に追加」でこのURLが保存される）
+function isStandalone(){ try{ return !!(navigator.standalone || matchMedia('(display-mode: standalone)').matches); }catch(e){ return false; } }
+function keepKey(){
+  try{
+    if(member && member.id && member.secret){
+      if(!isStandalone()) history.replaceState(null, '', location.pathname + '#k=' + member.id + '.' + member.secret);
+    }else if(/k=/.test(location.hash)) history.replaceState(null, '', location.pathname);
+  }catch(e){}
+}
 function fail(msg){ show('<div class="card center"><p class="big maru">うまくいきませんでした</p><p class="muted">' + esc(msg) + '</p></div>'); }
 function isOpen(){ return info && info.period === 'open'; }
 function setTitle(){
@@ -230,7 +240,9 @@ function showIntro(){
   show('<div class="card center"><p class="hero">🐾</p><p class="big maru">推し猫カードをつくろう！</p>' +
     '<p>お店に来たら、入口のQRコードを読み取るだけ。<br>来店の回数が記録されていきます。</p>' +
     (isOpen() ? '<p style="margin-top:8px">いまは<b>' + esc(info.title) + '</b>の期間中！<br>来店するたびに、推し猫に1ポイント入ります。</p>' : soonText()) +
-    '<p class="muted" style="margin-top:10px">登録・記録は、お店の入口にあるQRコードから行えます。</p></div>' + rulesBox());
+    '<p class="muted" style="margin-top:10px">登録・記録は、お店の入口にあるQRコードから行えます。</p>' +
+    (isStandalone() ? '<p class="muted" style="margin-top:10px;font-size:12px">登録ずみの方へ：このアイコンを一度消して、入口のQRで開いた推し猫カードの画面から、もう一度「ホーム画面に追加」してください。</p>' : '') +
+    '</div>' + rulesBox());
 }
 function toolsHtml(me){
   return '<div class="card center" style="margin-top:14px"><div class="bgbtns" style="margin-top:0"><button class="link" type="button" id="chg-oshi">推し猫を変える</button>' +
@@ -512,6 +524,8 @@ function boot(){
   device = store('el_device');
   if(!device){ device = uuid(); store('el_device', device); }
   try{ member = JSON.parse(store('el_member') || 'null'); }catch(e){ member = null; }
+  var km = location.hash.match(/k=([^.&#]+)\.([^&#]+)/);
+  if(km && !member){ member = {id:km[1], secret:km[2]}; store('el_member', JSON.stringify(member)); }
   var m = location.hash.match(/t=([0-9]+\.[0-9a-f]+)/), qr = m ? m[1] : null;
   var cm = location.hash.match(/c=([0-9a-f]{16})/), card = cm ? cm[1] : null;
   if(qr || card) history.replaceState(null, '', location.pathname);
