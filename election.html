@@ -230,30 +230,38 @@ function showIntro(){
     (isOpen() ? '<p style="margin-top:8px">いまは<b>' + esc(info.title) + '</b>の期間中！<br>来店するたびに、推し猫に1ポイント入ります。</p>' : soonText()) +
     '<p class="muted" style="margin-top:10px">登録・記録は、お店の入口にあるQRコードから行えます。</p></div>' + rulesBox());
 }
-function showMine(me){
-  show(oshiCard(me) +
-    '<div class="card center" style="margin-top:14px"><p class="muted">ご来店のときに、入口のQRコードを読み取ってください。' +
-    (me.period === 'open' ? '<br>応援している子に1ポイント入ります。順位は結果発表までのお楽しみです。' : '') + '</p>' + soonText() +
-    '<div class="bgbtns"><button class="link" type="button" id="chg-oshi">推し猫を変える</button>' +
+function toolsHtml(me){
+  return '<div class="card center" style="margin-top:14px"><div class="bgbtns" style="margin-top:0"><button class="link" type="button" id="chg-oshi">推し猫を変える</button>' +
     '<button class="link" type="button" id="chg-bg">背景の写真を変える</button>' +
     (myBg(me) ? '<button class="link" type="button" id="rst-bg">お店の写真に戻す</button>' : '') + '</div>' +
-    '<input type="file" id="bg-file" accept="image/*" hidden><p class="err" id="bg-err"></p></div>' + igCard() + HOME_TIP);
+    '<input type="file" id="bg-file" accept="image/*" hidden><p class="err" id="bg-err"></p></div>';
+}
+function bindTools(me, redraw){
+  if(!$('chg-oshi')) return;
   $('chg-oshi').onclick = function(){ showOshiChooser(me); };
   $('chg-bg').onclick = function(){ $('bg-file').click(); };
   $('bg-file').onchange = function(){
     var f = this.files && this.files[0]; if(!f) return;
-    setBgFromFile(me, f, function(ok){ if(ok) showMine(me); else $('bg-err').textContent = 'この写真は使えませんでした。別の写真でお試しください。'; });
+    setBgFromFile(me, f, function(ok){ if(ok) redraw(); else $('bg-err').textContent = 'この写真は使えませんでした。別の写真でお試しください。'; });
   };
-  if($('rst-bg')) $('rst-bg').onclick = function(){ store('el_bg_' + me.cat.id, null); showMine(me); };
+  if($('rst-bg')) $('rst-bg').onclick = function(){ store('el_bg_' + me.cat.id, null); redraw(); };
+}
+function showMine(me){
+  show(oshiCard(me) + toolsHtml(me) +
+    '<div class="card center" style="margin-top:14px"><p class="muted">ご来店のときに、入口のQRコードを読み取ってください。' +
+    (me.period === 'open' ? '<br>応援している子に1ポイント入ります。順位は結果発表までのお楽しみです。' : '') + '</p>' + soonText() + '</div>' + igCard() + HOME_TIP);
+  bindTools(me, function(){ showMine(me); });
 }
 function visitLine(me){ return '<p class="muted">今年 <b>' + me.year_visits + '</b> 回目のご来店です。</p>'; }
 function showVoted(me){
   show('<div class="card center pop"><p class="hero">💗</p><p class="big maru">' + esc((me.vote_cat || me.cat).name) + 'に<br>1ポイント入りました！</p>' +
-    visitLine(me) + '<p class="muted">来てくれてありがとう。また会いに来てね。</p></div>' + oshiCard(me) + igCard() + HOME_TIP);
+    visitLine(me) + '<p class="muted">来てくれてありがとう。また会いに来てね。</p></div>' + oshiCard(me) + toolsHtml(me) + igCard() + HOME_TIP);
+  bindTools(me, function(){ showVoted(me); });
 }
 function showVisited(me, isNew){
   show('<div class="card center pop"><p class="hero">🐾</p><p class="big maru">' + (isNew ? 'ようこそ！<br>来店を記録しました' : '今日の来店は<br>記録ずみです') + '</p>' +
-    visitLine(me) + soonText() + '</div>' + oshiCard(me) + igCard() + HOME_TIP);
+    visitLine(me) + soonText() + '</div>' + oshiCard(me) + toolsHtml(me) + igCard() + HOME_TIP);
+  bindTools(me, function(){ showVisited(me, isNew); });
 }
 function showNotice(title, text, me){
   show('<div class="card center"><p class="big maru">' + title + '</p><p class="muted">' + text + '</p></div>' + (me ? oshiCard(me) : ''));
