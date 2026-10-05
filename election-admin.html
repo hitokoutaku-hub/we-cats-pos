@@ -123,6 +123,14 @@ body.printmode #print-area{display:block}
 .ccard .c-kick{font-size:3.6mm;color:#a07c82;letter-spacing:.3mm}
 .ccard .c-msg{font-size:4.6mm;font-weight:700;color:#c9606d;margin-top:2mm}
 .page.cardpage{padding:10mm}
+.page.bcpage{padding:12mm 14mm;display:grid;grid-template-columns:91mm 91mm;grid-auto-rows:55mm;gap:0;justify-content:center;align-content:start;align-items:stretch;background:#fff}
+.bc{border:.3mm dashed #e9c3c9;display:flex;align-items:center;gap:3.5mm;padding:3mm 4mm;background:#fff;text-align:left}
+.bc .q svg{width:34mm;height:34mm;display:block}
+.bc .t{flex:1;min-width:0}
+.bc .k{font-size:3mm;color:#a07c82;letter-spacing:.2mm}
+.bc h4{font-family:'Zen Maru Gothic',sans-serif;font-size:4.4mm;color:#c9606d;line-height:1.3;margin:.8mm 0 1.2mm;white-space:nowrap}
+.bc p{font-size:2.6mm;line-height:1.45;color:#5c3a3e}
+.bc .no{font-family:'Zen Maru Gothic',sans-serif;font-size:3.2mm;color:#a07c82;margin-top:1mm}
 @media print{
   @page{margin:0}
   html,body{background:#fff!important;padding:0!important}
@@ -182,12 +190,13 @@ body.printmode #print-area{display:block}
   <section id="t-results" hidden></section>
   <section id="t-settings" hidden>
     <div class="card" id="o-gate">
-      <h3>オーナー設定</h3>
-      <div class="f"><label for="o-pw">オーナー用パスワード</label><input class="in" id="o-pw" type="password" autocomplete="off"><p class="err" id="o-gate-err"></p></div>
+      <h3>オーナー・マネージャー設定</h3>
+      <div class="f"><label for="o-pw">オーナー用またはマネージャー用パスワード</label><input class="in" id="o-pw" type="password" autocomplete="off"><p class="err" id="o-gate-err"></p></div>
       <button class="btn pri full" id="o-go" type="button">開く</button>
     </div>
     <div id="o-body" hidden>
-      <div class="card">
+      <p class="note" id="o-role" style="margin:0 0 10px"></p>
+      <div class="card" data-perm="period">
         <h3>総選挙の設定</h3>
         <div class="f"><label for="o-title">タイトル</label><input class="in" id="o-title" maxlength="30"></div>
         <div class="btns">
@@ -196,35 +205,61 @@ body.printmode #print-area{display:block}
         </div>
         <button class="btn pri full" id="o-save" type="button">保存する</button><p class="err" id="o-save-err"></p>
       </div>
-      <div class="card">
+      <div class="card" data-perm="cats">
         <h3>猫の登録</h3>
         <div id="o-cats"></div>
         <button class="btn full" id="o-addcat" type="button" style="margin-top:10px">＋ 猫を追加する</button>
-        <p class="note">卒業した猫は「卒業にする」を押してください。その猫を推していた人は、次の来店時に1回だけ推し猫を選び直せます。</p>
+        <p class="note">卒業した猫は「卒業にする」を押してください。その子を総選挙で応援していた人は、次の来店時に応援する子を選び直します。</p>
       </div>
-      <div class="card">
+      <div class="card" data-perm="owner">
+        <h3>マネージャー（オーナーが指定したスタッフ）</h3>
+        <p class="note" style="margin-top:0">マネージャー用パスワードを伝えた人は、下で許可した操作ができます。パスワードの変更・テストデータの削除・個人情報の削除・連絡先の閲覧記録は、オーナーだけができます。</p>
+        <p style="margin:8px 0" id="o-mgr-state"></p>
+        <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="cats" style="width:20px;height:20px"> 猫の登録・写真・卒業</label>
+        <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="period" style="width:20px;height:20px"> 総選挙のタイトル・期間</label>
+        <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="cards" style="width:20px;height:20px"> ボーナスカードの作成・印刷</label>
+        <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="options" style="width:20px;height:20px"> ボーナスの上限・入口QRの間隔（POSの⚙️）</label>
+        <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="votes" style="width:20px;height:20px"> 怪しい票の無効化</label>
+        <button class="btn pri full" id="o-mgr-save" type="button" style="margin-top:8px">許可する内容を保存</button>
+        <button class="btn ng full" id="o-mgr-off" type="button" style="margin-top:8px">マネージャー用パスワードを無効にする</button>
+        <p class="note">マネージャー用パスワードは、すぐ下の「パスワードの変更」で「マネージャー用」を選んで決めます。任せる人を変えたいときは、パスワードを変えて新しい人にだけ伝えてください。</p>
+        <p class="err" id="o-mgr-err"></p>
+      </div>
+      <div class="card" data-perm="owner">
         <h3>パスワードの変更</h3>
         <div class="f"><label for="o-pw-kind">変更するパスワード</label>
-          <select class="in" id="o-pw-kind"><option value="contact">連絡先閲覧用</option><option value="staff">スタッフ用（入口QR・POSの読み取り表示にも使います）</option><option value="owner">オーナー用</option></select></div>
+          <select class="in" id="o-pw-kind"><option value="contact">連絡先閲覧用</option><option value="staff">スタッフ用（入口QR・POSの読み取り表示にも使います）</option><option value="manager">マネージャー用</option><option value="owner">オーナー用</option></select></div>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><input class="in" id="o-pw-new" type="password" placeholder="新しいパスワード（4文字以上）" autocomplete="new-password"><button class="btn" id="o-pw-save" type="button">変更</button></div>
         <p class="err" id="o-pw-err"></p>
+      </div>
+      <div class="card" data-perm="cards">
+        <h3>ボーナスカード（ガチャに入れるカード）</h3>
+        <p class="note" style="margin-top:0" id="o-cards-desc"></p>
+        <p style="margin:8px 0" id="o-cards-n"></p>
+        <div class="btns">
+          <button class="btn pri" id="o-cards-print" type="button">カードを印刷する</button>
+          <button class="btn" id="o-cards-add" type="button">＋ カードを足す</button>
+        </div>
+        <button class="btn ng full" id="o-cards-renew" type="button" style="margin-top:8px">全部作り直す（今のカードは使えなくなる）</button>
+        <p class="note" id="o-cards-note"></p>
+        <p class="err" id="o-cards-err"></p>
       </div>
       <div class="card">
         <h3>ボーナス・入口QRの設定</h3>
         <p class="note" style="margin-top:0" id="o-opts"></p>
-        <p class="note">変更は、POSの ⚙️ →「総選挙ボーナス・入口QRの設定」から行えます。</p>
+        <p class="note">変更は、POSの ⚙️ →「ボーナスカード・入口QRの設定」から行えます。</p>
       </div>
-      <div class="card">
+      <div class="card" data-perm="owner">
         <h3>テストデータを消す</h3>
         <p class="note" style="margin-top:0">テストで登録した会員・来店記録・票をすべて消し、会員番号を1番から始め直します。猫・期間・パスワード・ボーナス設定は残ります。<b>本番が始まったあとは押さないでください。</b></p>
         <p style="margin:8px 0" id="o-reset-n"></p>
         <button class="btn ng full" id="o-reset" type="button">テストデータを消す</button><p class="err" id="o-reset-err"></p>
       </div>
-      <div class="card">
+      <div class="card" data-perm="owner">
         <h3>連絡先の閲覧記録</h3>
         <div id="o-logs"></div>
       </div>
-      <div class="card">
+      <div class="card" data-perm="owner">
         <h3>個人情報の削除</h3>
         <p class="note" style="margin-top:0">1年以上来店のない会員のうち、「常連さん連携」に同意していない方の、ニックネームと連絡先を削除します。ポイントや来店の集計は残ります。年に1回ほど実行してください。</p>
         <p style="margin:8px 0" id="o-purge-n"></p>
@@ -268,7 +303,7 @@ var PAW = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><elli
 var ERR = {wrong_password:'パスワードが違います。', locked:'間違いが続いたため10分間ロック中です。', too_short:'4文字以上にしてください。',
   dates:'終了日は開始日より後にしてください。', name:'名前は20文字以内で入力してください。', not_ended:'総選挙が終了してから実行できます。',
   setup_needed:'先にパスワードの初期設定をしてください。', same:'3つとも別のパスワードにしてください。', already_setup:'パスワードはすでに設定されています。再読み込みしてください。',
-  confirm:'確認の文字が違います。'};
+  confirm:'確認の文字が違います。', no_permission:'この操作はオーナーから許可されていません。'};
 
 function rpc(fn, args){
   return fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method:'POST',
@@ -384,7 +419,7 @@ $('t-rank').addEventListener('click', function(e){
     if(!r.ok) return toast(errText(r));
     var rows = r.supporters.map(function(s, i){
       return '<button class="row" type="button" data-mid="' + s.id + '"><span class="rk">' + (i + 1) + '</span><span class="grow"><span class="nm">' + esc(s.nickname) +
-        (s.current ? '' : '<span class="tag t-grad">推し変更済み</span>') + '</span><span class="sm">No.' + s.no + ' ・ 最終 ' + mdt(s.reached_at) + '</span></span>' +
+        (s.current ? '' : '<span class="tag t-grad">応援先を変更済み</span>') + '</span><span class="sm">No.' + s.no + ' ・ 最終 ' + mdt(s.reached_at) + '</span></span>' +
         '<span class="num"><b>' + s.points + '</b><span class="sm"> pt</span></span></button>';
     }).join('');
     sheet(b.dataset.name + ' の応援者', rows ? '<div id="sup">' + rows + '</div>' : '<p class="empty">まだ応援者はいません。</p>');
@@ -407,7 +442,7 @@ function renderMembers(){
   $('mlist').innerHTML = list.map(function(m){
     return '<button class="row" type="button" data-mid="' + m.id + '"><span class="grow"><span class="nm">' + esc(m.nickname) +
       (m.purged ? '<span class="tag t-inv">削除済み</span>' : '') + '</span>' +
-      '<span class="sm">No.' + m.no + ' ・ 推し：' + esc(m.cat) + (m.cat_status === 'graduated' ? '（卒業）' : '') + ' ・ 今年' + m.year_visits + '回来店 ・ 最終 ' + md(m.last_visit) + '</span></span>' +
+      '<span class="sm">No.' + m.no + ' ・ 推し：' + esc(m.cat) + (m.cat_status === 'graduated' ? '（卒業）' : '') + (m.vote_cat ? ' ・ 応援：' + esc(m.vote_cat) : '') + ' ・ 今年' + m.year_visits + '回来店 ・ 最終 ' + md(m.last_visit) + '</span></span>' +
       '<span class="num"><b>' + m.points + '</b><span class="sm"> pt</span></span></button>';
   }).join('') || '<p class="empty">' + (members.length ? '見つかりませんでした。' : 'まだ登録はありません。') + '</p>';
 }
@@ -429,13 +464,14 @@ function openMember(id){
 function renderMemberSheet(votes, visits){
   var m = curMember;
   var vrows = votes.map(function(v){
-    return '<div class="kv"><span>' + md(v.date) + ' ' + esc(v.cat) + (v.kind === 'bonus' ? '<span class="tag t-ok">ボーナス</span>' : ' <span class="sm">端末 ' + esc(v.device) + '</span>') +
+    return '<div class="kv"><span>' + md(v.date) + ' ' + esc(v.cat) + (v.kind === 'bonus' ? '<span class="tag t-ok">ボーナス' + (/^card:/.test(v.device) ? '（カード' + esc(v.device.slice(5)) + '）' : '') + '</span>' : ' <span class="sm">端末 ' + esc(v.device) + '</span>') +
       (v.invalid ? '<span class="tag t-inv">無効' + (v.reason ? '：' + esc(v.reason) : '') + '</span>' : '') + '</span>' +
       '<span><button class="lock" type="button" data-vote="' + v.id + '" data-inv="' + (v.invalid ? '0' : '1') + '">' + (v.invalid ? '有効に戻す' : '無効にする') + '</button></span></div>';
   }).join('');
   var contact = m.purged ? '削除済み' : '<button class="lock" type="button" id="show-contact">🔒 表示する</button>';
   sheet('No.' + m.no + ' ' + m.nickname,
-    '<div class="kv"><span>推し猫</span><span>' + esc(m.cat) + (m.cat_status === 'graduated' ? '（卒業）' : '') + (m.switch_count ? '　推し変更 ' + m.switch_count + '回' : '') + '</span></div>' +
+    '<div class="kv"><span>推し猫</span><span>' + esc(m.cat) + (m.cat_status === 'graduated' ? '（卒業）' : '') + '</span></div>' +
+    '<div class="kv"><span>今回の総選挙で応援</span><span>' + (m.vote_cat ? esc(m.vote_cat) : 'まだ選んでいません') + (m.switch_count ? '　卒業による選び直し ' + m.switch_count + '回' : '') + '</span></div>' +
     '<div class="kv"><span>応援ポイント（今回の総選挙）</span><span>' + m.points + ' pt</span></div>' +
     '<div class="kv"><span>来店</span><span>今年 ' + m.year_visits + '回 ・ 合計 ' + m.total_visits + '回' +
       (visits.length ? '<br><span class="sm">' + visits.slice(0, 12).map(md).join('、') + (visits.length > 12 ? ' …' : '') + '</span>' : '') + '</span></div>' +
@@ -448,7 +484,7 @@ function renderMemberSheet(votes, visits){
     '<div class="kv"><span>連絡先</span><span id="contact-val">' + contact + '</span></div>' +
     (m.purged ? '' : '<button class="btn full" id="issue-code" type="button" style="margin:12px 0 4px">復元コードを発行する</button><p class="note">登録が見つからないお客さまには、本人確認のうえコードを伝えてください（15分有効）。</p>') +
     '<h3 style="font-size:15px;margin:16px 0 4px">投票の記録（' + votes.length + '件）</h3>' + (vrows || '<p class="empty">まだ投票はありません。</p>') +
-    '<p class="note">無効にする・有効に戻すには、オーナー用パスワードが必要です。</p>');
+    '<p class="note">無効にする・有効に戻すには、オーナー用パスワード（または許可されたマネージャー用パスワード）が必要です。</p>');
 }
 $('sh-body').addEventListener('click', function(e){
   if(e.target.id === 'show-contact'){
@@ -481,7 +517,7 @@ $('sh-body').addEventListener('click', function(e){
         loadMembers().then(function(){ openMember(curMember.id); });
       }).catch(function(){ toast('通信できませんでした'); });
     };
-    var ask2 = function(){ askPw('オーナーの確認', 'オーナー用パスワード', '', go2); };
+    var ask2 = function(){ askPw('オーナー・マネージャーの確認', 'オーナー用またはマネージャー用パスワード', '', go2); };
     ownerPw ? go2(ownerPw) : ask2();
   }
 });
@@ -589,7 +625,7 @@ $('t-visits').addEventListener('click', function(e){ var b = e.target.closest('[
 function loadAlerts(){
   return rpc('el_admin_alerts', {p_pw:staffPw}).then(function(r){
     if(!r.ok) return toast(errText(r));
-    var n = r.days.length + r.devices.length + r.restores.length + r.bursts.length;
+    var n = r.days.length + r.devices.length + r.restores.length + r.bursts.length + (r.cards || []).length;
     $('alert-dot').hidden = !n; $('alert-dot').textContent = n;
     var sec = function(title, desc, rows){ return rows ? '<div class="card"><h3>' + title + '</h3><p class="note" style="margin:-4px 0 6px">' + desc + '</p>' + rows + '</div>' : ''; };
     var html =
@@ -599,6 +635,8 @@ function loadAlerts(){
         r.devices.map(function(d){ return '<div class="kv"><span>端末 ' + esc(d.device) + '</span><span>' + d.members + '人・' + d.votes + '票<br><span class="sm">' + esc(d.names) + '</span></span></div>'; }).join('')) +
       sec('復元を何度も行っている会員', 'スマホを使い回して、複数のアカウントで投票している可能性があります。',
         r.restores.map(function(m){ return '<button class="row" type="button" data-mid="' + m.id + '"><span class="grow"><span class="nm">' + esc(m.nickname) + '</span><span class="sm">No.' + m.no + '</span></span><span class="num">' + m.count + '回</span></button>'; }).join('')) +
+      sec('ボーナスカードをほぼ毎回使っている会員', 'カードの写真を撮って使い回している可能性があります（ガチャ好きの方の場合もあります）。続くようなら、カードを作り直してください。',
+        (r.cards || []).map(function(m){ return '<button class="row" type="button" data-mid="' + m.id + '"><span class="grow"><span class="nm">' + esc(m.nickname) + '</span><span class="sm">No.' + m.no + '</span></span><span class="num">カード ' + m.uses + '回 / 来店 ' + m.visits + '回</span></button>'; }).join('')) +
       sec('1日に登録が急に増えた日', 'イベントなどで増えた場合は問題ありません。',
         r.bursts.map(function(b){ return '<div class="kv"><span>' + md(b.day) + '</span><span>' + b.registrations + '人</span></div>'; }).join(''));
     $('t-alerts').innerHTML = html || '<div class="card"><p class="empty">気になる投票は見つかっていません。</p></div>';
@@ -627,6 +665,14 @@ function loadOwner(pw){
   return rpc('el_owner_get', {p_pw:pw}).then(function(r){
     if(!r.ok){ ownerPw = ''; $('o-gate').hidden = false; $('o-body').hidden = true; $('o-gate-err').textContent = errText(r); return; }
     ownerPw = pw; ownerData = r; $('o-gate').hidden = true; $('o-body').hidden = false;
+    var isOwner = r.role === 'owner';
+    document.querySelectorAll('#o-body [data-perm]').forEach(function(el){
+      var pm = el.dataset.perm; el.hidden = pm === 'owner' ? !isOwner : !(isOwner || (r.perms && r.perms[pm]));
+    });
+    $('o-role').textContent = isOwner ? 'オーナーとして開いています。' : 'マネージャーとして開いています（オーナーが許可した項目だけ表示しています）。';
+    document.querySelectorAll('[data-mp]').forEach(function(c){ c.checked = !!(r.perms && r.perms[c.dataset.mp]); });
+    $('o-mgr-state').textContent = r.manager_set ? 'マネージャー用パスワード：設定済み' : 'マネージャー用パスワード：まだ決めていません（下の「パスワードの変更」で決めます）';
+    $('o-mgr-off').hidden = !r.manager_set;
     $('o-title').value = r.title; $('o-start').value = r.start_date || ''; $('o-end').value = r.end_date || '';
     $('o-cats').innerHTML = r.cats.map(function(c){
       return '<div class="catrow">' + av(c.photo) + '<span class="grow"><span class="nm">' + esc(c.name) + (c.status === 'graduated' ? '<span class="tag t-grad">卒業</span>' : '') + '</span></span>' +
@@ -637,8 +683,16 @@ function loadOwner(pw){
     }).join('') : '<p class="note">まだ記録はありません。</p>';
     $('o-purge-n').textContent = '対象：' + r.purgeable + '人';
     $('o-reset-n').textContent = '今の登録：会員 ' + r.counts.members + '人 ・ 来店 ' + r.counts.checkins + '件 ・ 票 ' + r.counts.votes + '票';
-    $('o-opts').innerHTML = '入口QRの切り替え：' + (r.qr_interval < 60 ? r.qr_interval + '秒' : Math.round(r.qr_interval / 60) + '分') + 'ごと<br>ボーナス：' +
-      (r.bonus_enabled && r.bonus_items.length ? r.bonus_items.map(function(it){ return esc(it.name) + '（' + (it.cap > 0 ? '1日' + it.cap + 'ptまで' : '上限なし') + '）'; }).join('、') : 'なし');
+    $('o-opts').innerHTML = '入口QRの切り替え：' + (r.qr_interval < 60 ? r.qr_interval + '秒' : Math.round(r.qr_interval / 60) + '分') + 'ごと<br>ボーナスカード：' +
+      (r.bonus_enabled ? '使う（' + (r.card_once !== false ? '使い捨て' : '使い回し') + '・' + (r.bonus_cap > 0 ? '1人1日' + r.bonus_cap + 'ptまで' : '上限なし') + '）' : '使わない');
+    cardOnce = r.card_once !== false;
+    $('o-cards-n').textContent = cardOnce ? '未使用のカード：' + r.cards_unused + '枚（使用済みを含めて ' + r.cards + '枚）' : '今あるカード：' + r.cards + '枚';
+    $('o-cards-desc').textContent = cardOnce
+      ? '使い捨て（1枚1回）の設定です。名刺サイズのカードをA4に10枚ずつ印刷して、ガチャのカプセルに入れてください。使ったカードはお客さんが持ち帰ってOKです。少なくなったら「＋ カードを足す」で追加して、新しい分だけ印刷します。'
+      : '使い回し（1枚1日1回）の設定です。名刺サイズのカードをA4に10枚ずつ印刷してラミネートし、ガチャのカプセルに入れます。読み取ったら返してもらって、また使います。';
+    $('o-cards-note').textContent = cardOnce
+      ? '「カードを印刷する」では、まだ使われていないカードだけを印刷します。使い方（使い捨て／使い回し）は、POSの ⚙️ →「ボーナスカード・入口QRの設定」で変えられます。'
+      : 'カードの写真を撮って何度も使われている様子があれば（「要確認」タブに出ます）、「全部作り直す」で新しいカードに入れ替えてください。';
   });
 }
 $('o-go').onclick = function(){ var p = $('o-pw').value; if(!p){ $('o-gate-err').textContent = 'パスワードを入力してください。'; return; } loadOwner(p).catch(function(){ $('o-gate-err').textContent = '通信できませんでした。'; }); };
@@ -659,6 +713,7 @@ $('o-pw-save').onclick = function(){
     if(kind === 'owner') ownerPw = nw;
     if(kind === 'contact') contactPw = '';
     if(kind === 'staff'){ staffPw = nw; ss('wc_el_spw', nw); }
+    if(kind === 'manager') loadOwner(ownerPw);
     toast('変更しました' + (kind === 'staff' ? '。POSのQR画面でも新しいパスワードを入れてください' : ''));
   }).catch(function(){ $('o-pw-err').textContent = '通信できませんでした。'; });
 };
@@ -679,6 +734,67 @@ $('o-reset').onclick = function(){
     if(!r.ok){ $('o-reset-err').textContent = errText(r); return; }
     toast(r.count + '人分のテストデータを消しました'); loadOwner(ownerPw);
   }).catch(function(){ $('o-reset-err').textContent = '通信できませんでした。'; });
+};
+
+// マネージャーの権限
+$('o-mgr-save').onclick = function(){
+  var perms = {}; document.querySelectorAll('[data-mp]').forEach(function(c){ perms[c.dataset.mp] = c.checked; });
+  $('o-mgr-err').textContent = '';
+  rpc('el_owner_set_manager', {p_pw:ownerPw, p_perms:perms, p_off:false}).then(function(r){
+    if(!r.ok){ $('o-mgr-err').textContent = errText(r); return; }
+    toast('マネージャーにできることを保存しました');
+  }).catch(function(){ $('o-mgr-err').textContent = '通信できませんでした。'; });
+};
+$('o-mgr-off').onclick = function(){
+  if(!confirm('マネージャー用パスワードを無効にします。マネージャーは設定を開けなくなります。よろしいですか？')) return;
+  var perms = {}; document.querySelectorAll('[data-mp]').forEach(function(c){ perms[c.dataset.mp] = c.checked; });
+  rpc('el_owner_set_manager', {p_pw:ownerPw, p_perms:perms, p_off:true}).then(function(r){
+    if(!r.ok){ $('o-mgr-err').textContent = errText(r); return; }
+    toast('マネージャー用パスワードを無効にしました'); loadOwner(ownerPw);
+  }).catch(function(){ $('o-mgr-err').textContent = '通信できませんでした。'; });
+};
+
+// ボーナスカード
+var cardOnce = true;
+function cardsMake(count, renew){
+  return rpc('el_owner_cards_make', {p_pw:ownerPw, p_count:count, p_renew:renew}).then(function(r){
+    if(!r.ok){ $('o-cards-err').textContent = r.error === 'count' ? '1〜200枚の数字を入れてください。' : errText(r); return; }
+    toast('カードは' + r.count + '枚になりました。印刷してください'); loadOwner(ownerPw);
+  }).catch(function(){ $('o-cards-err').textContent = '通信できませんでした。'; });
+}
+$('o-cards-add').onclick = function(){
+  $('o-cards-err').textContent = '';
+  var n = prompt('何枚足しますか？（10枚でA4 1ページ）', '10'); if(n === null) return;
+  cardsMake(parseInt(n, 10), false);
+};
+$('o-cards-renew').onclick = function(){
+  $('o-cards-err').textContent = '';
+  if(!confirm('今のカードはすべて使えなくなります。新しいカードを印刷して入れ替える必要があります。よろしいですか？')) return;
+  var n = prompt('新しく何枚作りますか？', '20'); if(n === null) return;
+  cardsMake(parseInt(n, 10), true);
+};
+$('o-cards-print').onclick = function(){
+  $('o-cards-err').textContent = '';
+  rpc('el_owner_cards', {p_pw:ownerPw}).then(function(r){
+    if(!r.ok){ $('o-cards-err').textContent = errText(r); return; }
+    var list = cardOnce ? r.cards.filter(function(c){ return !c.uses; }) : r.cards;
+    if(!list.length){ $('o-cards-err').textContent = cardOnce ? '未使用のカードがありません。「＋ カードを足す」で作ってください。' : 'まだカードがありません。「＋ カードを足す」で作ってください。'; return; }
+    var base = new URL('election.html', location.href).href, pages = [];
+    for(var i = 0; i < list.length; i += 10){
+      pages.push('<section class="page bcpage">' + list.slice(i, i + 10).map(function(c){
+        return '<div class="bc"><div class="q">' + qrSvg(base + '#c=' + c.code) + '</div><div class="t"><p class="k">cat cafe WE CATS</p>' +
+          '<h4>🎁 総選挙<br>ボーナスカード</h4><p>スマホで読み取ると推し猫に<b>+1pt</b>！</p>' +
+          (cardOnce ? '<p>来店を記録した日に使えます。<br>1枚1回・使ったら持ち帰ってOK</p>' : '<p>来店を記録した日だけ使えます。<br>読み取ったらスタッフに返してね</p>') +
+          '<p class="no">No.' + c.no + '</p></div></div>';
+      }).join('') + '</section>');
+    }
+    $('pages').innerHTML = pages.join('');
+    $('print-hint').textContent = '印刷の設定は「用紙A4・縦・倍率100%・余白なし」にしてください。点線で切って' + (cardOnce ? '使います（ラミネートは不要です）。' : 'ラミネートします。') + '（' + list.length + '枚）';
+    var st = document.getElementById('page-size'); if(st) st.remove();
+    st = document.createElement('style'); st.id = 'page-size'; st.textContent = '@media print{@page{size:A4 portrait;margin:0}}';
+    document.head.appendChild(st);
+    document.body.classList.add('printmode'); fitPages(210); window.scrollTo(0, 0);
+  }).catch(function(){ $('o-cards-err').textContent = '通信できませんでした。'; });
 };
 
 // 猫の追加・編集

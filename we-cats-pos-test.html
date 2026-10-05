@@ -771,7 +771,7 @@
 // WE CATS POS × 入口QR（来店チェックイン）・猫総選挙 の連携
 // we-cats-pos.html の app.js の後に読み込みます。app.js は書き換えません。
 //  ・新規画面：入口のQRを読み取った会員を表示 → タップで区分・常連さんを自動入力
-//  ・退店画面：結びついた会員に、総選挙ボーナス（ガチャなど）を入れる
+//  ・退店画面：この組に結びついた会員の表示（結びつけ忘れの修正）
 //  ・⚙️メニュー：入口QR・総選挙管理・ボーナスとQRの設定
 // =====================================================
 (function(){
@@ -793,8 +793,8 @@
   }
   var ERR = {wrong_password:'パスワードが違います', locked:'間違いが続いたため10分間ロック中です',
     setup_needed:'先に総選挙の管理画面でパスワードを決めてください', interval:'切り替え間隔を選んでください',
-    closed:'総選挙の期間外です', disabled:'ボーナスはオフになっています', graduated:'推し猫が卒業しています。お客さまのスマホで推し猫を選び直してもらってください',
-    too_many:'対象の商品は10個までです'};
+    closed:'総選挙の期間外です', disabled:'ボーナスはオフになっています', cap:'上限を選んでください',
+    no_permission:'この設定の変更は、オーナーから許可されていません'};
   function errText(r){ return ERR[r && r.error] || '処理できませんでした（通信状況を確認してください）'; }
 
   // 非表示にした読み取り（今日の分だけ覚える）
@@ -869,7 +869,7 @@
         '<span style="font-weight:400">' + (state.lastAt ? hm(state.lastAt) + ' 更新' : '') + '</span></div>' +
       (rows || '<div class="elc-note">まだ読み取りはありません。読み取りがあると自動で出てきます。</div>') +
       (sel.length ? '<div class="elc-note" style="color:var(--tx)">✅ ' + sel.map(function(k){ return esc(k.nickname) + '(No.' + k.member_no + ')'; }).join('、') +
-        ' を選択中。下で来店パターンと人数を選んで「入店登録」すると、この組に結びつきます。</div>'
+        ' を選択中。アンケートの推し猫と来店経験も自動で入れたので、会員さんには聞かなくて大丈夫です。来店パターンと人数を選んで「入店登録」すると、この組に結びつきます。</div>'
         : (rows ? '<div class="elc-note">タップすると「お客様区分」と「常連さん」が自動で入ります。グループで何人か読み取った場合は、まとめて選べます。</div>' : '')) +
       '</div>';
     updateBadge();
@@ -895,6 +895,18 @@
       }
       mem.value = label;
     }
+    // アンケートの「推し猫はいますか？」に会員の推し猫を入れる（POSの猫の名前と同じとき）
+    if(typeof togAqCat === 'function'){
+      sel.forEach(function(k){
+        var chip = Array.prototype.find.call(document.querySelectorAll('#aq-cats .chip'), function(c){ return c.getAttribute('data-v') === k.cat; });
+        if(chip && !chip.classList.contains('on2')) togAqCat(chip);
+      });
+    }
+    // 「猫カフェは初めてですか？」：このお店に2回以上来ている会員は自動で入れる
+    var most = Math.max.apply(null, sel.map(function(k){ return k.total_visits; }));
+    var v = most >= 4 ? 'よく来る' : most >= 2 ? '2〜3回目' : '';
+    var exp = v && Array.prototype.find.call(document.querySelectorAll('#aq-exp .chip'), function(c){ return c.getAttribute('data-v') === v; });
+    if(exp && !exp.classList.contains('on') && typeof selOne === 'function') selOne(exp, 'aq-exp');
   }
   function onBoxClick(e){
     var a = e.target.closest('[data-act]');
@@ -951,7 +963,7 @@
   // =====================================================
   // 退店画面：総選挙ボーナス
   // =====================================================
-  var co = {guest:null, data:null, qty:{}, timers:{}};
+  var co = {guest:null, data:null};
   function coBox(){
     var b = $('elc-co');
     var tot = $('co-tot'); if(!tot) return null;
@@ -964,62 +976,42 @@
     return b;
   }
   function loadCo(guestId){
-    co.guest = String(guestId); co.data = null; co.qty = {};
+    co.guest = String(guestId); co.data = null;
     var b = coBox(); if(!b) return;
     b.innerHTML = '';
     if(!pw()) return;
     rpc('el_pos_guest', {p_pw:pw(), p_guest:co.guest}).then(function(r){
       if(co.guest !== String(guestId)) return;
       if(!r.ok){ b.innerHTML = ''; return; }
-      co.data = r;
-      r.linked.forEach(function(k){ co.qty[k.id] = Object.assign({}, k.bonus_items || {}); });
-      renderCo();
+      co.data = r; renderCo();
     }).catch(function(){});
   }
+  // 退店画面：この組の会員の表示と、結びつけ忘れたときの結びつけ（ボーナスはお客さんがカードで入れる）
   function renderCo(){
     var b = coBox(), r = co.data; if(!b || !r) return;
-    var cfg = r.config || {}, open = cfg.period === 'open', bonusOn = open && cfg.bonus_enabled && (cfg.bonus_items || []).length;
-    if(!r.linked.length && !(open && r.unclaimed.length)){ b.innerHTML = ''; return; }
-    var h = '<div class="card" style="padding:12px 14px;margin-bottom:12px">' +
-      '<div class="ct" style="margin-bottom:4px">' + (bonusOn ? '🗳️ 総選挙ボーナス' : '📱 入口QRの会員') + '</div>';
+    var open = (r.config || {}).period === 'open';
+    if(!r.linked.length && !r.unclaimed.length){ b.innerHTML = ''; return; }
+    var h = '<div class="card" style="padding:12px 14px;margin-bottom:12px"><div class="ct" style="margin-bottom:4px">📱 入口QRの会員</div>';
     r.linked.forEach(function(k){
       h += '<div style="padding:8px 0 4px;border-top:1px solid var(--bd);margin-top:6px">' +
         '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">No.' + k.member_no + ' ' + esc(k.nickname) + ' さん</b>' +
         '<button class="elc-link" type="button" data-unlink="' + k.id + '">外す</button></div>' +
-        '<div style="font-size:11px;color:var(--tx2)" id="elc-info-' + k.id + '">推し猫：' + esc(k.cat) + (k.cat_status === 'graduated' ? '（卒業）' : '') + '　今年' + k.year_visits + '回目' +
-        (open ? '　応援 ' + k.points + 'pt' : '') + '</div>';
-      if(bonusOn){
-        (cfg.bonus_items || []).forEach(function(it){
-          var q = +(co.qty[k.id] || {})[it.name] || 0;
-          h += '<div class="elc-item"><span class="nm">' + esc(it.name) + '<small>' + (it.cap > 0 ? '1日' + it.cap + 'ptまで' : '上限なし') + '</small></span>' +
-            '<button class="cb" type="button" data-q="-1" data-k="' + k.id + '" data-it="' + esc(it.name) + '" style="width:34px;height:34px">－</button>' +
-            '<span class="q">' + q + '</span>' +
-            '<button class="cb" type="button" data-q="1" data-k="' + k.id + '" data-it="' + esc(it.name) + '" style="width:34px;height:34px">＋</button></div>';
-        });
-        h += '<div style="font-size:12px;text-align:right;color:var(--ok);font-weight:700" id="elc-st-' + k.id + '">' + (k.bonus > 0 ? 'ボーナス +' + k.bonus + 'pt 入っています' : '') + '</div>';
-      }
-      h += '</div>';
+        '<div style="font-size:11px;color:var(--tx2)">推し猫：' + esc(k.cat) + (k.cat_status === 'graduated' ? '（卒業）' : '') + '　今年' + k.year_visits + '回目' +
+        (open ? '　応援 ' + k.points + 'pt' + (k.bonus > 0 ? '（今日のボーナス +' + k.bonus + '）' : '') : '') + '</div></div>';
     });
-    if(open && r.unclaimed.length){
+    if(r.unclaimed.length){
       h += '<div class="elc-note">' + (r.linked.length ? 'ほかに今日読み取った方：' : 'この組に結びついた会員はいません。今日読み取った方から選んで結びつけられます：') + '</div>' +
         r.unclaimed.slice(0, 8).map(function(k){
           return '<div class="elc-row" role="button" tabindex="0" data-claim="' + k.id + '"><span class="t">' + hm(k.at) + '</span>' +
             '<span class="n">No.' + k.member_no + ' ' + esc(k.nickname) + ' さん<small>推し猫：' + esc(k.cat) + '</small></span><span class="v">結びつける</span></div>';
         }).join('');
     }
-    if(bonusOn) h += '<div class="elc-note">ガチャなどを利用したら＋を押してください。押した時点でボーナスが入ります（物販タブへの記録は今まで通り別に行ってください）。</div>';
     b.innerHTML = h + '</div>';
   }
   function onCoClick(e){
-    var q = e.target.closest('[data-q]');
-    if(q){
-      var k = +q.dataset.k, it = q.dataset.it, m = co.qty[k] || (co.qty[k] = {});
-      m[it] = Math.max(0, (+m[it] || 0) + (+q.dataset.q));
-      renderCo(); sendBonus(k); return;
-    }
     var u = e.target.closest('[data-unlink]');
     if(u){
-      if(!confirm('この会員の結びつけを外しますか？（入れたボーナスも取り消されます）')) return;
+      if(!confirm('この会員の結びつけを外しますか？')) return;
       rpc('el_pos_unlink', {p_pw:pw(), p_id:+u.dataset.unlink}).then(function(r){
         if(!r.ok) return msg(errText(r), true);
         msg('結びつけを外しました'); loadCo(co.guest); poll();
@@ -1033,20 +1025,6 @@
         msg('会員を結びつけました'); loadCo(co.guest); poll();
       }).catch(function(){ msg('通信できませんでした', true); });
     }
-  }
-  function sendBonus(k){
-    clearTimeout(co.timers[k]);
-    var st = $('elc-st-' + k); if(st){ st.style.color = 'var(--tx2)'; st.textContent = '保存中…'; }
-    co.timers[k] = setTimeout(function(){
-      rpc('el_pos_bonus', {p_pw:pw(), p_checkin:k, p_items:co.qty[k] || {}}).then(function(r){
-        var st2 = $('elc-st-' + k);
-        if(!r.ok){ if(st2){ st2.style.color = 'var(--ng)'; st2.textContent = errText(r); } return; }
-        var row = co.data && co.data.linked.find(function(x){ return x.id === k; });
-        if(row){ row.bonus = r.bonus; row.points = r.points;
-          var inf = $('elc-info-' + k); if(inf) inf.textContent = '推し猫：' + row.cat + (row.cat_status === 'graduated' ? '（卒業）' : '') + '　今年' + row.year_visits + '回目　応援 ' + r.points + 'pt'; }
-        if(st2){ st2.style.color = 'var(--ok)'; st2.textContent = r.bonus > 0 ? 'ボーナス +' + r.bonus + 'pt 入りました' : 'ボーナスなし'; }
-      }).catch(function(){ var st3 = $('elc-st-' + k); if(st3){ st3.style.color = 'var(--ng)'; st3.textContent = '通信できませんでした。もう一度押してください'; } });
-    }, 500);
   }
   var origOCO = window.oCO;
   if(typeof origOCO === 'function'){
@@ -1084,8 +1062,6 @@
     }
     if(id === 'elc-pw-del'){ ls(PW_KEY, null); state.checkins = []; cModal('m-elc'); renderBox(); msg('消しました'); }
     if(id === 'elc-o-go') ownerLogin();
-    if(id === 'elc-add') addItemRow({name:'', cap:1});
-    if(e.target.dataset && e.target.dataset.delrow !== undefined){ e.target.closest('.elc-set-row').remove(); }
     if(id === 'elc-save') saveOptions();
   });
   modal.addEventListener('keydown', function(e){
@@ -1096,59 +1072,43 @@
 
   var ownerPwMem = '';
   function openSettings(){
-    openM('⚙️ 総選挙ボーナス・入口QRの設定',
-      '<div class="elc-note" style="margin:0 0 10px">会員管理画面で決めた「オーナー用パスワード」で開きます。</div>' +
-      '<div class="fg"><input class="fc" id="elc-opw" type="password" autocomplete="off" placeholder="オーナー用パスワード"></div>' +
+    openM('⚙️ ボーナスカード・入口QRの設定',
+      '<div class="elc-note" style="margin:0 0 10px">会員管理画面で決めた「オーナー用」または「マネージャー用」のパスワードで開きます。</div>' +
+      '<div class="fg"><input class="fc" id="elc-opw" type="password" autocomplete="off" placeholder="オーナー用・マネージャー用パスワード"></div>' +
       '<div id="elc-o-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
       '<button class="btn bp bf" type="button" id="elc-o-go">開く</button>');
     if(ownerPwMem){ $('elc-opw').value = ownerPwMem; ownerLogin(); }
     else setTimeout(function(){ var i = $('elc-opw'); if(i) i.focus(); }, 80);
-  }
-  function itemOptions(sel){
-    var names = (MI || []).map(function(m){ return m.n; });
-    if(sel && names.indexOf(sel) < 0) names.unshift(sel);
-    return '<option value="">商品を選ぶ</option>' + names.map(function(n){ return '<option' + (n === sel ? ' selected' : '') + '>' + esc(n) + '</option>'; }).join('');
-  }
-  function capOptions(c){
-    return [[1,'1日1ptまで'],[2,'1日2ptまで'],[3,'1日3ptまで'],[5,'1日5ptまで'],[0,'上限なし']].map(function(o){
-      return '<option value="' + o[0] + '"' + (o[0] === c ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
-  }
-  function addItemRow(it){
-    var d = document.createElement('div'); d.className = 'elc-set-row';
-    d.innerHTML = '<select class="fc elc-it-n">' + itemOptions(it.name) + '</select><select class="fc elc-it-c">' + capOptions(+it.cap) + '</select>' +
-      '<button class="btn bs bsm" type="button" data-delrow aria-label="削除" style="padding:6px 0">✕</button>';
-    $('elc-items').appendChild(d);
   }
   function ownerLogin(){
     var v = $('elc-opw').value;
     if(!v){ $('elc-o-err').textContent = 'パスワードを入力してください'; return; }
     rpc('el_owner_get', {p_pw:v}).then(function(r){
       if(!r.ok){ ownerPwMem = ''; $('elc-o-err').textContent = errText(r); return; }
+      if(r.role === 'manager' && !(r.perms && r.perms.options)){ $('elc-o-err').textContent = ERR.no_permission; return; }
       ownerPwMem = v;
       var iv = r.qr_interval;
       var ivs = [[20,'20秒（おすすめ）'],[30,'30秒'],[60,'1分'],[300,'5分'],[1800,'30分']];
       if(!ivs.some(function(x){ return x[0] === iv; })) ivs.push([iv, iv + '秒']);
       $('elc-m-body').innerHTML =
         '<div class="card" style="padding:12px 14px"><div class="ct">🎁 総選挙ボーナス</div>' +
-          '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px"><input type="checkbox" id="elc-b-on"' + (r.bonus_enabled ? ' checked' : '') + ' style="width:20px;height:20px"> ボーナス投票を使う</label>' +
-          '<div class="fl">対象の商品と、1日にもらえるボーナスの上限</div><div id="elc-items"></div>' +
-          '<button class="btn bso bsm" type="button" id="elc-add" style="margin-top:4px">＋ 商品を追加</button>' +
-          '<div class="elc-note">総選挙の期間中、退店画面に「＋」ボタンが出ます。1個につき1pt、上限まで入ります。</div></div>' +
+          '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px"><input type="checkbox" id="elc-b-on"' + (r.bonus_enabled ? ' checked' : '') + ' style="width:20px;height:20px"> ボーナスカードを使う</label>' +
+          '<div class="fg"><label class="fl">1人が1日にもらえるボーナスの上限</label><select class="fc" id="elc-cap">' +
+          [[1,'1日1ptまで（おすすめ）'],[2,'1日2ptまで'],[3,'1日3ptまで'],[5,'1日5ptまで'],[0,'上限なし']].map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === r.bonus_cap ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+          '<div class="fg"><label class="fl">カードの使い方</label><select class="fc" id="elc-once">' +
+            '<option value="1"' + (r.card_once !== false ? ' selected' : '') + '>使い捨て（1枚1回・お客さんが持ち帰ってOK）</option>' +
+            '<option value="0"' + (r.card_once === false ? ' selected' : '') + '>使い回し（1枚1日1回・返してもらう）</option></select></div>' +
+          '<div class="elc-note">ガチャに入れたボーナスカードを、お客さんが自分のスマホで読み取ると1pt入ります（来店を記録した日だけ）。未使用のカード：' + r.cards_unused + '枚。カードの印刷・追加は管理画面の「⚙️ 設定」から行います。</div></div>' +
         '<div class="card" style="padding:12px 14px"><div class="ct">📱 入口QR</div>' +
           '<div class="fg"><label class="fl">QRコードが切り替わる間隔</label><select class="fc" id="elc-iv">' +
           ivs.map(function(x){ return '<option value="' + x[0] + '"' + (x[0] === iv ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
           '<div class="elc-note">表示中のコードと、1つ前のコードまで読み取れます。短いほど、写真を撮って店の外から使うズルがしにくくなります。</div></div>' +
         '<div id="elc-s-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
         '<button class="btn bp bf" type="button" id="elc-save">保存する</button>';
-      (r.bonus_items || []).forEach(addItemRow);
-      if(!(r.bonus_items || []).length) addItemRow({name:'ガチャ', cap:1});
     }).catch(function(){ $('elc-o-err').textContent = '通信できませんでした'; });
   }
   function saveOptions(){
-    var items = Array.prototype.map.call(document.querySelectorAll('#elc-items .elc-set-row'), function(row){
-      return {name:row.querySelector('.elc-it-n').value, cap:+row.querySelector('.elc-it-c').value};
-    }).filter(function(x){ return x.name; });
-    rpc('el_owner_save_options', {p_pw:ownerPwMem, p_qr_interval:+$('elc-iv').value, p_bonus_enabled:$('elc-b-on').checked, p_bonus_items:items}).then(function(r){
+    rpc('el_owner_save_options', {p_pw:ownerPwMem, p_qr_interval:+$('elc-iv').value, p_bonus_enabled:$('elc-b-on').checked, p_bonus_cap:+$('elc-cap').value, p_card_once:$('elc-once').value === '1'}).then(function(r){
       if(!r.ok){ $('elc-s-err').textContent = errText(r); return; }
       cModal('m-elc'); msg('保存しました'); poll();
     }).catch(function(){ $('elc-s-err').textContent = '通信できませんでした'; });
@@ -1162,7 +1122,7 @@
     wrap.innerHTML =
       '<button class="btn bso bf" type="button" data-go="election-qr.html">📱 入口QR（来店・総選挙）</button>' +
       '<button class="btn bso bf" type="button" data-go="election-admin.html">🗳️ 総選挙・会員の管理</button>' +
-      '<button class="btn bso bf" type="button" data-m="settings">⚙️ 総選挙ボーナス・入口QRの設定</button>' +
+      '<button class="btn bso bf" type="button" data-m="settings">⚙️ ボーナスカード・入口QRの設定</button>' +
       '<button class="btn bso bf" type="button" data-m="pw">🔑 入口QR連携のパスワード</button>';
     wrap.addEventListener('click', function(e){
       var b = e.target.closest('button'); if(!b) return;
