@@ -59,6 +59,7 @@ h1,h2,h3{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;font-weight:700
 .btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}
 .btn.full{width:100%}
 .btn.ng{color:var(--ng);border-color:#f2c4c4}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 .btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .err{color:var(--ng);font-size:13px;margin-top:6px}
 .err:empty{display:none}
@@ -211,6 +212,20 @@ body.printmode #print-area{display:block}
         <button class="btn full" id="o-addcat" type="button" style="margin-top:10px">＋ 猫を追加する</button>
         <p class="note">卒業した猫は「卒業にする」を押してください。その子を総選挙で応援していた人は、次の来店時に応援する子を選び直します。</p>
       </div>
+      <div class="card" data-perm="perks">
+        <h3>来店のごほうび・称号</h3>
+        <p class="note" style="margin-top:0">入口QRを読み取った来店回数で、ごほうびと称号が自動で決まります。お客さんの推し猫カードと、POSの「新規」画面に表示されます。ごほうびを渡したら、POSで「渡した」を押してください。</p>
+        <div class="f"><label for="pk-basis">来店回数の数え方</label>
+          <select class="in" id="pk-basis"><option value="total">通算（ずっと積み上がる）</option><option value="year">毎年リセット（1月1日に0回から）</option></select></div>
+        <label style="display:block;font-size:12px;color:var(--tx2);margin-bottom:4px;font-weight:500">ごほうび（何回目の来店で、何を渡すか）</label>
+        <div id="pk-rewards"></div>
+        <button class="btn" type="button" id="pk-add-r" style="margin:4px 0 12px">＋ ごほうびを追加</button>
+        <label style="display:block;font-size:12px;color:var(--tx2);margin-bottom:4px;font-weight:500">称号（何回以上の来店で、なんと呼ぶか）</label>
+        <div id="pk-titles"></div>
+        <button class="btn" type="button" id="pk-add-t" style="margin:4px 0 12px">＋ 称号を追加</button>
+        <button class="btn pri full" id="pk-save" type="button">保存する</button><p class="err" id="pk-err"></p>
+        <p class="note">「1回目」のごほうびは、初めて登録した日のおまけになります。</p>
+      </div>
       <div class="card" data-perm="owner">
         <h3>マネージャー（オーナーが指定したスタッフ）</h3>
         <p class="note" style="margin-top:0">マネージャー用パスワードを伝えた人は、下で許可した操作ができます。パスワードの変更・テストデータの削除・個人情報の削除・連絡先の閲覧記録は、オーナーだけができます。</p>
@@ -219,6 +234,7 @@ body.printmode #print-area{display:block}
         <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="period" style="width:20px;height:20px"> 総選挙のタイトル・期間</label>
         <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="cards" style="width:20px;height:20px"> ボーナスカードの作成・印刷</label>
         <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="options" style="width:20px;height:20px"> ボーナスの上限・入口QRの間隔（POSの⚙️）</label>
+        <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="perks" style="width:20px;height:20px"> 来店のごほうび・称号の設定</label>
         <label class="chk" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" data-mp="votes" style="width:20px;height:20px"> 怪しい票の無効化</label>
         <button class="btn pri full" id="o-mgr-save" type="button" style="margin-top:8px">許可する内容を保存</button>
         <button class="btn ng full" id="o-mgr-off" type="button" style="margin-top:8px">マネージャー用パスワードを無効にする</button>
@@ -251,7 +267,7 @@ body.printmode #print-area{display:block}
       </div>
       <div class="card" data-perm="owner">
         <h3>テストデータを消す</h3>
-        <p class="note" style="margin-top:0">テストで登録した会員・来店記録・票をすべて消し、会員番号を1番から始め直します。猫・期間・パスワード・ボーナス設定は残ります。<b>本番が始まったあとは押さないでください。</b></p>
+        <p class="note" style="margin-top:0">テストで登録した会員・来店記録・票をすべて消し、会員番号を1番から始め直します。猫・期間・パスワード・ボーナス設定は残ります。<b>本番が始まったあとは押さないでください。</b>誤操作を防ぐため、会員が20人を超えると押せなくなります。</p>
         <p style="margin:8px 0" id="o-reset-n"></p>
         <button class="btn ng full" id="o-reset" type="button">テストデータを消す</button><p class="err" id="o-reset-err"></p>
       </div>
@@ -303,7 +319,7 @@ var PAW = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><elli
 var ERR = {wrong_password:'パスワードが違います。', locked:'間違いが続いたため10分間ロック中です。', too_short:'4文字以上にしてください。',
   dates:'終了日は開始日より後にしてください。', name:'名前は20文字以内で入力してください。', not_ended:'総選挙が終了してから実行できます。',
   setup_needed:'先にパスワードの初期設定をしてください。', same:'3つとも別のパスワードにしてください。', already_setup:'パスワードはすでに設定されています。再読み込みしてください。',
-  confirm:'確認の文字が違います。', no_permission:'この操作はオーナーから許可されていません。'};
+  confirm:'確認の文字が違います。', live:'会員が20人を超えているため、本番の運用中と判断して消せないようにしています。', no_permission:'この操作はオーナーから許可されていません。'};
 
 function rpc(fn, args){
   return fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method:'POST',
@@ -673,6 +689,7 @@ function loadOwner(pw){
     document.querySelectorAll('[data-mp]').forEach(function(c){ c.checked = !!(r.perms && r.perms[c.dataset.mp]); });
     $('o-mgr-state').textContent = r.manager_set ? 'マネージャー用パスワード：設定済み' : 'マネージャー用パスワード：まだ決めていません（下の「パスワードの変更」で決めます）';
     $('o-mgr-off').hidden = !r.manager_set;
+    renderPerks(r.perks || {});
     $('o-title').value = r.title; $('o-start').value = r.start_date || ''; $('o-end').value = r.end_date || '';
     $('o-cats').innerHTML = r.cats.map(function(c){
       return '<div class="catrow">' + av(c.photo) + '<span class="grow"><span class="nm">' + esc(c.name) + (c.status === 'graduated' ? '<span class="tag t-grad">卒業</span>' : '') + '</span></span>' +
@@ -682,7 +699,9 @@ function loadOwner(pw){
       return '<div class="kv"><span>' + esc(l.staff_name || '名前なし') + ' が No.' + esc(l.no) + '（' + esc(l.nickname) + '）を表示</span><span>' + mdt(l.viewed_at) + '</span></div>';
     }).join('') : '<p class="note">まだ記録はありません。</p>';
     $('o-purge-n').textContent = '対象：' + r.purgeable + '人';
-    $('o-reset-n').textContent = '今の登録：会員 ' + r.counts.members + '人 ・ 来店 ' + r.counts.checkins + '件 ・ 票 ' + r.counts.votes + '票';
+    $('o-reset-n').textContent = '今の登録：会員 ' + r.counts.members + '人 ・ 来店 ' + r.counts.checkins + '件 ・ 票 ' + r.counts.votes + '票' +
+      (r.counts.members > 20 ? '（会員が20人を超えたので、本番の運用中として押せなくなっています）' : '');
+    $('o-reset').disabled = r.counts.members > 20;
     $('o-opts').innerHTML = '入口QRの切り替え：' + (r.qr_interval < 60 ? r.qr_interval + '秒' : Math.round(r.qr_interval / 60) + '分') + 'ごと<br>ボーナスカード：' +
       (r.bonus_enabled ? '使う（' + (r.card_once !== false ? '使い捨て' : '使い回し') + '・' + (r.bonus_cap > 0 ? '1人1日' + r.bonus_cap + 'ptまで' : '上限なし') + '）' : '使わない');
     cardOnce = r.card_once !== false;
@@ -734,6 +753,36 @@ $('o-reset').onclick = function(){
     if(!r.ok){ $('o-reset-err').textContent = errText(r); return; }
     toast(r.count + '人分のテストデータを消しました'); loadOwner(ownerPw);
   }).catch(function(){ $('o-reset-err').textContent = '通信できませんでした。'; });
+};
+
+// 来店のごほうび・称号
+function pkRow(kind, v, t){
+  var d = document.createElement('div');
+  d.style.cssText = 'display:grid;grid-template-columns:118px minmax(0,1fr) 40px;gap:6px;align-items:center;margin-bottom:6px';
+  d.className = 'pkrow-' + kind;
+  d.innerHTML = '<div style="display:flex;align-items:center;gap:4px"><input class="in pk-v" type="number" inputmode="numeric" min="' + (kind === 't' ? 0 : 1) + '" max="999" value="' + (v == null ? '' : v) + '" style="padding:8px"><span class="sm">' + (kind === 't' ? '回〜' : '回目') + '</span></div>' +
+    '<input class="in pk-t" maxlength="' + (kind === 't' ? 20 : 30) + '" placeholder="' + (kind === 't' ? '例：常連さん' : '例：チェキ1枚') + '" value="' + esc(t || '') + '">' +
+    '<button class="btn" type="button" data-pkdel style="padding:8px 0">✕</button>';
+  $(kind === 't' ? 'pk-titles' : 'pk-rewards').appendChild(d);
+}
+function renderPerks(pk){
+  $('pk-basis').value = pk.basis === 'year' ? 'year' : 'total';
+  $('pk-rewards').innerHTML = ''; $('pk-titles').innerHTML = '';
+  (pk.rewards || []).forEach(function(r){ pkRow('r', r.visits, r.item); });
+  (pk.titles || []).forEach(function(t){ pkRow('t', t.visits, t.name); });
+  if(!(pk.rewards || []).length) pkRow('r', 1, 'プチおやつ');
+}
+$('pk-add-r').onclick = function(){ pkRow('r', null, ''); };
+$('pk-add-t').onclick = function(){ pkRow('t', null, ''); };
+$('o-body').addEventListener('click', function(e){ if(e.target.closest('[data-pkdel]')) e.target.closest('[data-pkdel]').parentNode.remove(); });
+$('pk-save').onclick = function(){
+  var rows = function(sel, key){ return Array.prototype.map.call(document.querySelectorAll(sel), function(d){
+    var o = {visits: d.querySelector('.pk-v').value}; o[key] = d.querySelector('.pk-t').value; return o; }); };
+  $('pk-err').textContent = '';
+  rpc('el_owner_save_perks', {p_pw:ownerPw, p_perks:{basis:$('pk-basis').value, rewards:rows('.pkrow-r', 'item'), titles:rows('.pkrow-t', 'name')}}).then(function(r){
+    if(!r.ok){ $('pk-err').textContent = r.error === 'too_many' ? 'ごほうび・称号はそれぞれ20個までです。' : errText(r); return; }
+    renderPerks(r.perks); toast('保存しました');
+  }).catch(function(){ $('pk-err').textContent = '通信できませんでした。'; });
 };
 
 // マネージャーの権限

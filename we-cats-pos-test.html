@@ -818,6 +818,9 @@
     '.elc-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed var(--bd)}' +
     '.elc-item .nm{flex:1;font-size:13px}.elc-item .nm small{color:var(--tx2);font-size:11px;margin-left:4px}' +
     '.elc-item .q{min-width:28px;text-align:center;font-weight:800;font-size:18px}' +
+    '.elc-gift{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;font-weight:700;color:#a87a18;background:#fbf0dc;border-radius:10px;padding:5px 8px}' +
+    '.elc-gift span{flex:1}.elc-gift button{border:1.5px solid #e0a830;background:#fff;color:#a87a18;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}' +
+    '.elc-ttl{display:inline-block;font-size:10px;background:#eeebfa;color:#6a5fb0;border-radius:8px;padding:0 6px;margin-left:4px;vertical-align:1px}' +
     '.elc-link{background:none;border:none;color:var(--ac);text-decoration:underline;font-size:12px;cursor:pointer;padding:0;font-family:inherit}' +
     '.elc-set-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 36px;gap:6px;margin-bottom:6px;align-items:center}';
   document.head.appendChild(css);
@@ -859,7 +862,8 @@
       return '<div class="elc-row' + (on ? ' on' : '') + '" role="button" tabindex="0" data-k="' + k.id + '">' +
         '<span class="t">' + hm(k.at) + '</span>' +
         '<span class="n">No.' + k.member_no + ' ' + esc(k.nickname) + ' さん' + (k.total_visits <= 1 ? '<span class="elc-first">はじめての読み取り</span>' : '') +
-          '<small>推し猫：' + esc(k.cat) + '</small></span>' +
+          (k.perk && k.perk.title ? '<span class="elc-ttl">' + esc(k.perk.title) + '</span>' : '') +
+          '<small>推し猫：' + esc(k.cat) + '</small>' + giftHtml(k) + '</span>' +
         '<span class="v">今年' + k.year_visits + '回目</span>' +
         '<button class="x" type="button" data-hide="' + k.id + '" aria-label="この表示を消す">✕</button></div>';
     }).join('');
@@ -873,6 +877,23 @@
         : (rows ? '<div class="elc-note">タップすると「お客様区分」と「常連さん」が自動で入ります。グループで何人か読み取った場合は、まとめて選べます。</div>' : '')) +
       '</div>';
     updateBadge();
+  }
+  // 渡していないごほうび
+  function giftHtml(k){
+    return ((k.perk && k.perk.pending) || []).map(function(r){
+      return '<div class="elc-gift"><span>🎁 ごほうび：' + esc(r.item) + '（' + r.visits + '回目）</span>' +
+        '<button type="button" data-give="' + k.id + ':' + r.visits + '">渡した</button></div>';
+    }).join('');
+  }
+  function giveReward(btn, after){
+    var p = btn.dataset.give.split(':');
+    btn.disabled = true;
+    rpc('el_pos_reward_give', {p_pw:pw(), p_checkin:+p[0], p_visits:+p[1]}).then(function(r){
+      if(!r.ok){ btn.disabled = false; return msg(errText(r), true); }
+      state.checkins.forEach(function(k){ if(k.id === +p[0]) k.perk = r.perk; });
+      if(co.data) co.data.linked.concat(co.data.unclaimed).forEach(function(k){ if(k.id === +p[0]) k.perk = r.perk; });
+      msg('ごほうびを渡した記録をつけました'); after();
+    }).catch(function(){ btn.disabled = false; msg('通信できませんでした', true); });
   }
   function updateBadge(){
     var nav = $('n-r'); if(!nav) return;
@@ -911,6 +932,8 @@
   function onBoxClick(e){
     var a = e.target.closest('[data-act]');
     if(a && a.dataset.act === 'pw') return askStaffPw();
+    var gv = e.target.closest('[data-give]');
+    if(gv){ e.stopPropagation(); return giveReward(gv, renderBox); }
     var h = e.target.closest('[data-hide]');
     if(h){ e.stopPropagation(); var id = +h.dataset.hide; hide(id); state.selected = state.selected.filter(function(x){ return x !== id; }); applySelection(); renderBox(); return; }
     var r = e.target.closest('[data-k]'); if(!r) return;
@@ -997,7 +1020,8 @@
         '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:14px">No.' + k.member_no + ' ' + esc(k.nickname) + ' さん</b>' +
         '<button class="elc-link" type="button" data-unlink="' + k.id + '">外す</button></div>' +
         '<div style="font-size:11px;color:var(--tx2)">推し猫：' + esc(k.cat) + (k.cat_status === 'graduated' ? '（卒業）' : '') + '　今年' + k.year_visits + '回目' +
-        (open ? '　応援 ' + k.points + 'pt' + (k.bonus > 0 ? '（今日のボーナス +' + k.bonus + '）' : '') : '') + '</div></div>';
+        (open ? '　応援 ' + k.points + 'pt' + (k.bonus > 0 ? '（今日のボーナス +' + k.bonus + '）' : '') : '') +
+        (k.perk && k.perk.title ? '　🏅 ' + esc(k.perk.title) : '') + '</div>' + giftHtml(k) + '</div>';
     });
     if(r.unclaimed.length){
       h += '<div class="elc-note">' + (r.linked.length ? 'ほかに今日読み取った方：' : 'この組に結びついた会員はいません。今日読み取った方から選んで結びつけられます：') + '</div>' +
@@ -1009,6 +1033,8 @@
     b.innerHTML = h + '</div>';
   }
   function onCoClick(e){
+    var gv = e.target.closest('[data-give]');
+    if(gv) return giveReward(gv, renderCo);
     var u = e.target.closest('[data-unlink]');
     if(u){
       if(!confirm('この会員の結びつけを外しますか？')) return;

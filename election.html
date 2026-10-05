@@ -60,7 +60,22 @@ h1,h2,.maru{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;font-weight:
 .oshi .lbl{font-size:12px;color:var(--tx2)}
 .oshi .cn{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:22px;line-height:1.3}
 .oshi .me{font-size:12px;color:var(--tx2)}
+.oshi .me.vc{color:var(--ac-d)}
+.oshi .ttl{display:inline-block;font-size:12px;font-weight:700;background:#fbf0d9;color:#9a6a0e;border-radius:10px;padding:1px 9px;margin-top:4px}
+.oshi .top.bg .ttl{background:rgba(255,255,255,.88)}
+.reward{background:#fdf3e1;border:1.5px dashed #e7c27a;border-radius:14px;padding:10px 12px;margin:10px 0 2px;font-size:14px;text-align:center}
+.reward small{display:block;font-size:12px;color:var(--tx2)}
+.nextr{font-size:13px;color:var(--tx2);text-align:center;margin-top:8px}
+.bgbtns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .oshi .body{padding:16px}
+/* 推し猫の写真を背景にしたカード */
+.oshi .top.bg{position:relative;min-height:220px;align-items:flex-end;padding:18px;background-color:#d9b7bc;background-size:cover;background-position:center}
+.oshi .top.bg::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(60,28,34,.72),rgba(60,28,34,.15) 55%,rgba(60,28,34,0))}
+.oshi .top.bg>*{position:relative}
+.oshi .top.bg .av{display:none}
+.oshi .top.bg .lbl,.oshi .top.bg .me{color:rgba(255,255,255,.88)}
+.oshi .top.bg .cn{color:#fff;font-size:28px;text-shadow:0 1px 6px rgba(0,0,0,.25)}
+.oshi .top.bg .me.vc{color:#ffe1e6}
 .pts{display:flex;align-items:baseline;justify-content:space-between}
 .pts b{font-family:'Zen Maru Gothic',sans-serif;font-size:34px;color:var(--ac-d);line-height:1}
 .pts b small{font-size:15px;margin-left:3px}
@@ -102,8 +117,8 @@ h1,h2,.maru{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;font-weight:
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cf-title">
     <h2 class="maru" id="cf-title" style="font-size:19px;margin-bottom:8px">推し猫の確認</h2>
     <p id="cf-text" style="font-size:15px"></p>
-    <p class="muted" style="margin-top:6px">推し猫はあとから変更できません。</p>
-    <button class="btn" id="cf-ok" type="button">この子を推す</button>
+    <p class="muted" style="margin-top:6px" id="cf-note"></p>
+    <button class="btn" id="cf-ok" type="button">この子にする</button>
     <button class="btn sub" id="cf-no" type="button">選び直す</button>
   </div>
 </div>
@@ -149,6 +164,21 @@ function soonText(){
   return '<p class="muted" style="margin-top:8px">🗳️ ' + esc(info.title || '猫総選挙') + 'は ' + md(info.start_date) + ' スタート！<br>期間中は来店するたびに推し猫に1ポイント入ります。</p>';
 }
 
+// ---------- 背景の写真（お客さんのスマホの中だけに保存） ----------
+function myBg(me){ return (me && store('el_bg_' + me.cat.id)) || ''; }
+function setBgFromFile(me, file, done){
+  var url = URL.createObjectURL(file), img = new Image();
+  img.onload = function(){
+    var s = Math.min(1, 1100 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    var data = c.toDataURL('image/jpeg', 0.8);
+    try{ localStorage.setItem('el_bg_' + me.cat.id, data); done(true); }catch(e){ done(false); }
+  };
+  img.onerror = function(){ done(false); };
+  img.src = url;
+}
+
 // ---------- 推し活カード ----------
 function oshiCard(me){
   var election = me.period !== 'before' || me.points > 0;
@@ -160,19 +190,38 @@ function oshiCard(me){
            : me.period === 'ended' ? '終了しました'
            : me.start_date ? md(me.start_date) + ' スタート' : 'おたのしみに';
   return '<div class="oshi">' +
-    '<div class="top"><div class="av">' + catImg(me.cat.photo) + '</div><div>' +
+    '<div class="top' + ((myBg(me) || me.cat.photo) ? ' bg" style="background-image:url(\'' + (myBg(me) || photo(me.cat.photo)) + '\')' : '') + '"><div class="av">' + catImg(me.cat.photo) + '</div><div>' +
       '<p class="lbl">わたしの推し猫</p><p class="cn">' + esc(me.cat.name) + grad + '</p>' +
-      '<p class="me">' + esc(me.nickname) + ' さん ・ No.' + me.member_no + '</p></div></div>' +
+      '<p class="me">' + esc(me.nickname) + ' さん ・ No.' + me.member_no + '</p>' +
+      (me.vote_cat && me.period !== 'before' ? '<p class="me vc" style="font-weight:700">🗳️ 総選挙で応援中：' + esc(me.vote_cat.name) + '</p>' : '') +
+      (me.perk && me.perk.title ? '<span class="ttl">🏅 ' + esc(me.perk.title) + '</span>' : '') + '</div></div>' +
     '<div class="body"><div class="vstats">' +
       '<div><span>今年のご来店</span><b>' + me.year_visits + '<small>回</small></b></div>' +
       '<div><span>' + '総選挙の応援ポイント' + '</span><b>' + (election ? me.points + '<small>pt</small>' : '<small>開始前</small>') + '</b></div></div>' +
     (me.bonus_today > 0 && me.period === 'open' ? '<p class="center"><span class="bonus">🎁 今日のボーナス +' + me.bonus_today + 'pt</span></p>' : '') +
+    perkHtml(me.perk) +
     '<div class="stamps" aria-hidden="true">' + st + '</div>' +
     (n > 30 ? '<p class="muted" style="text-align:right">ほか ' + (n - 30) + (election ? 'pt' : '回') + '</p>' : '') +
     '<p class="muted" style="text-align:right;font-size:11px">' + (election ? '肉球1つ＝応援1ポイント' : '肉球1つ＝ご来店1回') + '</p>' +
     '<div class="left"><span class="muted">総選挙' + (me.period === 'before' ? '' : '終了まで') + '</span><span>' + left + '</span></div></div></div>';
 }
+function perkHtml(pk){
+  if(!pk) return '';
+  var h = (pk.pending || []).map(function(r){
+    return '<div class="reward">🎁 ごほうびがあります：<b>' + esc(r.item) + '</b><small>' + r.visits + '回目のご来店のごほうびです。スタッフに声をかけてね</small></div>';
+  }).join('');
+  if(pk.next) h += '<p class="nextr">次のごほうびまで あと <b>' + pk.next.left + '</b> 回（' + pk.next.visits + '回目：' + esc(pk.next.item) + '）' +
+    (pk.basis === 'total' ? '<br><span style="font-size:11px">これまでのご来店 ' + pk.count + '回</span>' : '') + '</p>';
+  return h;
+}
 var HOME_TIP = '<p class="muted center" style="margin-top:14px">このページを「ホーム画面に追加」しておくと、いつでも推し猫カードを見られます。</p>';
+var IG_URL = 'https://www.instagram.com/wecats_staff/';
+function igCard(){
+  if(store('el_insta') !== '1') return '';
+  return '<div class="card center" style="margin-top:14px"><p class="maru" style="margin-bottom:4px">📷 Instagramで登録した方へ</p>' +
+    '<p class="muted">入賞したときのご連絡はInstagramのDMでお送りします。届くように、WE CATSの公式Instagramをフォローしてください。</p>' +
+    '<a class="btn" href="' + IG_URL + '" target="_blank" rel="noopener" style="text-decoration:none">@wecats_staff をフォローする</a></div>';
+}
 
 // ---------- 画面 ----------
 function showIntro(){
@@ -184,39 +233,51 @@ function showIntro(){
 function showMine(me){
   show(oshiCard(me) +
     '<div class="card center" style="margin-top:14px"><p class="muted">ご来店のときに、入口のQRコードを読み取ってください。' +
-    (me.period === 'open' ? '<br>推し猫に1ポイント入ります。順位は結果発表までのお楽しみです。' : '') + '</p>' + soonText() + '</div>' + HOME_TIP);
+    (me.period === 'open' ? '<br>応援している子に1ポイント入ります。順位は結果発表までのお楽しみです。' : '') + '</p>' + soonText() +
+    '<div class="bgbtns"><button class="link" type="button" id="chg-oshi">推し猫を変える</button>' +
+    '<button class="link" type="button" id="chg-bg">背景の写真を変える</button>' +
+    (myBg(me) ? '<button class="link" type="button" id="rst-bg">お店の写真に戻す</button>' : '') + '</div>' +
+    '<input type="file" id="bg-file" accept="image/*" hidden><p class="err" id="bg-err"></p></div>' + igCard() + HOME_TIP);
+  $('chg-oshi').onclick = function(){ showOshiChooser(me); };
+  $('chg-bg').onclick = function(){ $('bg-file').click(); };
+  $('bg-file').onchange = function(){
+    var f = this.files && this.files[0]; if(!f) return;
+    setBgFromFile(me, f, function(ok){ if(ok) showMine(me); else $('bg-err').textContent = 'この写真は使えませんでした。別の写真でお試しください。'; });
+  };
+  if($('rst-bg')) $('rst-bg').onclick = function(){ store('el_bg_' + me.cat.id, null); showMine(me); };
 }
 function visitLine(me){ return '<p class="muted">今年 <b>' + me.year_visits + '</b> 回目のご来店です。</p>'; }
 function showVoted(me){
-  show('<div class="card center pop"><p class="hero">💗</p><p class="big maru">' + esc(me.cat.name) + 'に<br>1ポイント入りました！</p>' +
-    visitLine(me) + '<p class="muted">来てくれてありがとう。また会いに来てね。</p></div>' + oshiCard(me) + HOME_TIP);
+  show('<div class="card center pop"><p class="hero">💗</p><p class="big maru">' + esc((me.vote_cat || me.cat).name) + 'に<br>1ポイント入りました！</p>' +
+    visitLine(me) + '<p class="muted">来てくれてありがとう。また会いに来てね。</p></div>' + oshiCard(me) + igCard() + HOME_TIP);
 }
 function showVisited(me, isNew){
   show('<div class="card center pop"><p class="hero">🐾</p><p class="big maru">' + (isNew ? 'ようこそ！<br>来店を記録しました' : '今日の来店は<br>記録ずみです') + '</p>' +
-    visitLine(me) + soonText() + '</div>' + oshiCard(me) + HOME_TIP);
+    visitLine(me) + soonText() + '</div>' + oshiCard(me) + igCard() + HOME_TIP);
 }
 function showNotice(title, text, me){
   show('<div class="card center"><p class="big maru">' + title + '</p><p class="muted">' + text + '</p></div>' + (me ? oshiCard(me) : ''));
 }
 
+function capText(){ var c = info ? info.bonus_cap : 1; return c > 0 ? '1日' + c + '回まで' : '回数の上限なし'; }
 function rulesBox(){
   return '<div class="card"><p class="maru" style="margin-bottom:8px">参加のルール</p><ul class="rules">' +
     '<li>お店の入口のQRコードを読み取ると、来店が記録されます（1日1回）</li>' +
-    '<li>総選挙の期間中は、来店1回（1日1回）につき推し猫に1ポイント。お店が決めた商品（ガチャなど）をご利用の日は、ボーナスポイントが入ることがあります</li>' +
+    '<li>総選挙の期間中は、来店1回（1日1回）につき推し猫に1ポイント。ガチャに入っている「ボーナスカード」を読み取ると、ボーナスポイントが入ります（来店を記録した日だけ・' + capText() + (info && info.card_once === false ? '' : '・カード1枚につき1回') + '）</li>' +
     '<li>記録・投票はお店のQRコードからだけ。1台のスマホで記録できるのは1日1人までです</li>' +
-    '<li>推し猫は登録後に変更できません（推し猫が卒業したときだけ選び直せます）</li>' +
+    '<li>推し猫は、推し猫カードからいつでも変えられます。総選挙で応援する子は、総選挙が始まって最初の来店のときに選び、その総選挙の間は変更できません（その子が卒業したときだけ選び直せます）</li>' +
     '<li>順位やほかの方のポイントは、結果発表まで非公開です</li>' +
     '<li>総選挙1位の猫を最も応援した方を「最優秀サポーター」として表彰します（同点の場合は全員）。年間の来店回数に応じた表彰を行うこともあります</li>' +
-    '<li>ご登録の連絡先は、入賞のご連絡と登録の復元にだけ使います</li>' +
+    '<li>ご登録の連絡先は、入賞のご連絡と登録の復元にだけ使います。ご連絡はInstagramのDMかSMS（ショートメッセージ）で行い、お電話はしません。キャンペーンなどの宣伝は送りません</li>' +
     '<li>「常連さん情報と連携する」にチェックした方は、お店の来店記録と照らし合わせ、来店特典のご案内などに使います</li>' +
-    '<li>1年以上ご来店がない方の情報は削除します（「お知らせを受け取る」「常連さん情報と連携する」にチェックした方を除く）</li>' +
+    '<li>1年以上ご来店がない方の情報は削除します（「常連さん情報と連携する」にチェックした方を除く）</li>' +
     '</ul></div>';
 }
 
 function showWelcome(note){
   show((note ? '<div class="card center"><p class="muted">' + note + '</p></div>' : '') +
     '<div class="card center"><p class="hero">🐾</p><p class="big maru">' + (isOpen() ? 'ようこそ、猫総選挙へ！' : 'ようこそ、WE CATSへ！') + '</p>' +
-    (isOpen() ? '<p>来店1回につき、推し猫に1ポイント。<br>あなたの応援で1位を決めよう！</p>'
+    (isOpen() ? '<p>来店1回につき、応援する子に1ポイント。<br>あなたの応援で1位を決めよう！</p>'
               : '<p>推し猫を1匹えらんで、推し猫カードをつくろう。<br>来店するたびに回数が記録されます。</p>' + soonText()) +
     '<button class="btn" id="go-reg" type="button">はじめて登録する</button>' +
     '<button class="btn sub" id="go-res" type="button">前に登録した</button></div>');
@@ -235,12 +296,11 @@ function showRegister(){
   show('<div class="card"><p class="maru" style="font-size:18px;margin-bottom:10px">推し猫を1匹えらんでね</p><div class="cats" id="cats">' + (cats || '<p class="muted">猫の登録がまだです。スタッフに声をかけてください。</p>') + '</div><p class="err" id="e-cat"></p></div>' +
     '<div class="card">' +
       '<div class="f"><label for="nick">ニックネーム <span class="req">必須</span></label><input class="in" id="nick" maxlength="20" autocomplete="nickname" placeholder="ねこまる"><p class="err" id="e-nick"></p></div>' +
-      '<p class="muted" style="margin-bottom:10px">電話番号かInstagramの、どちらか1つ以上を入力してください</p>' +
-      '<div class="f"><label for="phone">電話番号</label><input class="in" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="090-1234-5678"></div>' +
+      '<p class="muted" style="margin-bottom:10px">携帯電話番号かInstagramの、どちらか1つ以上を入力してください</p>' +
+      '<div class="f"><label for="phone">携帯電話番号</label><input class="in" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="090-1234-5678"></div>' +
       '<div class="f"><label for="insta">Instagram</label><input class="in" id="insta" autocomplete="off" autocapitalize="off" placeholder="@wecats_fan">' +
         '<label class="chk" id="share-row" hidden><input type="checkbox" id="share"> 結果発表で@を紹介してもOK</label></div>' +
-      '<p class="hint" style="margin-top:-8px">入賞のご連絡と、登録の復元にだけ使います。公開されることはありません。</p><p class="err" id="e-contact"></p>' +
-      '<label class="chk"><input type="checkbox" id="notice"> 次回のイベントや会員サービスのお知らせを受け取る（任意）</label>' +
+      '<p class="hint" style="margin-top:-8px">入賞のご連絡と登録の復元に使います。ご連絡はInstagramのDMかSMSで行い、お電話や宣伝はしません。公開されることはありません。</p><p class="err" id="e-contact"></p>' +
       '<label class="chk"><input type="checkbox" id="poslink"> お店の常連さん情報（来店記録）と連携する（任意）</label>' +
       '<p class="hint" style="margin-left:32px">年間の来店回数に応じた特典のご案内などに使います。電話番号などの連絡先は連携しません。</p>' +
     '</div>' + rulesBox() +
@@ -258,21 +318,26 @@ function showRegister(){
     var ok = true;
     if(!pickedCat){ $('e-cat').textContent = '推し猫を選んでください。'; ok = false; }
     if(!$('nick').value.trim()){ $('e-nick').textContent = 'ニックネームを入力してください。'; ok = false; }
-    if(!$('phone').value.trim() && !$('insta').value.trim()){ $('e-contact').textContent = '電話番号かInstagramを入力してください。'; ok = false; }
+    if(!$('phone').value.trim() && !$('insta').value.trim()){ $('e-contact').textContent = '携帯電話番号かInstagramを入力してください。'; ok = false; }
     if(!$('consent').checked){ $('e-consent').textContent = '参加のルールへの同意が必要です。'; ok = false; }
     if(!ok){ var f = document.querySelector('.err:not(:empty)'); if(f) f.scrollIntoView({block:'center', behavior:'smooth'}); return; }
     var cat = info.cats.find(function(c){ return c.id === pickedCat; });
-    $('cf-text').innerHTML = 'あなたの推し猫は <b>' + esc(cat.name) + '</b> ちゃんです。';
-    $('confirm').hidden = false;
+    askConfirm('推し猫の確認', 'あなたの推し猫は <b>' + esc(cat.name) + '</b> ちゃんです。',
+      isOpen() ? '今回の総選挙でも、この子を応援します（総選挙の間は変更できません）。推し猫は、あとから推し猫カードで変えられます。' : '推し猫は、あとから推し猫カードで変えられます。', null);
+    return;
   };
 }
-$('cf-no').onclick = function(){ $('confirm').hidden = true; };
+function askConfirm(title, text, note, action){
+  $('cf-title').textContent = title; $('cf-text').innerHTML = text; $('cf-note').textContent = note || '';
+  cfAction = action; $('confirm').hidden = false;
+}
+$('cf-no').onclick = function(){ $('confirm').hidden = true; cfAction = null; };
 $('cf-ok').onclick = function(){
   $('confirm').hidden = true;
   if(typeof cfAction === 'function'){ var a = cfAction; cfAction = null; a(); return; }
   var b = $('reg-go'); b.setAttribute('aria-busy', 'true'); b.textContent = '登録中…';
   rpc('el_register', {p_ticket:ticket, p_device:device, p_nickname:$('nick').value, p_phone:$('phone').value,
-    p_insta:$('insta').value, p_cat:pickedCat, p_notice:$('notice').checked, p_insta_share:$('share').checked, p_consent:true, p_pos_link:$('poslink').checked})
+    p_insta:$('insta').value, p_cat:pickedCat, p_notice:false, p_insta_share:$('share').checked, p_consent:true, p_pos_link:$('poslink').checked})
   .then(function(r){
     if(!r.ok){
       b.removeAttribute('aria-busy'); b.textContent = regLabel();
@@ -288,6 +353,7 @@ $('cf-ok').onclick = function(){
     }
     member = {id:r.member_id, secret:r.secret};
     store('el_member', JSON.stringify(member));
+    store('el_insta', $('insta').value.trim() ? '1' : null);
     handleCheckin(r.checkin);
   }).catch(function(){ b.removeAttribute('aria-busy'); b.textContent = regLabel(); $('e-send').textContent = '通信できませんでした。電波の良い場所でもう一度お試しください。'; });
 };
@@ -296,12 +362,12 @@ var cfAction = null;
 // ---------- 復元 ----------
 function showRestore(){
   show('<div class="card"><p class="maru" style="font-size:18px">前に登録した方</p>' +
-    '<p class="muted" style="margin-bottom:14px">登録したときのニックネームと、電話番号またはInstagramを入力してください。</p>' +
+    '<p class="muted" style="margin-bottom:14px">登録したときのニックネームと、携帯電話番号を入力してください。</p>' +
     '<div class="f"><label for="r-nick">ニックネーム</label><input class="in" id="r-nick" maxlength="20"></div>' +
-    '<div class="f"><label for="r-contact">電話番号またはInstagram</label><input class="in" id="r-contact" autocapitalize="off" placeholder="090-1234-5678 / @wecats_fan"></div>' +
+    '<div class="f"><label for="r-contact">携帯電話番号</label><input class="in" id="r-contact" type="tel" inputmode="tel" placeholder="090-1234-5678"></div>' +
     '<button class="btn" id="r-go" type="button">復元する</button><p class="err" id="r-err"></p>' +
-    '<div id="code-box" hidden style="border-top:1px dashed var(--bd);margin-top:18px;padding-top:14px">' +
-      '<p class="muted" style="margin-bottom:10px">見つからない場合は、スタッフに声をかけてください。スタッフが確認して6桁のコードをお伝えします。</p>' +
+    '<div id="code-box" style="border-top:1px dashed var(--bd);margin-top:18px;padding-top:14px">' +
+      '<p class="muted" style="margin-bottom:10px">Instagramだけで登録した方や、見つからない場合は、スタッフに声をかけてください。スタッフが確認して6桁のコードをお伝えします。</p>' +
       '<div class="f"><label for="r-code">スタッフから聞いた6桁のコード</label><input class="in" id="r-code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div>' +
       '<button class="btn sub" id="c-go" type="button">コードで復元する</button><p class="err" id="c-err"></p></div>' +
     '</div><button class="link" type="button" onclick="showWelcome()">← 戻る</button>');
@@ -320,7 +386,9 @@ function restoreWith(fn, args, errId){
   rpc(fn, args).then(function(r){
     if(!r.ok){
       if(r.error === 'qr_expired') return showExpired();
-      $(errId).textContent = r.error === 'locked' ? '時間をおいてからお試しください。' : '登録が見つかりませんでした。';
+      $(errId).textContent = r.error === 'locked' ? '時間をおいてからお試しください。'
+        : r.error === 'insta_staff' ? '携帯電話番号を入力してください。Instagramだけで登録した方は、スタッフに声をかけてください。'
+        : '登録が見つかりませんでした。';
       $('code-box').hidden = false;
       return;
     }
@@ -345,7 +413,7 @@ function handleCheckin(r){
   }
   switch(r.error){
     case 'device_used': return showNotice('このスマホでは今日すでに記録されています', '別の方の来店がこのスマホで記録されています。<br>来店の記録は、1台のスマホにつき1日1人までです。', r.me);
-    case 'graduated': return showGraduated(r);
+    case 'choose_vote': return showVoteChooser(r);
     case 'qr_expired': return showExpired();
     case 'auth':
       member = null; store('el_member', null);
@@ -353,20 +421,78 @@ function handleCheckin(r){
     default: return fail('もう一度QRコードを読み取ってください。');
   }
 }
-function showGraduated(r){
-  var cats = (r.cats || []).map(function(c){
-    return '<button class="cat" type="button" data-id="' + c.id + '" data-name="' + esc(c.name) + '" aria-pressed="false"><div class="ph">' + catImg(c.photo) + '</div><div class="nm">' + esc(c.name) + '</div></button>';
-  }).join('');
-  show('<div class="card center"><p class="hero">🎓</p><p class="big maru">' + esc(r.old_cat) + 'が<br>卒業しました！</p>' +
-    '<p class="muted">新しい家族のもとへ旅立ちました。これまでの応援ポイントは' + esc(r.old_cat) + 'に残ります。<br>新しい推し猫を1匹選んでください。今日の1票から新しい推し猫に入ります。</p></div>' +
-    '<div class="card"><div class="cats" id="gcats">' + cats + '</div></div>');
-  $('gcats').addEventListener('click', function(e){
+function catGrid(cats, sel, id){
+  return '<div class="cats" id="' + id + '">' + (cats || []).map(function(c){
+    return '<button class="cat" type="button" data-id="' + c.id + '" data-name="' + esc(c.name) + '" aria-pressed="' + (c.id === sel) + '"><div class="ph">' + catImg(c.photo) + '</div><div class="nm">' + esc(c.name) + '</div></button>';
+  }).join('') + '</div>';
+}
+function pickIn(id, onPick){
+  $(id).addEventListener('click', function(e){
     var b = e.target.closest('.cat'); if(!b) return;
-    $('cf-text').innerHTML = '新しい推し猫は <b>' + esc(b.dataset.name) + '</b> ちゃんです。';
-    cfAction = function(){ checkin(+b.dataset.id); };
-    $('confirm').hidden = false;
+    document.querySelectorAll('#' + id + ' .cat').forEach(function(x){ x.setAttribute('aria-pressed', String(x === b)); });
+    onPick(+b.dataset.id, b.dataset.name);
   });
 }
+// 総選挙で応援する子を選ぶ（総選挙が始まって最初の来店・応援していた子が卒業したとき）
+function showVoteChooser(r){
+  var sel = r.current || null, selName = '';
+  (r.cats || []).forEach(function(c){ if(c.id === sel) selName = c.name; });
+  show((r.graduated
+      ? '<div class="card center"><p class="hero">🎓</p><p class="big maru">' + esc(r.graduated) + 'が<br>卒業しました！</p>' +
+        '<p class="muted">新しい家族のもとへ旅立ちました。これまでの応援ポイントは' + esc(r.graduated) + 'に残ります。<br>この総選挙で応援する子を、もう一度選んでください。</p></div>'
+      : '<div class="card center"><p class="hero">🗳️</p><p class="big maru">' + esc(info.title || '猫総選挙') + 'スタート！</p>' +
+        '<p>今回の総選挙で応援する子を選んでね。</p>' +
+        (sel ? '<p class="muted">推し猫の' + esc(selName) + 'に印が付いています。同じでよければ、そのまま下のボタンを押してください。</p>' : '') + '</div>') +
+    '<div class="card">' + catGrid(r.cats, sel, 'vcats') +
+    '<button class="btn" id="v-go" type="button"' + (sel ? '' : ' disabled') + '>この子を応援する</button></div>');
+  pickIn('vcats', function(id, name){ sel = id; selName = name; $('v-go').disabled = false; });
+  $('v-go').onclick = function(){
+    if(!sel) return;
+    askConfirm('応援する子の確認', '今回の総選挙で応援する子は <b>' + esc(selName) + '</b> ちゃんです。', 'この総選挙の間は変更できません。推し猫は別に変えられます。', function(){ checkin(sel); });
+  };
+}
+// 推し猫を変える（いつでも）
+function showOshiChooser(me){
+  var sel = me.cat.status === 'active' ? me.cat.id : null, selName = me.cat.name;
+  show('<div class="card center"><p class="big maru">推し猫を変える</p><p class="muted">いまの推し猫：' + esc(me.cat.name) +
+    (me.vote_cat ? '<br>総選挙で応援する子（' + esc(me.vote_cat.name) + '）は変わりません。' : '') + '</p></div>' +
+    '<div class="card">' + catGrid(info.cats, sel, 'ocats') + '<button class="btn" id="o-go" type="button">この子を推し猫にする</button>' +
+    '<button class="btn sub" id="o-back" type="button">やめる</button></div>');
+  pickIn('ocats', function(id, name){ sel = id; selName = name; });
+  $('o-back').onclick = function(){ showMine(me); };
+  $('o-go').onclick = function(){
+    if(!sel) return;
+    rpc('el_set_oshi', {p_member:member.id, p_secret:member.secret, p_cat:sel}).then(function(r){
+      if(!r.ok) return fail('変更できませんでした。もう一度お試しください。');
+      showMine(r.me);
+    }).catch(function(){ fail('通信できませんでした。'); });
+  };
+}
+// ---------- ボーナスカード ----------
+function useCard(code){
+  show('<p class="center muted" style="padding:40px 0">ボーナスカードを確認しています…</p>');
+  rpc('el_use_card', {p_member:member.id, p_secret:member.secret, p_code:code}).then(function(r){
+    if(r.ok){
+      return show('<div class="card center pop"><p class="hero">🎁</p><p class="big maru">ボーナス +1pt！<br>' + esc((r.me.vote_cat || r.me.cat).name) + 'に入りました</p>' +
+        '<p class="muted">' + (r.card_once === false ? 'カードは読み取ったら、スタッフに返してね。' : 'このカードは使用済みになりました。記念に持ち帰ってOKです。') + '</p></div>' + oshiCard(r.me) + HOME_TIP);
+    }
+    var M = {
+      no_checkin:['先に入口のQRを読み取ってね', 'ボーナスカードは、来店を記録した日だけ使えます。<br>入口のQRを読み取ってから、もう一度このカードを読み取ってください。'],
+      card_used:['このカードは今日はもう使われています', '別のカードでお試しください。'],
+      used_by_you:['このカードはもう使いました', 'ボーナスはもう入っています。'],
+      card_spent:['このカードは使用済みです', 'ボーナスカードは1枚につき1回だけ使えます。'],
+      cap:['今日のボーナスは上限に達しました', 'ボーナスは' + (r.cap ? '1日' + r.cap + '回' : '1日の上限') + 'までです。また来てね！'],
+      closed:['総選挙の期間外です', 'ボーナスカードは、総選挙の期間中だけ使えます。'],
+      disabled:['いまボーナスはお休み中です', 'カードはスタッフに返してね。'],
+      invalid:['このカードは使えません', '古いカードかもしれません。スタッフに声をかけてください。'],
+      no_vote_cat:['先に応援する子を選んでね', '入口のQRを読み取って、今回の総選挙で応援する子を選んでから、もう一度このカードを読み取ってください。']
+    };
+    if(r.error === 'auth'){ member = null; store('el_member', null); return showWelcome('このスマホの登録情報が見つかりませんでした。入口のQRを読み取って「前に登録した」から復元してください。'); }
+    var t = M[r.error] || ['うまくいきませんでした', 'もう一度読み取ってください。'];
+    showNotice(t[0], t[1], r.me);
+  }).catch(function(){ fail('通信できませんでした。電波の良い場所で、もう一度カードを読み取ってください。'); });
+}
+
 function showExpired(){
   showNotice('QRコードの有効期限が切れました', 'お手数ですが、入口のQRコードをもう一度読み取ってください。');
 }
@@ -377,10 +503,15 @@ function boot(){
   if(!device){ device = uuid(); store('el_device', device); }
   try{ member = JSON.parse(store('el_member') || 'null'); }catch(e){ member = null; }
   var m = location.hash.match(/t=([0-9]+\.[0-9a-f]+)/), qr = m ? m[1] : null;
-  if(qr) history.replaceState(null, '', location.pathname);
+  var cm = location.hash.match(/c=([0-9a-f]{16})/), card = cm ? cm[1] : null;
+  if(qr || card) history.replaceState(null, '', location.pathname);
 
   rpc('el_public_info').then(function(i){
     info = i; setTitle();
+    if(card){
+      if(!member) return showNotice('先に推し猫カードを作ってね', 'ボーナスカードを使うには、会員登録が必要です。<br>お店の入口のQRを読み取って登録してから、もう一度このカードを読み取ってください。');
+      return useCard(card);
+    }
     if(!qr){
       if(!member) return showIntro();
       return rpc('el_me', {p_member:member.id, p_secret:member.secret}).then(function(r){
@@ -397,7 +528,7 @@ function boot(){
   }).catch(function(){ fail('通信できませんでした。ページを再読み込みしてください。'); });
 }
 // 開いたままのページでQRを読み取った場合（URLの#だけが変わる）にも対応
-window.addEventListener('hashchange', function(){ if(/t=/.test(location.hash)) boot(); });
+window.addEventListener('hashchange', function(){ if(/[tc]=/.test(location.hash)) boot(); });
 boot();
 </script>
 </body>
