@@ -12,6 +12,8 @@
 :root{--bg:#fff5f6;--sf:#fff;--sf2:#fdeef0;--bd:#f6d3d8;--ac:#e8838f;--ac-d:#c9606d;--tx:#5c3a3e;--tx2:#a07c82;--ok:#3f8a66;--wn:#b9831a;--ng:#d65f5f;--gold:#c9952e}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{background:var(--bg);min-height:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.pages,.page{-webkit-text-size-adjust:none;text-size-adjust:none}
 body{color:var(--tx);font-family:'Noto Sans JP',system-ui,sans-serif;font-size:14px;line-height:1.6;
   padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
 button,input,select,textarea{font-family:inherit;color:inherit}
@@ -125,7 +127,7 @@ body.printmode #print-area{display:block}
 .ccard .c-msg{font-size:4.6mm;font-weight:700;color:#c9606d;margin-top:2mm}
 .page.cardpage{padding:10mm}
 .page.bcpage{padding:12mm 14mm;display:grid;grid-template-columns:91mm 91mm;grid-auto-rows:55mm;gap:0;justify-content:center;align-content:start;align-items:stretch;background:#fff}
-.bc{border:.3mm dashed #e9c3c9;display:flex;align-items:center;gap:3.5mm;padding:3mm 4mm;background:#fff;text-align:left}
+.bc{overflow:hidden;border:.3mm dashed #e9c3c9;display:flex;align-items:center;gap:3.5mm;padding:3mm 4mm;background:#fff;text-align:left}
 .bc .q svg{width:34mm;height:34mm;display:block}
 .bc .t{flex:1;min-width:0}
 .bc .k{font-size:3mm;color:#a07c82;letter-spacing:.2mm}

@@ -178,17 +178,34 @@ function soonText(){
 
 // ---------- 背景の写真（お客さんのスマホの中だけに保存） ----------
 function myBg(me){ return (me && store('el_bg_' + me.cat.id)) || ''; }
+// スマホに無ければお店のサーバーから取ってくる（Safariとホーム画面のアイコン・機種変更でも同じ背景に）
+var bgFetched = {};
+function syncBg(me, redraw){
+  if(!me || !member || myBg(me) || bgFetched[me.cat.id]) return;
+  bgFetched[me.cat.id] = true;
+  rpc('el_bg_get', {p_member:member.id, p_secret:member.secret, p_cat:me.cat.id}).then(function(r){
+    if(r && r.ok && r.data){ store('el_bg_' + me.cat.id, r.data); redraw(); }
+  }).catch(function(){});
+}
 function setBgFromFile(me, file, done){
   var url = URL.createObjectURL(file), img = new Image();
   img.onload = function(){
-    var s = Math.min(1, 1100 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    var s = Math.min(1, 900 / Math.max(img.width, img.height)), c = document.createElement('canvas');
     c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    var data = c.toDataURL('image/jpeg', 0.8);
-    try{ localStorage.setItem('el_bg_' + me.cat.id, data); done(true); }catch(e){ done(false); }
+    var q = 0.8, data = c.toDataURL('image/jpeg', q);
+    while(data.length > 550000 && q > 0.4){ q -= 0.1; data = c.toDataURL('image/jpeg', q); }
+    try{ localStorage.setItem('el_bg_' + me.cat.id, data); }catch(e){}
+    rpc('el_bg_set', {p_member:member.id, p_secret:member.secret, p_cat:me.cat.id, p_data:data}).then(function(r){
+      done(!!(r && r.ok) || !!myBg(me));
+    }).catch(function(){ done(!!myBg(me)); });
   };
   img.onerror = function(){ done(false); };
   img.src = url;
+}
+function clearBg(me, done){
+  store('el_bg_' + me.cat.id, null);
+  rpc('el_bg_set', {p_member:member.id, p_secret:member.secret, p_cat:me.cat.id, p_data:null}).then(done, done);
 }
 
 // ---------- 推し活カード ----------
@@ -248,6 +265,7 @@ function toolsHtml(me){
   return '<div class="card center" style="margin-top:14px"><div class="bgbtns" style="margin-top:0"><button class="link" type="button" id="chg-oshi">推し猫を変える</button>' +
     '<button class="link" type="button" id="chg-bg">背景の写真を変える</button>' +
     (myBg(me) ? '<button class="link" type="button" id="rst-bg">お店の写真に戻す</button>' : '') + '</div>' +
+    '<p class="muted" style="font-size:11px;margin-top:6px">背景の写真はお店のサーバーに保存されます（表示されるのはご自身のカードだけ。スタッフは見られません）</p>' +
     '<input type="file" id="bg-file" accept="image/*" hidden><p class="err" id="bg-err"></p></div>';
 }
 function bindTools(me, redraw){
@@ -258,7 +276,8 @@ function bindTools(me, redraw){
     var f = this.files && this.files[0]; if(!f) return;
     setBgFromFile(me, f, function(ok){ if(ok) redraw(); else $('bg-err').textContent = 'この写真は使えませんでした。別の写真でお試しください。'; });
   };
-  if($('rst-bg')) $('rst-bg').onclick = function(){ store('el_bg_' + me.cat.id, null); redraw(); };
+  if($('rst-bg')) $('rst-bg').onclick = function(){ clearBg(me, redraw); };
+  syncBg(me, redraw);
 }
 function showMine(me){
   show(oshiCard(me) + toolsHtml(me) +
@@ -292,6 +311,7 @@ function rulesBox(){
     '<li>総選挙1位の猫を最も応援した方を「最優秀サポーター」として表彰します（同点の場合は全員）。年間の来店回数に応じた表彰を行うこともあります</li>' +
     '<li>ご登録の連絡先は、入賞のご連絡と登録の復元にだけ使います。ご連絡はInstagramのDMかSMS（ショートメッセージ）で行い、お電話はしません。キャンペーンなどの宣伝は送りません</li>' +
     '<li>「常連さん情報と連携する」にチェックした方は、お店の来店記録と照らし合わせ、来店特典のご案内などに使います</li>' +
+    '<li>推し猫カードの背景に選んだ写真は、どのスマホからでも同じ背景が出るよう、小さく縮めてお店のサーバーに保存します。表示されるのはご自身のカードだけで、スタッフやほかの方は見られません。「お店の写真に戻す」を押すと削除されます</li>' +
     '<li>1年以上ご来店がない方の情報は削除します（「常連さん情報と連携する」にチェックした方を除く）</li>' +
     '</ul></div>';
 }
