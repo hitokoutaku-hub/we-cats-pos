@@ -496,7 +496,7 @@ function renderMemberSheet(votes, visits){
     '<div class="kv"><span>登録日</span><span>' + md(m.created_at) + '</span></div>' +
     '<div class="kv"><span>登録している連絡先</span><span>' + [m.has_phone ? '電話番号' : '', m.has_insta ? 'Instagram' + (m.insta_share ? '（紹介OK）' : '') : ''].filter(Boolean).join('・') + '</span></div>' +
     '<div class="kv"><span>常連さん連携</span><span>' + (!m.pos_link_ok ? '同意なし' :
-      (m.pos_customer_id ? esc(m.pos_name || '（POSに見つかりません）') + '<br>' : '同意あり・未連携<br>') +
+      (m.pos_customer_id ? esc(m.pos_name) + (m.pos_past ? '<br><span class="sm">POSの来店 ' + m.pos_past + '回を引き継ぎ（その分のごほうびは対象外）</span>' : '') + '<br>' : '同意あり・未連携<br>') +
       '<button class="lock" type="button" id="pos-link">' + (m.pos_customer_id ? '変更・解除' : 'POSの常連さんと紐づける') + '</button>') + '</span></div>' +
     '<div class="kv"><span>復元した回数</span><span>' + m.restore_count + '回</span></div>' +
     '<div class="kv"><span>連絡先</span><span id="contact-val">' + contact + '</span></div>' +
@@ -544,8 +544,11 @@ $('sh-body').addEventListener('click', function(e){
 function linkSheet(){
   var m = curMember;
   sheet('常連さんと紐づける',
-    '<p class="note" style="margin:0 0 10px">' + esc(m.nickname) + '（No.' + m.no + '）と同じ方を、POSの常連さんから選んでください。電話番号などの連絡先はPOSには送られません。</p>' +
-    '<input class="in" id="pos-q" type="search" placeholder="名前か会員番号で検索" style="margin-bottom:10px">' +
+    '<p class="note" style="margin:0 0 10px">' + esc(m.nickname) + '（No.' + m.no + '）と同じ方を、POSの「常連さん」から選んでください。<br>' +
+      '・この方が入口のQRを読むと、POSの常連さん欄にその名前が自動で入ります<br>' +
+      '・入口QRを使い始める前のPOSの来店回数を、推し猫カードの来店回数と称号に引き継ぎます（その分のごほうびは渡しません）<br>' +
+      '・電話番号などの連絡先はPOSには送られません</p>' +
+    '<input class="in" id="pos-q" type="search" placeholder="常連さんの名前で検索" style="margin-bottom:10px">' +
     '<div id="pos-res"><p class="empty">検索しています…</p></div>' +
     (m.pos_customer_id ? '<button class="btn ng full" type="button" id="pos-unlink" style="margin-top:12px">紐づけを解除する</button>' : ''));
   posSearch('');
@@ -555,14 +558,15 @@ function posSearch(q){
   rpc('el_admin_pos_search', {p_pw:staffPw, p_q:q}).then(function(r){
     if(!r.ok) return toast(errText(r));
     $('pos-res').innerHTML = r.customers.map(function(c){
-      return '<button class="row" type="button" data-cust="' + esc(c.id) + '"><span class="grow"><span class="nm">' + esc(c.name) + '</span><span class="sm">' + (c.no ? '会員番号 ' + esc(c.no) : '会員番号なし') + '</span></span><span class="num sm">選ぶ</span></button>';
-    }).join('') || '<p class="empty">見つかりませんでした。</p>';
+      return '<button class="row" type="button" data-cust="' + esc(c.id) + '"><span class="grow"><span class="nm">' + esc(c.name) + '</span><span class="sm">POSの来店 ' + c.visits + '回' +
+        (c.taken ? '　※すでに「' + esc(c.taken) + '」さんと紐づいています' : '') + '</span></span><span class="num sm">選ぶ</span></button>';
+    }).join('') || '<p class="empty">見つかりませんでした。POSの新規画面の「常連さん」に登録されている名前から探します。</p>';
   }).catch(function(){ toast('通信できませんでした'); });
 }
 function doLink(cust){
   rpc('el_admin_link', {p_pw:staffPw, p_id:curMember.id, p_customer:cust}).then(function(r){
     if(!r.ok) return toast(r.error === 'no_consent' ? 'この方は連携に同意していません' : r.error === 'no_customer' ? '常連さんが見つかりません' : errText(r));
-    toast(cust ? '紐づけました' : '紐づけを解除しました');
+    toast(cust ? '紐づけました' + (r.pos_past ? '（POSの来店 ' + r.pos_past + '回を引き継ぎ）' : '') : '紐づけを解除しました');
     var id = curMember.id; loadMembers().then(function(){ openMember(id); });
   }).catch(function(){ toast('通信できませんでした'); });
 }

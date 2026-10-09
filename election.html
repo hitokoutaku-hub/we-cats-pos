@@ -53,6 +53,12 @@ h1,h2,.maru{font-family:'Zen Maru Gothic','Noto Sans JP',sans-serif;font-weight:
 .cat .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .cat .nm{font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:15px;padding:7px 4px 9px}
 .paw{width:42%;height:42%;color:var(--ac)}
+/* 来店予定 */
+.plan{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:10px 0;border-top:1px dashed var(--bd)}
+.plan .ps{text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.pst{font-size:12px;font-weight:700;border-radius:10px;padding:2px 10px;white-space:nowrap}
+.pst.pending{background:#fbf0dc;color:#a87a18}.pst.ok{background:#e3f3ea;color:#3d8a5f}.pst.declined{background:#eee;color:#888}
+.plan.declined .pd{color:var(--tx2)}
 
 /* 推し活カード */
 .oshi{background:var(--sf);border-radius:22px;overflow:hidden;border:1px solid var(--bd)}
@@ -266,7 +272,8 @@ function toolsHtml(me){
     '<button class="link" type="button" id="chg-bg">背景の写真を変える</button>' +
     (myBg(me) ? '<button class="link" type="button" id="rst-bg">お店の写真に戻す</button>' : '') + '</div>' +
     '<p class="muted" style="font-size:11px;margin-top:6px">背景の写真はお店のサーバーに保存されます（表示されるのはご自身のカードだけ。スタッフは見られません）</p>' +
-    '<input type="file" id="bg-file" accept="image/*" hidden><p class="err" id="bg-err"></p></div>';
+    '<input type="file" id="bg-file" accept="image/*" hidden><p class="err" id="bg-err"></p></div>' +
+    '<div id="plans-box"></div>';
 }
 function bindTools(me, redraw){
   if(!$('chg-oshi')) return;
@@ -278,6 +285,77 @@ function bindTools(me, redraw){
   };
   if($('rst-bg')) $('rst-bg').onclick = function(){ clearBg(me, redraw); };
   syncBg(me, redraw);
+  loadPlans(me);
+}
+
+// ---------- 来店予定（お店に知らせるだけ） ----------
+var WD = '日月火水木金土';
+function dLabel(d){ var t = new Date(d + 'T00:00:00'); return (t.getMonth() + 1) + '/' + t.getDate() + '（' + WD[t.getDay()] + '）'; }
+var PLAN_ST = {pending:['確認中', 'お店が確認したら「OK」と表示されます'], ok:['OK', 'お待ちしています！'],
+  declined:['ごめんなさい', 'お店の都合でお受けできませんでした。別の日でお知らせください']};
+var planInfo = null;
+function loadPlans(me){
+  if(!member || !$('plans-box')) return;
+  rpc('el_plan_list', {p_member:member.id, p_secret:member.secret}).then(function(r){
+    if(!r || !r.ok || !$('plans-box')) return;
+    planInfo = r;
+    if(!r.enabled && !r.plans.length) return;
+    var rows = r.plans.map(function(p){
+      var st = PLAN_ST[p.status] || ['', ''];
+      return '<div class="plan ' + p.status + '"><div class="pd"><b>' + dLabel(p.date) + ' ' + esc(p.time) + '</b> ・ ' + p.people + '名' +
+        (p.note ? '<br><span class="muted" style="font-size:12px">' + esc(p.note) + '</span>' : '') + '</div>' +
+        '<div class="ps"><span class="pst ' + p.status + '">' + st[0] + '</span>' +
+        (p.status !== 'declined' ? '<button class="link" type="button" data-cancel="' + p.id + '" style="margin-top:4px;font-size:12px">取り消す</button>' : '') + '</div>' +
+        '<p class="muted" style="font-size:11px;grid-column:1/-1;margin-top:2px">' + st[1] + '</p></div>';
+    }).join('');
+    $('plans-box').innerHTML = '<div class="card" style="margin-top:14px"><p class="maru" style="font-size:16px;margin-bottom:4px">📅 来店予定</p>' +
+      (rows || '<p class="muted">来る日が決まったら、お店に知らせておけます。</p>') +
+      (r.enabled ? '<button class="btn sub" type="button" id="plan-new" style="margin-top:12px">来店予定を知らせる</button>' : '<p class="muted" style="margin-top:8px">いまは来店予定の受付をお休みしています。</p>') +
+      '<p class="err" id="plan-err"></p></div>';
+    if($('plan-new')) $('plan-new').onclick = function(){ showPlanForm(me); };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cancel]'), function(b){
+      b.onclick = function(){
+        if(!confirm('この来店予定を取り消しますか？')) return;
+        rpc('el_plan_cancel', {p_member:member.id, p_secret:member.secret, p_id:+b.dataset.cancel}).then(function(){ loadPlans(me); })
+          .catch(function(){ $('plan-err').textContent = '通信できませんでした。'; });
+      };
+    });
+  }).catch(function(){});
+}
+function showPlanForm(me){
+  var r = planInfo; if(!r) return;
+  var days = [], t0 = new Date(r.today + 'T00:00:00');
+  for(var i = 0; i <= 60; i++){
+    var d = new Date(t0.getTime() + i * 86400000);
+    var iso = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    days.push('<option value="' + iso + '">' + dLabel(iso) + (i === 0 ? ' 今日' : i === 1 ? ' 明日' : '') + '</option>');
+  }
+  show('<div class="card"><p class="maru" style="font-size:18px">📅 来店予定を知らせる</p>' +
+    '<p class="muted" style="margin:4px 0 14px">来る日と時間をお店に知らせておけます。お店が確認すると、このカードに「OK」と表示されます（お店から電話やメッセージは送りません）。</p>' +
+    '<div class="f"><label for="pl-date">日にち</label><select class="in" id="pl-date">' + days.join('') + '</select></div>' +
+    '<div class="f"><label for="pl-time">時間（だいたいでOK）</label><select class="in" id="pl-time">' +
+      r.times.map(function(t){ return '<option' + (t === '14:00' ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' +
+      '<p class="hint">営業 12:00〜18:00（最終受付 17:00）</p></div>' +
+    '<div class="f"><label for="pl-people">人数</label><select class="in" id="pl-people">' +
+      [1,2,3,4,5,6,7,8,9,10].map(function(n){ return '<option value="' + n + '"' + (n === 1 ? ' selected' : '') + '>' + n + '名</option>'; }).join('') + '</select></div>' +
+    '<div class="f"><label for="pl-note">ひとこと <span class="opt">任意・100文字まで</span></label><input class="in" id="pl-note" maxlength="100" placeholder="例：子ども1人います／初めての友達と行きます"></div>' +
+    '<p class="muted" style="font-size:12px">お店の空き状況によっては、お受けできないことがあります。予定が変わったら、カードから取り消してください。</p>' +
+    '<button class="btn" type="button" id="pl-go">知らせる</button><p class="err" id="pl-err"></p>' +
+    '<button class="btn sub" type="button" id="pl-back">戻る</button></div>');
+  $('pl-back').onclick = function(){ showMine(me); };
+  $('pl-go').onclick = function(){
+    var b = this; b.setAttribute('aria-busy', 'true');
+    rpc('el_plan_add', {p_member:member.id, p_secret:member.secret, p_date:$('pl-date').value, p_time:$('pl-time').value,
+      p_people:+$('pl-people').value, p_note:$('pl-note').value}).then(function(x){
+      b.removeAttribute('aria-busy');
+      if(x && x.ok) return showMine(me);
+      var M = {same_day:'その日はもう来店予定を知らせています。変えたいときは、前の予定を取り消してください。',
+        too_many:'知らせておける来店予定は3件までです。', past:'その時間はもう過ぎています。', date:'選べない日にちです。',
+        time:'選べない時間です。', people:'人数を選んでください。', disabled:'いまは来店予定の受付をお休みしています。',
+        auth:'このスマホの登録情報が見つかりませんでした。'};
+      $('pl-err').textContent = M[x && x.error] || '知らせることができませんでした。';
+    }).catch(function(){ b.removeAttribute('aria-busy'); $('pl-err').textContent = '通信できませんでした。電波の良い場所でもう一度お試しください。'; });
+  };
 }
 function showMine(me){
   show(oshiCard(me) + toolsHtml(me) +
@@ -312,6 +390,7 @@ function rulesBox(){
     '<li>ご登録の連絡先は、入賞のご連絡と登録の復元にだけ使います。ご連絡はInstagramのDMかSMS（ショートメッセージ）で行い、お電話はしません。キャンペーンなどの宣伝は送りません</li>' +
     '<li>「常連さん情報と連携する」にチェックした方は、お店の来店記録と照らし合わせ、来店特典のご案内などに使います</li>' +
     '<li>推し猫カードの背景に選んだ写真は、どのスマホからでも同じ背景が出るよう、小さく縮めてお店のサーバーに保存します。表示されるのはご自身のカードだけで、スタッフやほかの方は見られません。「お店の写真に戻す」を押すと削除されます</li>' +
+    '<li>「来店予定を知らせる」は、来る日時をお店に知らせておく機能です。お店が確認するとカードに「OK」と表示されます。お店の空き状況によっては、お受けできないことがあります</li>' +
     '<li>1年以上ご来店がない方の情報は削除します（「常連さん情報と連携する」にチェックした方を除く）</li>' +
     '</ul></div>';
 }

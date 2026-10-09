@@ -772,12 +772,13 @@
 // we-cats-pos.html の app.js の後に読み込みます。app.js は書き換えません。
 //  ・新規画面：入口のQRを読み取った会員を表示 → タップで区分・常連さんを自動入力
 //  ・退店画面：この組に結びついた会員の表示（結びつけ忘れの修正）
-//  ・⚙️メニュー：入口QR・総選挙管理・ボーナスとQRの設定
+//  ・新規画面：会員がカードから知らせた「来店予定」の表示とOK
+//  ・⚙️メニュー：入口QR・総選挙管理・来店予定・ボーナスとQRの設定
 // =====================================================
 (function(){
   var PW_KEY = 'wc_election_qr_pw';     // 入口QR画面と共通（総選挙のスタッフ用パスワード）
   var HIDE_KEY = 'wc_elc_hidden';
-  var state = {checkins:[], config:null, error:'', selected:[], lastAt:null, busy:false};
+  var state = {checkins:[], config:null, error:'', selected:[], lastAt:null, busy:false, plans:null, autoMember:''};
   var tickN = 0;
 
   function $(id){ return document.getElementById(id); }
@@ -794,7 +795,7 @@
   var ERR = {wrong_password:'パスワードが違います', locked:'間違いが続いたため10分間ロック中です',
     setup_needed:'先に総選挙の管理画面でパスワードを決めてください', interval:'切り替え間隔を選んでください',
     closed:'総選挙の期間外です', disabled:'ボーナスはオフになっています', cap:'上限を選んでください',
-    no_permission:'この設定の変更は、オーナーから許可されていません'};
+    no_permission:'この設定の変更は、オーナーから許可されていません', not_found:'見つかりませんでした'};
   function errText(r){ return ERR[r && r.error] || '処理できませんでした（通信状況を確認してください）'; }
 
   // 非表示にした読み取り（今日の分だけ覚える）
@@ -822,6 +823,14 @@
     '.elc-gift span{flex:1}.elc-gift button{border:1.5px solid #e0a830;background:#fff;color:#a87a18;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}' +
     '.elc-ttl{display:inline-block;font-size:10px;background:#eeebfa;color:#6a5fb0;border-radius:8px;padding:0 6px;margin-left:4px;vertical-align:1px}' +
     '.elc-link{background:none;border:none;color:var(--ac);text-decoration:underline;font-size:12px;cursor:pointer;padding:0;font-family:inherit}' +
+    '.elc-plan{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed var(--bd);font-size:13px}' +
+    '.elc-plan .t{font-weight:800;width:44px;flex-shrink:0}.elc-plan .n{flex:1;min-width:0}.elc-plan .n small{display:block;color:var(--tx2);font-size:11px}' +
+    '.elc-plan.cancel .n,.elc-plan.cancel .t,.elc-plan.declined .n,.elc-plan.declined .t{text-decoration:line-through;color:var(--tx2)}' +
+    '.elc-st{flex-shrink:0;font-size:11px;font-weight:700;border-radius:8px;padding:1px 7px}' +
+    '.elc-st.pending{background:#fbf0dc;color:#a87a18}.elc-st.ok{background:#e3f3ea;color:#3d8a5f}.elc-st.cancel,.elc-st.declined{background:#eee;color:#888}' +
+    '.elc-pb{border:1.5px solid var(--ac);background:#fff;color:var(--ac);border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0}' +
+    '.elc-pb.ng{border-color:#bbb;color:#888}' +
+    '.elc-day{font-weight:800;font-size:13px;margin-top:12px}' +
     '.elc-set-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 36px;gap:6px;margin-bottom:6px;align-items:center}';
   document.head.appendChild(css);
 
@@ -857,6 +866,7 @@
       return;
     }
     var list = unclaimed();
+    var planHtml = plansBoxHtml();
     var rows = list.map(function(k){
       var on = state.selected.indexOf(k.id) >= 0;
       return '<div class="elc-row' + (on ? ' on' : '') + '" role="button" tabindex="0" data-k="' + k.id + '">' +
@@ -874,10 +884,59 @@
       (rows || '<div class="elc-note">まだ読み取りはありません。読み取りがあると自動で出てきます。</div>') +
       (sel.length ? '<div class="elc-note" style="color:var(--tx)">✅ ' + sel.map(function(k){ return esc(k.nickname) + '(No.' + k.member_no + ')'; }).join('、') +
         ' を選択中。アンケートの推し猫と来店経験も自動で入れたので、会員さんには聞かなくて大丈夫です。来店パターンと人数を選んで「入店登録」すると、この組に結びつきます。</div>'
-        : (rows ? '<div class="elc-note">タップすると「お客様区分」と「常連さん」が自動で入ります。グループで何人か読み取った場合は、まとめて選べます。</div>' : '')) +
-      '</div>';
+        : (rows ? '<div class="elc-note">タップすると「お客様区分」と、紐づけた「常連さん」が自動で入ります。グループで何人か読み取った場合は、まとめて選べます。</div>' : '')) +
+      '</div>' + planHtml;
     updateBadge();
   }
+  // ---------- 来店予定 ----------
+  var ST = {pending:'確認待ち', ok:'OK済み', cancel:'キャンセル', declined:'お断り'};
+  function who(p){ return 'No.' + p.member_no + ' ' + esc(p.nickname) + ' さん' + (p.pos_member && p.pos_member !== p.nickname ? '（' + esc(p.pos_member) + '）' : ''); }
+  function planRow(p, withDate){
+    return '<div class="elc-plan ' + p.status + '"><span class="t">' + esc(p.time) + '</span>' +
+      '<span class="n">' + who(p) + '<small>' + p.people + '名' + (withDate ? '' : '') + '　来店' + p.visits + '回' + (p.note ? '　「' + esc(p.note) + '」' : '') + '</small></span>' +
+      (p.status === 'pending' ? '<button class="elc-pb" type="button" data-plan="' + p.id + ':1">OK</button><button class="elc-pb ng" type="button" data-plan="' + p.id + ':0">お断り</button>'
+        : '<span class="elc-st ' + p.status + '">' + ST[p.status] + '</span>') + '</div>';
+  }
+  function plansBoxHtml(){
+    var pl = state.plans; if(!pl) return '';
+    var today = (pl.today || []), pend = pl.pending || 0;
+    var todayPend = today.filter(function(p){ return p.status === 'pending'; }).length;
+    if(!today.length && !pend) return '';
+    return '<div class="card" style="padding:12px 14px;margin-top:10px"><div class="ct" style="margin-bottom:0;display:flex;justify-content:space-between;align-items:center">' +
+      '<span>📅 今日の来店予定' + (today.length ? '（' + today.filter(function(p){ return p.status !== 'cancel'; }).length + '件）' : '') + '</span>' +
+      '<button class="elc-link" type="button" data-act="plans">一覧を開く</button></div>' +
+      (today.length ? today.map(function(p){ return planRow(p); }).join('') : '<div class="elc-note">今日の予定はありません。</div>') +
+      (pend > todayPend ? '<div class="elc-note" style="color:#a87a18;font-weight:700">明日以降の確認待ちが ' + (pend - todayPend) + '件あります。「一覧を開く」からOKしてください。</div>' : '') +
+      '</div>';
+  }
+  function decidePlan(btn, after){
+    var p = btn.dataset.plan.split(':'), ok = p[1] === '1';
+    if(!ok && !confirm('この来店予定をお断りしますか？\nお客さんのカードに「お店の都合でお受けできませんでした」と表示されます。')) return;
+    btn.disabled = true;
+    rpc('el_pos_plan_decide', {p_pw:pw(), p_id:+p[0], p_ok:ok}).then(function(r){
+      if(!r.ok){ btn.disabled = false; return msg(errText(r), true); }
+      msg(ok ? 'OKしました（お客さんのカードに「OK」と出ます）' : 'お断りしました'); poll().then(after || function(){});
+    }).catch(function(){ btn.disabled = false; msg('通信できませんでした', true); });
+  }
+  function openPlans(){
+    if(!pw()) return askStaffPw();
+    openM('📅 来店予定', '<div class="elc-note" style="margin:0">読み込んでいます…</div>');
+    rpc('el_pos_plans', {p_pw:pw()}).then(function(r){
+      if(!r.ok){ $('elc-m-body').innerHTML = '<div class="elc-note" style="color:var(--ng)">' + esc(errText(r)) + '</div>'; return; }
+      var by = {}, days = [];
+      r.plans.forEach(function(p){ if(!by[p.date]){ by[p.date] = []; days.push(p.date); } by[p.date].push(p); });
+      var W = '日月火水木金土';
+      var h = (r.enabled ? '' : '<div class="elc-note" style="color:var(--ng);margin-top:0">いまは受付を止めています（⚙️「ボーナスカード・入口QRの設定」で再開できます）。</div>') +
+        '<div class="elc-note" style="margin-top:0">会員さんが推し猫カードから知らせてくれた来店予定です。OKを押すと、お客さんのカードに「OK」と表示されます（お店から連絡は送られません）。</div>';
+      h += days.length ? days.map(function(d){
+        var dt = new Date(d + 'T00:00:00');
+        return '<div class="elc-day">' + (dt.getMonth() + 1) + '/' + dt.getDate() + '（' + W[dt.getDay()] + '）' + (d === r.today ? ' 今日' : '') + '</div>' +
+          by[d].map(function(p){ return planRow(p); }).join('');
+      }).join('') : '<div class="elc-note">これからの来店予定はありません。</div>';
+      $('elc-m-body').innerHTML = h;
+    }).catch(function(){ $('elc-m-body').innerHTML = '<div class="elc-note" style="color:var(--ng)">通信できませんでした</div>'; });
+  }
+
   // 渡していないごほうび
   function giftHtml(k){
     return ((k.perk && k.perk.pending) || []).map(function(r){
@@ -898,23 +957,30 @@
   function updateBadge(){
     var nav = $('n-r'); if(!nav) return;
     nav.style.position = 'relative';
-    var bd = nav.querySelector('.elc-badge'), n = pw() ? unclaimed().length : 0;
+    var bd = nav.querySelector('.elc-badge'), n = pw() ? unclaimed().length + ((state.plans && state.plans.pending) || 0) : 0;
     if(!n){ if(bd) bd.remove(); return; }
     if(!bd){ bd = document.createElement('i'); bd.className = 'elc-badge'; nav.appendChild(bd); }
     bd.textContent = n;
   }
-  function memberLabel(k){ return Members && Members.indexOf(k.nickname) >= 0 ? k.nickname : 'No.' + k.member_no + ' ' + k.nickname; }
+  // 常連さん欄に入れる名前：管理画面で紐づけた常連さん → ニックネームが常連さんの名前と同じとき → なし
+  function memberLabel(k){
+    if(k.pos_member) return k.pos_member;
+    return (typeof Members !== 'undefined' && Members && Members.indexOf(k.nickname) >= 0) ? k.nickname : '';
+  }
   function applySelection(){
     var sel = state.checkins.filter(function(k){ return state.selected.indexOf(k.id) >= 0; });
     var tp = $('r-tp'), mem = $('r-member');
-    if(!sel.length){ if(mem && /^No\.\d+ /.test(mem.value)) mem.value = ''; return; }
+    if(!sel.length){ if(mem && state.autoMember && mem.value === state.autoMember) mem.value = ''; state.autoMember = ''; return; }
     if(tp && sel.some(function(k){ return k.total_visits > 1; })) tp.value = 'rep';
     if(mem){
-      var label = memberLabel(sel[0]);
-      if(!Array.prototype.some.call(mem.options, function(o){ return o.value === label; })){
-        var o = document.createElement('option'); o.value = label; o.textContent = label + '（入口QR）'; mem.appendChild(o);
-      }
-      mem.value = label;
+      var label = '';
+      sel.some(function(k){ label = memberLabel(k); return !!label; });
+      if(label){
+        if(!Array.prototype.some.call(mem.options, function(o){ return o.value === label; })){
+          var o = document.createElement('option'); o.value = label; o.textContent = label; mem.appendChild(o);
+        }
+        mem.value = label; state.autoMember = label;
+      }else if(state.autoMember && mem.value === state.autoMember){ mem.value = ''; state.autoMember = ''; }
     }
     // アンケートの「推し猫はいますか？」に会員の推し猫を入れる（POSの猫の名前と同じとき）
     if(typeof togAqCat === 'function'){
@@ -932,6 +998,9 @@
   function onBoxClick(e){
     var a = e.target.closest('[data-act]');
     if(a && a.dataset.act === 'pw') return askStaffPw();
+    if(a && a.dataset.act === 'plans') return openPlans();
+    var pb = e.target.closest('[data-plan]');
+    if(pb){ e.stopPropagation(); return decidePlan(pb); }
     var gv = e.target.closest('[data-give]');
     if(gv){ e.stopPropagation(); return giveReward(gv, renderBox); }
     var h = e.target.closest('[data-hide]');
@@ -947,7 +1016,7 @@
     return rpc('el_pos_checkins', {p_pw:pw()}).then(function(r){
       state.busy = false;
       if(!r.ok){ state.error = r.error; state.checkins = []; renderBox(); return; }
-      state.error = ''; state.checkins = r.checkins || []; state.config = r.config; state.lastAt = new Date().toISOString();
+      state.error = ''; state.checkins = r.checkins || []; state.config = r.config; state.plans = r.plans || null; state.lastAt = new Date().toISOString();
       var ids = state.checkins.map(function(k){ return k.id; });
       state.selected = state.selected.filter(function(id){ return ids.indexOf(id) >= 0 && !state.checkins.find(function(k){ return k.id === id; }).guest_id; });
       renderBox();
@@ -1077,6 +1146,8 @@
   }
   modal.addEventListener('click', function(e){
     if(e.target === modal){ cModal('m-elc'); return; }
+    var pb = e.target.closest('[data-plan]');
+    if(pb) return decidePlan(pb, openPlans);
     var id = e.target.id;
     if(id === 'elc-pw-go'){
       var v = $('elc-pw').value;
@@ -1125,6 +1196,9 @@
             '<option value="1"' + (r.card_once !== false ? ' selected' : '') + '>使い捨て（1枚1回・お客さんが持ち帰ってOK）</option>' +
             '<option value="0"' + (r.card_once === false ? ' selected' : '') + '>使い回し（1枚1日1回・返してもらう）</option></select></div>' +
           '<div class="elc-note">ガチャに入れたボーナスカードを、お客さんが自分のスマホで読み取ると1pt入ります（来店を記録した日だけ）。未使用のカード：' + r.cards_unused + '枚。カードの印刷・追加は管理画面の「⚙️ 設定」から行います。</div></div>' +
+        '<div class="card" style="padding:12px 14px"><div class="ct">📅 来店予定</div>' +
+          '<label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="elc-plan-on"' + (r.plans_enabled !== false ? ' checked' : '') + ' style="width:20px;height:20px"> 推し猫カードから来店予定を受け付ける</label>' +
+          '<div class="elc-note">会員さんが日時と人数を知らせてくれます。新規画面と「📅 来店予定」でOK・お断りを押します。お休みの日などに受付を止めたいときはオフにしてください。</div></div>' +
         '<div class="card" style="padding:12px 14px"><div class="ct">📱 入口QR</div>' +
           '<div class="fg"><label class="fl">QRコードが切り替わる間隔</label><select class="fc" id="elc-iv">' +
           ivs.map(function(x){ return '<option value="' + x[0] + '"' + (x[0] === iv ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
@@ -1136,7 +1210,10 @@
   function saveOptions(){
     rpc('el_owner_save_options', {p_pw:ownerPwMem, p_qr_interval:+$('elc-iv').value, p_bonus_enabled:$('elc-b-on').checked, p_bonus_cap:+$('elc-cap').value, p_card_once:$('elc-once').value === '1'}).then(function(r){
       if(!r.ok){ $('elc-s-err').textContent = errText(r); return; }
-      cModal('m-elc'); msg('保存しました'); poll();
+      return rpc('el_owner_save_plans', {p_pw:ownerPwMem, p_enabled:$('elc-plan-on').checked}).then(function(r2){
+        if(!r2.ok){ $('elc-s-err').textContent = errText(r2); return; }
+        cModal('m-elc'); msg('保存しました'); poll();
+      });
     }).catch(function(){ $('elc-s-err').textContent = '通信できませんでした'; });
   }
 
@@ -1148,6 +1225,7 @@
     wrap.innerHTML =
       '<button class="btn bso bf" type="button" data-go="election-qr.html">📱 入口QR（来店・総選挙）</button>' +
       '<button class="btn bso bf" type="button" data-go="election-admin.html">🗳️ 総選挙・会員の管理</button>' +
+      '<button class="btn bso bf" type="button" data-m="plans">📅 来店予定</button>' +
       '<button class="btn bso bf" type="button" data-m="settings">⚙️ ボーナスカード・入口QRの設定</button>' +
       '<button class="btn bso bf" type="button" data-m="pw">🔑 入口QR連携のパスワード</button>';
     wrap.addEventListener('click', function(e){
@@ -1155,6 +1233,7 @@
       cModal('m-menu');
       if(b.dataset.go) location.href = b.dataset.go;
       else if(b.dataset.m === 'settings') openSettings();
+      else if(b.dataset.m === 'plans') openPlans();
       else askStaffPw();
     });
     if(anchor) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
@@ -1164,7 +1243,6 @@
   function init(){ addMenuButtons(); renderBox(); poll(); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
-
 </script>
 </body>
 </html>
