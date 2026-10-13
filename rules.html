@@ -30,12 +30,16 @@ label.f small{font-weight:400;color:var(--tx2)}
 .stp{display:flex;align-items:center;gap:14px}
 .stp button{width:44px;height:44px;border-radius:50%;border:2px solid var(--ac);background:#fff;color:var(--ac);font-size:24px;font-weight:700;line-height:1;cursor:pointer;font-family:inherit}
 .stp b{min-width:28px;text-align:center;font-size:22px;font-family:'Zen Maru Gothic',sans-serif}
-ol.rules{list-style:none;counter-reset:r;margin:0;padding:0}
-ol.rules li{counter-increment:r;position:relative;padding:12px 0 12px 40px;border-top:1px dashed var(--bd)}
+ol.rules{list-style:none;margin:0;padding:0}
+ol.rules li{position:relative;padding:11px 0 11px 30px;border-top:1px dashed var(--bd)}
 ol.rules li:first-child{border-top:none}
-ol.rules li::before{content:counter(r);position:absolute;left:0;top:12px;width:28px;height:28px;border-radius:50%;background:var(--ac);color:#fff;font-weight:700;font-size:14px;text-align:center;line-height:28px;font-family:'Zen Maru Gothic',sans-serif}
-ol.rules b{display:block;font-size:15px;font-weight:700}
-ol.rules span{display:block;font-size:13.5px;color:var(--tx2)}
+ol.rules li::before{content:'🐾';position:absolute;left:0;top:11px;font-size:17px}
+.rules .ln,.rfoot .ln{display:block;font-size:14.5px;line-height:1.75}
+.rules .r,.rfoot .r{color:#d0342c;font-weight:700}
+.rules .u,.rfoot .u{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.rules .y{background:linear-gradient(transparent 35%,#ffe45c 35%);padding:0 2px}
+.rules .s{font-size:12.5px;color:var(--tx2);font-weight:400}
+.rfoot{margin-top:6px;padding-top:12px;border-top:1.5px solid var(--bd);font-weight:700}
 .who{border:2px solid var(--bd);border-radius:14px;padding:12px;margin-top:10px;background:#fffafa}
 .who .t{font-size:13px;font-weight:700;margin-bottom:6px}
 input.in{width:100%;font-size:16px;padding:11px 12px;border:1.5px solid var(--bd);border-radius:12px;background:#fff;color:var(--tx);font-family:inherit;outline:none}
@@ -103,9 +107,10 @@ input.in:focus{border-color:var(--ac)}
 
     <div id="rulesSec" hidden>
       <div class="card">
-        <h1>ご来店の注意事項</h1>
+        <h1 id="rulesTitle">ご利用にあたっての注意事項</h1>
         <p class="lead" style="margin-bottom:6px">猫たちが安心して過ごせるよう、お読みください。</p>
         <ol class="rules" id="rules"></ol>
+        <div class="rfoot" id="rulesFoot"></div>
         <div id="end" style="height:1px"></div>
       </div>
       <div class="card">
@@ -140,18 +145,39 @@ input.in:focus{border-color:var(--ac)}
 <script>
 // =====================================================
 // ★★ 注意事項の文面はここだけ書き換えれば変わります ★★
+//  1つの［ ］が、🐾1つ分の項目です。「'…',」が1行です。
+//  文字の飾り：{赤}赤い字{/赤}　{線}下線{/線}　{黄}黄色のマーカー{/黄}　{小}小さい字{/小}
 //  文面を変えたら RULES_VERSION も変えてください（どの版を読んだかが記録されます）
 // =====================================================
-var RULES_VERSION = '2026-10-v2-draft';
+var RULES_VERSION = '2026-10-v3';
+var RULES_TITLE = 'ご利用にあたっての注意事項';
 var RULES = [
-  {t:'猫が嫌がることはしないでください', d:'追いかける、無理に抱っこする、しっぽや足をつかむ、大きな声を出す、などはご遠慮ください。'},
-  {t:'寝ている猫は、そっとしておいてください', d:'寝ている子を起こしたり、触ったりしないでください。'},
-  {t:'フラッシュ撮影はできません', d:'撮影は猫のペースで、フラッシュなしでお願いします。'},
-  {t:'猫へのおやつは、スタッフの案内があるときだけ', d:'ご自身で持ち込んだ物や、案内のない食べ物は猫にあげないでください。'},
-  {t:'小さなお子様には保護者の方が付き添ってください', d:'猫との触れ合い方を、一緒に見守ってあげてください。'},
-  {t:'引っかかれたり、噛まれたりしたときは', d:'すぐにスタッフにお声がけください。'},
-  {t:'体調が優れない方・猫アレルギーの方は', d:'ご無理をなさらず、スタッフにお申し出ください。'},
-  {t:'扉の開け閉めは、スタッフの案内に従ってください', d:'猫の脱走を防ぐため、ご協力をお願いします。'}
+  ['{赤}必ず靴下の着用をお願い致します。{/赤}',
+   '{赤}未着用の方は入店できませんので必ずご持参下さい。{/赤}',
+   '{小}（店内で靴下の販売も行っております）{/小}'],
+  ['{赤}猫ちゃん達の嫌がる行為は禁止です。{/赤}',
+   '{赤}{線}※走り回る・大声を出す・寝ている猫を無理やり起こす・猫を追い回す・抱っこする・叩くなど{/線}{/赤}'],
+  ['{黄}{赤}抱っこは禁止{/赤}{/黄}ですが、猫ちゃんからお膝にきた場合は、そのまま座らせてあげて下さい。'],
+  ['{線}同日他の猫カフェや動物を触られた方は入店できません。{/線}'],
+  ['{赤}入店・退店の際は必ずアルコール消毒{/赤}をお願い致します。'],
+  ['{赤}料金は30分以上から{線}自動延長{/線}{/赤}となります。',
+   '{線}スタッフからのお声がけは致しませんのでご了承下さい。{/線}'],
+  ['当店は禁煙となっております。ご来店前は香水やハンドクリーム、柔軟剤等、香りの強いものの使用は避けて下さい。'],
+  ['写真撮影は可能ですが、{線}フラッシュ撮影は禁止{/線}です。',
+   'また他のお客様が写り込まない様、ご注意下さい。',
+   '店内での通話は他のお客様のご迷惑となりますのでご遠慮下さい。'],
+  ['万が一お怪我をされた場合や猫ちゃんがお洋服を破損させた場合、当店は一切責任は負いかねますのでご了承下さい。',
+   '※傷ばん・消毒液はございますのでお声がけ下さい。'],
+  ['飲食物、ペットのおやつの持ち込みは禁止です。'],
+  ['お荷物の管理はお客様ご自身でお願い致します。',
+   '店内での紛失・盗難・猫たちのイタズラ等の責任は負いかねますので、あらかじめご了承下さい。'],
+  ['キャットタワー・キャットウォーク・キャットステップの破損によりケガをされても責任は負いかねます。',
+   'また破損された場合は代金の請求をさせて頂きます。']
+];
+// 最後の締めの文（🐾なし）
+var RULES_FOOT = [
+  '{線}以上の注意事項を厳守できない方、スタッフの指示に従えない方、安全で無いと判断した場合、即退店頂きます。{/線}',
+  '{線}途中退店でも入店料の返金は致しかねます。{/線}'
 ];
 
 // ★★ 受付後に出す「お店のご案内」。文面はここだけ書き換えれば変わります ★★
@@ -182,7 +208,13 @@ var MAX_PEOPLE = 20;
     return '<div class="gi"><span class="ic">'+g.i+'</span><div style="flex:1"><b>'+esc(g.t)+'</b><span class="d">'+esc(g.d)+'</span>'+
       (g.review ? '<a class="rv" href="'+REVIEW_URL+'" target="_blank" rel="noopener">Googleに口コミを書く</a>' : '')+'</div></div>';
   }).join('');
-  $('rules').innerHTML = RULES.map(function(r){ return '<li><b>'+esc(r.t)+'</b><span>'+esc(r.d)+'</span></li>'; }).join('');
+  function fmt(t){
+    return esc(t).replace(/\{(赤|線|黄|小)\}/g,function(_,k){ return '<span class="'+({'赤':'r','線':'u','黄':'y','小':'s'})[k]+'">'; })
+                 .replace(/\{\/(赤|線|黄|小)\}/g,'</span>');
+  }
+  $('rulesTitle').textContent = RULES_TITLE;
+  $('rules').innerHTML = RULES.map(function(r){ return '<li>'+r.map(function(l){ return '<span class="ln">'+fmt(l)+'</span>'; }).join('')+'</li>'; }).join('');
+  $('rulesFoot').innerHTML = RULES_FOOT.map(function(l){ return '<span class="ln">'+fmt(l)+'</span>'; }).join('');
 
   function jstToday(){ try{ return new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'}); }catch(e){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); } }
   function showDone(v){
