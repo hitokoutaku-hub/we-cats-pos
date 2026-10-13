@@ -13,7 +13,7 @@
 <!-- Supabase SDK -->
 
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Kaisei+Opti:wght@400;700&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260815c">
+<link rel="stylesheet" href="style.css?v=20261011d">
 
 
 </head>
@@ -48,7 +48,7 @@
     </div>
   </div>
   <div class="hdate" id="hdate"></div>
-  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20260918a</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20261011e</div>
 </div>
 
 <div class="nav">
@@ -772,13 +772,12 @@
 // we-cats-pos.html の app.js の後に読み込みます。app.js は書き換えません。
 //  ・新規画面：入口のQRを読み取った会員を表示 → タップで区分・常連さんを自動入力
 //  ・退店画面：この組に結びついた会員の表示（結びつけ忘れの修正）
-//  ・新規画面：会員がカードから申し込んだ「予約」（昼・夜カフェ）の表示とOK
-//  ・⚙️メニュー：入口QR・総選挙管理・予約・ボーナスとQRと予約の設定
+//  ・⚙️メニュー：入口QR・総選挙管理・ボーナスとQRの設定
 // =====================================================
 (function(){
   var PW_KEY = 'wc_election_qr_pw';     // 入口QR画面と共通（総選挙のスタッフ用パスワード）
   var HIDE_KEY = 'wc_elc_hidden';
-  var state = {checkins:[], config:null, error:'', selected:[], lastAt:null, busy:false, plans:null, autoMember:''};
+  var state = {checkins:[], config:null, error:'', selected:[], lastAt:null, busy:false};
   var tickN = 0;
 
   function $(id){ return document.getElementById(id); }
@@ -795,8 +794,7 @@
   var ERR = {wrong_password:'パスワードが違います', locked:'間違いが続いたため10分間ロック中です',
     setup_needed:'先に総選挙の管理画面でパスワードを決めてください', interval:'切り替え間隔を選んでください',
     closed:'総選挙の期間外です', disabled:'ボーナスはオフになっています', cap:'上限を選んでください',
-    no_permission:'この設定の変更は、オーナーから許可されていません', not_found:'見つかりませんでした',
-    night_days:'夜カフェの曜日を選んでください', night_times:'夜カフェの時間を入れてください（例：19:00,20:00）', night_cap:'夜カフェの定員を入れてください（1〜100）'};
+    no_permission:'この設定の変更は、オーナーから許可されていません'};
   function errText(r){ return ERR[r && r.error] || '処理できませんでした（通信状況を確認してください）'; }
 
   // 非表示にした読み取り（今日の分だけ覚える）
@@ -824,16 +822,6 @@
     '.elc-gift span{flex:1}.elc-gift button{border:1.5px solid #e0a830;background:#fff;color:#a87a18;border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}' +
     '.elc-ttl{display:inline-block;font-size:10px;background:#eeebfa;color:#6a5fb0;border-radius:8px;padding:0 6px;margin-left:4px;vertical-align:1px}' +
     '.elc-link{background:none;border:none;color:var(--ac);text-decoration:underline;font-size:12px;cursor:pointer;padding:0;font-family:inherit}' +
-    '.elc-plan{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px dashed var(--bd);font-size:13px}' +
-    '.elc-plan .t{font-weight:800;width:44px;flex-shrink:0}.elc-plan .n{flex:1;min-width:0}.elc-plan .n small{display:block;color:var(--tx2);font-size:11px}' +
-    '.elc-plan.cancel .n,.elc-plan.cancel .t,.elc-plan.declined .n,.elc-plan.declined .t{text-decoration:line-through;color:var(--tx2)}' +
-    '.elc-st{flex-shrink:0;font-size:11px;font-weight:700;border-radius:8px;padding:1px 7px}' +
-    '.elc-st.pending{background:#fbf0dc;color:#a87a18}.elc-st.ok{background:#e3f3ea;color:#3d8a5f}.elc-st.cancel,.elc-st.declined{background:#eee;color:#888}' +
-    '.elc-pb{border:1.5px solid var(--ac);background:#fff;color:var(--ac);border-radius:14px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0}' +
-    '.elc-pb.ng{border-color:#bbb;color:#888}' +
-    '.elc-day{font-weight:800;font-size:13px;margin-top:12px}' +
-    '.elc-nt{display:inline-block;font-size:10px;font-weight:700;background:#2e2a4f;color:#f7d774;border-radius:8px;padding:0 6px;margin-right:4px;vertical-align:1px}' +
-    '.elc-wd{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.elc-wd label{display:flex;align-items:center;gap:3px;font-size:13px;border:1.5px solid var(--bd);border-radius:10px;padding:4px 8px}' +
     '.elc-set-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 36px;gap:6px;margin-bottom:6px;align-items:center}';
   document.head.appendChild(css);
 
@@ -869,7 +857,6 @@
       return;
     }
     var list = unclaimed();
-    var planHtml = plansBoxHtml();
     var rows = list.map(function(k){
       var on = state.selected.indexOf(k.id) >= 0;
       return '<div class="elc-row' + (on ? ' on' : '') + '" role="button" tabindex="0" data-k="' + k.id + '">' +
@@ -887,64 +874,10 @@
       (rows || '<div class="elc-note">まだ読み取りはありません。読み取りがあると自動で出てきます。</div>') +
       (sel.length ? '<div class="elc-note" style="color:var(--tx)">✅ ' + sel.map(function(k){ return esc(k.nickname) + '(No.' + k.member_no + ')'; }).join('、') +
         ' を選択中。アンケートの推し猫と来店経験も自動で入れたので、会員さんには聞かなくて大丈夫です。来店パターンと人数を選んで「入店登録」すると、この組に結びつきます。</div>'
-        : (rows ? '<div class="elc-note">タップすると「お客様区分」と、紐づけた「常連さん」が自動で入ります。グループで何人か読み取った場合は、まとめて選べます。</div>' : '')) +
-      '</div>' + planHtml;
+        : (rows ? '<div class="elc-note">タップすると「お客様区分」と「常連さん」が自動で入ります。グループで何人か読み取った場合は、まとめて選べます。</div>' : '')) +
+      '</div>';
     updateBadge();
   }
-  // ---------- 来店予定 ----------
-  var ST = {pending:'確認待ち', ok:'予約OK', cancel:'キャンセル', declined:'お断り'};
-  var WDN = '日月火水木金土';
-  function who(p){ return 'No.' + p.member_no + ' ' + esc(p.nickname) + ' さん' + (p.pos_member && p.pos_member !== p.nickname ? '（' + esc(p.pos_member) + '）' : ''); }
-  function planRow(p, withDate){
-    return '<div class="elc-plan ' + p.status + '"><span class="t">' + esc(p.time) + '</span>' +
-      '<span class="n">' + (p.kind === 'night' ? '<span class="elc-nt">🌙 夜カフェ</span>' : '') + who(p) + '<small>' + p.people + '名　来店' + p.visits + '回' + (p.note ? '　「' + esc(p.note) + '」' : '') + '</small></span>' +
-      (p.status === 'pending' ? '<button class="elc-pb" type="button" data-plan="' + p.id + ':1">OK</button><button class="elc-pb ng" type="button" data-plan="' + p.id + ':0">お断り</button>'
-        : '<span class="elc-st ' + p.status + '">' + ST[p.status] + '</span>') + '</div>';
-  }
-  function plansBoxHtml(){
-    var pl = state.plans; if(!pl) return '';
-    var today = (pl.today || []), pend = pl.pending || 0;
-    var todayPend = today.filter(function(p){ return p.status === 'pending'; }).length;
-    if(!today.length && !pend && !pl.night_today) return '';
-    return '<div class="card" style="padding:12px 14px;margin-top:10px"><div class="ct" style="margin-bottom:0;display:flex;justify-content:space-between;align-items:center">' +
-      '<span>📅 今日の予約' + (today.length ? '（' + today.filter(function(p){ return p.status !== 'cancel'; }).length + '件）' : '') +
-        (pl.night_today ? '　🌙 夜 ' + pl.night_today.booked + '/' + pl.night_today.cap + '名' : '') + '</span>' +
-      '<button class="elc-link" type="button" data-act="plans">一覧を開く</button></div>' +
-      (today.length ? today.map(function(p){ return planRow(p); }).join('') : '<div class="elc-note">今日の予定はありません。</div>') +
-      (pend > todayPend ? '<div class="elc-note" style="color:#a87a18;font-weight:700">明日以降の確認待ちが ' + (pend - todayPend) + '件あります。「一覧を開く」からOKしてください。</div>' : '') +
-      '</div>';
-  }
-  function decidePlan(btn, after){
-    var p = btn.dataset.plan.split(':'), ok = p[1] === '1';
-    if(!ok && !confirm('この予約をお断りしますか？\nお客さんのカードに「お店の都合でお受けできませんでした」と表示されます。')) return;
-    btn.disabled = true;
-    rpc('el_pos_plan_decide', {p_pw:pw(), p_id:+p[0], p_ok:ok}).then(function(r){
-      if(!r.ok){ btn.disabled = false; return msg(errText(r), true); }
-      msg(ok ? 'OKしました（お客さんのカードに「予約OK」と出ます）' : 'お断りしました'); poll().then(after || function(){});
-    }).catch(function(){ btn.disabled = false; msg('通信できませんでした', true); });
-  }
-  function openPlans(){
-    if(!pw()) return askStaffPw();
-    openM('📅 予約', '<div class="elc-note" style="margin:0">読み込んでいます…</div>');
-    rpc('el_pos_plans', {p_pw:pw()}).then(function(r){
-      if(!r.ok){ $('elc-m-body').innerHTML = '<div class="elc-note" style="color:var(--ng)">' + esc(errText(r)) + '</div>'; return; }
-      var by = {}, days = [];
-      r.plans.forEach(function(p){ if(!by[p.date]){ by[p.date] = []; days.push(p.date); } by[p.date].push(p); });
-      var nb = {}; (r.night_dates || []).forEach(function(n){ nb[n.date] = n; });
-      var nightOn = r.night && r.night.enabled;
-      var h = (r.enabled ? '' : '<div class="elc-note" style="color:var(--ng);margin-top:0">昼の予約の受付を止めています。</div>') +
-        (nightOn ? '<div class="elc-note" style="margin-top:0">🌙 夜カフェ：' + r.night.days.map(function(d){ return WDN[d]; }).join('・') + '曜 ' + r.night.times.join('・') + '　定員' + r.night.cap + '名</div>' : '') +
-        '<div class="elc-note" style="margin-top:4px">会員さんが推し猫カードから申し込んだ予約です。OKを押すと、お客さんのカードに「予約OK」と表示されます（お店から連絡は送られません）。夜カフェは確認待ちの分も席を押さえています。</div>';
-      h += days.length ? days.map(function(d){
-        var dt = new Date(d + 'T00:00:00');
-        return '<div class="elc-day">' + (dt.getMonth() + 1) + '/' + dt.getDate() + '（' + WDN[dt.getDay()] + '）' + (d === r.today ? ' 今日' : '') +
-          (nb[d] ? '　<span style="font-weight:400;font-size:12px">🌙 夜 ' + nb[d].booked + '/' + r.night.cap + '名</span>' : '') + '</div>' +
-          by[d].map(function(p){ return planRow(p); }).join('');
-      }).join('') : '<div class="elc-note">これからの予約はありません。</div>';
-      $('elc-m-body').innerHTML = h;
-    }).catch(function(){ $('elc-m-body').innerHTML = '<div class="elc-note" style="color:var(--ng)">通信できませんでした</div>'; });
-  }
-
   // 渡していないごほうび
   function giftHtml(k){
     return ((k.perk && k.perk.pending) || []).map(function(r){
@@ -965,30 +898,23 @@
   function updateBadge(){
     var nav = $('n-r'); if(!nav) return;
     nav.style.position = 'relative';
-    var bd = nav.querySelector('.elc-badge'), n = pw() ? unclaimed().length + ((state.plans && state.plans.pending) || 0) : 0;
+    var bd = nav.querySelector('.elc-badge'), n = pw() ? unclaimed().length : 0;
     if(!n){ if(bd) bd.remove(); return; }
     if(!bd){ bd = document.createElement('i'); bd.className = 'elc-badge'; nav.appendChild(bd); }
     bd.textContent = n;
   }
-  // 常連さん欄に入れる名前：管理画面で紐づけた常連さん → ニックネームが常連さんの名前と同じとき → なし
-  function memberLabel(k){
-    if(k.pos_member) return k.pos_member;
-    return (typeof Members !== 'undefined' && Members && Members.indexOf(k.nickname) >= 0) ? k.nickname : '';
-  }
+  function memberLabel(k){ return Members && Members.indexOf(k.nickname) >= 0 ? k.nickname : 'No.' + k.member_no + ' ' + k.nickname; }
   function applySelection(){
     var sel = state.checkins.filter(function(k){ return state.selected.indexOf(k.id) >= 0; });
     var tp = $('r-tp'), mem = $('r-member');
-    if(!sel.length){ if(mem && state.autoMember && mem.value === state.autoMember) mem.value = ''; state.autoMember = ''; return; }
+    if(!sel.length){ if(mem && /^No\.\d+ /.test(mem.value)) mem.value = ''; return; }
     if(tp && sel.some(function(k){ return k.total_visits > 1; })) tp.value = 'rep';
     if(mem){
-      var label = '';
-      sel.some(function(k){ label = memberLabel(k); return !!label; });
-      if(label){
-        if(!Array.prototype.some.call(mem.options, function(o){ return o.value === label; })){
-          var o = document.createElement('option'); o.value = label; o.textContent = label; mem.appendChild(o);
-        }
-        mem.value = label; state.autoMember = label;
-      }else if(state.autoMember && mem.value === state.autoMember){ mem.value = ''; state.autoMember = ''; }
+      var label = memberLabel(sel[0]);
+      if(!Array.prototype.some.call(mem.options, function(o){ return o.value === label; })){
+        var o = document.createElement('option'); o.value = label; o.textContent = label + '（入口QR）'; mem.appendChild(o);
+      }
+      mem.value = label;
     }
     // アンケートの「推し猫はいますか？」に会員の推し猫を入れる（POSの猫の名前と同じとき）
     if(typeof togAqCat === 'function'){
@@ -1006,9 +932,6 @@
   function onBoxClick(e){
     var a = e.target.closest('[data-act]');
     if(a && a.dataset.act === 'pw') return askStaffPw();
-    if(a && a.dataset.act === 'plans') return openPlans();
-    var pb = e.target.closest('[data-plan]');
-    if(pb){ e.stopPropagation(); return decidePlan(pb); }
     var gv = e.target.closest('[data-give]');
     if(gv){ e.stopPropagation(); return giveReward(gv, renderBox); }
     var h = e.target.closest('[data-hide]');
@@ -1024,7 +947,7 @@
     return rpc('el_pos_checkins', {p_pw:pw()}).then(function(r){
       state.busy = false;
       if(!r.ok){ state.error = r.error; state.checkins = []; renderBox(); return; }
-      state.error = ''; state.checkins = r.checkins || []; state.config = r.config; state.plans = r.plans || null; state.lastAt = new Date().toISOString();
+      state.error = ''; state.checkins = r.checkins || []; state.config = r.config; state.lastAt = new Date().toISOString();
       var ids = state.checkins.map(function(k){ return k.id; });
       state.selected = state.selected.filter(function(id){ return ids.indexOf(id) >= 0 && !state.checkins.find(function(k){ return k.id === id; }).guest_id; });
       renderBox();
@@ -1154,8 +1077,6 @@
   }
   modal.addEventListener('click', function(e){
     if(e.target === modal){ cModal('m-elc'); return; }
-    var pb = e.target.closest('[data-plan]');
-    if(pb) return decidePlan(pb, openPlans);
     var id = e.target.id;
     if(id === 'elc-pw-go'){
       var v = $('elc-pw').value;
@@ -1177,7 +1098,7 @@
 
   var ownerPwMem = '';
   function openSettings(){
-    openM('⚙️ ボーナスカード・入口QR・予約の設定',
+    openM('⚙️ ボーナスカード・入口QRの設定',
       '<div class="elc-note" style="margin:0 0 10px">会員管理画面で決めた「オーナー用」または「マネージャー用」のパスワードで開きます。</div>' +
       '<div class="fg"><input class="fc" id="elc-opw" type="password" autocomplete="off" placeholder="オーナー用・マネージャー用パスワード"></div>' +
       '<div id="elc-o-err" style="color:var(--ng);font-size:12px;margin-bottom:8px"></div>' +
@@ -1192,7 +1113,6 @@
       if(!r.ok){ ownerPwMem = ''; $('elc-o-err').textContent = errText(r); return; }
       if(r.role === 'manager' && !(r.perms && r.perms.options)){ $('elc-o-err').textContent = ERR.no_permission; return; }
       ownerPwMem = v;
-      var nt = r.night || {};
       var iv = r.qr_interval;
       var ivs = [[20,'20秒（おすすめ）'],[30,'30秒'],[60,'1分'],[300,'5分'],[1800,'30分']];
       if(!ivs.some(function(x){ return x[0] === iv; })) ivs.push([iv, iv + '秒']);
@@ -1204,17 +1124,7 @@
           '<div class="fg"><label class="fl">カードの使い方</label><select class="fc" id="elc-once">' +
             '<option value="1"' + (r.card_once !== false ? ' selected' : '') + '>使い捨て（1枚1回・お客さんが持ち帰ってOK）</option>' +
             '<option value="0"' + (r.card_once === false ? ' selected' : '') + '>使い回し（1枚1日1回・返してもらう）</option></select></div>' +
-          '<div class="elc-note">ガチャに入れたボーナスカードを、お客さんが自分のスマホで読み取ると1pt入ります（来店を記録した日だけ）。未使用のカード：' + r.cards_unused + '枚。カードの印刷・追加は管理画面の「⚙️ 設定」から行います。</div></div>' +
-        '<div class="card" style="padding:12px 14px"><div class="ct">📅 予約（推し猫カードの会員さん）</div>' +
-          '<label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="elc-plan-on"' + (r.plans_enabled !== false ? ' checked' : '') + ' style="width:20px;height:20px"> ☀️ 昼の予約を受け付ける（12:00〜17:00）</label>' +
-          '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:10px"><input type="checkbox" id="elc-n-on"' + (nt.enabled ? ' checked' : '') + ' style="width:20px;height:20px"> 🌙 夜カフェの予約を受け付ける</label>' +
-          '<div id="elc-n-box" style="margin-top:8px;padding-left:4px">' +
-            '<div class="fl">夜カフェの曜日</div><div class="elc-wd">' + [1,2,3,4,5,6,0].map(function(d){
-              return '<label><input type="checkbox" class="elc-n-d" value="' + d + '"' + ((nt.days || []).indexOf(d) >= 0 ? ' checked' : '') + '>' + WDN[d] + '</label>'; }).join('') + '</div>' +
-            '<div class="fg"><label class="fl">選べる時間（カンマ区切り）</label><input class="fc" id="elc-n-times" value="' + esc((nt.times || []).join(',')) + '" placeholder="19:00,19:30,20:00"></div>' +
-            '<div class="fg"><label class="fl">1晩の定員（人数）</label><input class="fc" id="elc-n-cap" type="number" min="1" max="100" value="' + esc(nt.cap || 8) + '"></div>' +
-          '</div>' +
-          '<div class="elc-note">会員さんが推し猫カードから日時と人数を申し込みます。新規画面と「📅 予約」でOK・お断りを押します。夜カフェは定員に達すると、カードで「満席」と表示されて申し込めなくなります。</div></div>' +
+          '<div class="elc-note">ガチャやチェキで渡したボーナスカードを、お客さんが自分のスマホで読み取ると1pt入ります（ガチャとチェキの両方に入れるなら、上限を2pt以上に）（来店を記録した日だけ）。未使用のカード：' + r.cards_unused + '枚。カードの印刷・追加は管理画面の「⚙️ 設定」から行います。</div></div>' +
         '<div class="card" style="padding:12px 14px"><div class="ct">📱 入口QR</div>' +
           '<div class="fg"><label class="fl">QRコードが切り替わる間隔</label><select class="fc" id="elc-iv">' +
           ivs.map(function(x){ return '<option value="' + x[0] + '"' + (x[0] === iv ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
@@ -1226,17 +1136,7 @@
   function saveOptions(){
     rpc('el_owner_save_options', {p_pw:ownerPwMem, p_qr_interval:+$('elc-iv').value, p_bonus_enabled:$('elc-b-on').checked, p_bonus_cap:+$('elc-cap').value, p_card_once:$('elc-once').value === '1'}).then(function(r){
       if(!r.ok){ $('elc-s-err').textContent = errText(r); return; }
-      return rpc('el_owner_save_plans', {p_pw:ownerPwMem, p_enabled:$('elc-plan-on').checked}).then(function(r2){
-        if(!r2.ok){ $('elc-s-err').textContent = errText(r2); return; }
-        var night = {enabled:$('elc-n-on').checked,
-          days:Array.prototype.filter.call(document.querySelectorAll('.elc-n-d'), function(c){ return c.checked; }).map(function(c){ return +c.value; }),
-          times:$('elc-n-times').value.replace(/[、，\s]+/g, ',').replace(/：/g, ':').split(',').filter(Boolean).map(function(t){ return /^\d:\d\d$/.test(t) ? '0' + t : t; }),
-          cap:$('elc-n-cap').value};
-        return rpc('el_owner_save_night', {p_pw:ownerPwMem, p_night:night}).then(function(r3){
-          if(!r3.ok){ $('elc-s-err').textContent = errText(r3); return; }
-          cModal('m-elc'); msg('保存しました'); poll();
-        });
-      });
+      cModal('m-elc'); msg('保存しました'); poll();
     }).catch(function(){ $('elc-s-err').textContent = '通信できませんでした'; });
   }
 
@@ -1248,15 +1148,13 @@
     wrap.innerHTML =
       '<button class="btn bso bf" type="button" data-go="election-qr.html">📱 入口QR（来店・総選挙）</button>' +
       '<button class="btn bso bf" type="button" data-go="election-admin.html">🗳️ 総選挙・会員の管理</button>' +
-      '<button class="btn bso bf" type="button" data-m="plans">📅 予約（昼・夜カフェ）</button>' +
-      '<button class="btn bso bf" type="button" data-m="settings">⚙️ ボーナスカード・入口QR・予約の設定</button>' +
+      '<button class="btn bso bf" type="button" data-m="settings">⚙️ ボーナスカード・入口QRの設定</button>' +
       '<button class="btn bso bf" type="button" data-m="pw">🔑 入口QR連携のパスワード</button>';
     wrap.addEventListener('click', function(e){
       var b = e.target.closest('button'); if(!b) return;
       cModal('m-menu');
       if(b.dataset.go) location.href = b.dataset.go;
       else if(b.dataset.m === 'settings') openSettings();
-      else if(b.dataset.m === 'plans') openPlans();
       else askStaffPw();
     });
     if(anchor) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
@@ -1264,6 +1162,258 @@
   }
 
   function init(){ addMenuButtons(); renderBox(); poll(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+
+</script>
+<script>
+// =====================================================
+// QR受付（rules.html）× POS入店登録 の連携
+//  ・新規画面：今日、QRで受付したグループを表示。タップすると「区分・パターン・人数・入店時間」が自動で入る
+//    → 内容を確認して「入店登録」を押すと、そのグループに結びつく
+//  ・入店登録：ご新規様で、注意事項を確認した人数が大人の人数より少ないときに警告（登録は止めません）
+//  ・来店カード：「📝確認済 n名」などの目印。タップすると、後から結びつけられる
+// app.js は書き換えません。Supabaseの表 pos_visit_checkins が無いときは何も表示しません。
+// =====================================================
+(function(){
+  var HIDE_KEY = 'wc_vc_hidden';
+  var state = {rows:[], ready:false, selected:null, busy:false, warned:false};
+  var tickN = 0, skipWarn = false, obs = null;
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } }
+  function hm(iso){ var d = new Date(iso); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function msg(t, err){ if(typeof toast === 'function') toast(t, err); }
+  function hdr(extra){ var h = {apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY}; for(var k in (extra || {})) h[k] = extra[k]; return h; }
+  function REST(){ return SUPA_URL + '/rest/v1/pos_visit_checkins'; }
+
+  function hidden(){ try{ var o = JSON.parse(ls(HIDE_KEY) || '{}'); return o.d === td() ? o.ids : []; }catch(e){ return []; } }
+  function hide(id){ var ids = hidden(); ids.push(id); ls(HIDE_KEY, JSON.stringify({d:td(), ids:ids})); }
+  function unlinked(){ var h = hidden(); return state.rows.filter(function(r){ return !r.guest_id && h.indexOf(r.id) < 0; }); }
+  function rowById(id){ for(var i = 0; i < state.rows.length; i++) if(state.rows[i].id === id) return state.rows[i]; return null; }
+  function peopleText(r){ return '大人' + r.adults + '名' + (r.children > 0 ? '・子ども' + r.children + '名' : ''); }
+  function ackTag(r){
+    if(r.visit_type !== 'new') return '<span class="vc-tag ok">リピーター</span>';
+    var ok = r.ack_n >= r.adults;
+    return '<span class="vc-tag ' + (ok ? 'ok' : 'warn') + '">' + (ok ? '📝 確認済 ' + r.ack_n + '名' : '📝 確認 ' + r.ack_n + '/' + r.adults + '名') + '</span>';
+  }
+
+  // ---------- 見た目 ----------
+  var css = document.createElement('style');
+  css.textContent =
+    '#vc-box{margin-bottom:12px}' +
+    '.vc-row{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid var(--bd);border-radius:14px;padding:10px 12px;margin-top:8px;cursor:pointer;font-family:inherit;color:var(--tx)}' +
+    '.vc-row.on{border-color:var(--ok);background:#eef8f2;box-shadow:0 0 0 3px rgba(79,157,120,.18)}' +
+    '.vc-row .l1{display:flex;align-items:center;gap:8px}' +
+    '.vc-row .t{font-size:12px;color:var(--tx2);flex-shrink:0}' +
+    '.vc-row .no{flex-shrink:0;font-size:13px;background:var(--tx);color:#fff;border-radius:8px;padding:1px 8px}' +
+    '.vc-tag.num{background:var(--tx);color:#fff;border-color:var(--tx);font-size:13px;padding:2px 10px;margin-left:0;margin-right:4px}' +
+    '.vc-row .n{flex:1;min-width:0;font-weight:700;font-size:14px}' +
+    '.vc-row .v{flex-shrink:0;font-size:12px;font-weight:700;color:var(--ok)}' +
+    '.vc-row .x{flex-shrink:0;border:none;background:none;color:var(--tx2);font-size:15px;padding:2px 4px;cursor:pointer}' +
+    '.vc-row .l2{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}' +
+    '.vc-row .nm{font-size:11px;color:var(--tx2);margin-top:4px}' +
+    '.vc-note{font-size:11px;color:var(--tx2);margin-top:8px;line-height:1.6}' +
+    '.vc-tag{display:inline-block;font-size:11px;font-weight:700;border-radius:10px;padding:2px 8px;margin-left:4px;border:1px solid transparent}' +
+    '.vc-tag.ok{background:#e7f5ed;color:#2f6b4c;border-color:#bfe3cf}' +
+    '.vc-tag.warn{background:#fff3d6;color:#a06010;border-color:#f0d9a0}' +
+    '.vc-row .l2 .vc-tag{margin-left:0}' +
+    '.gmeta .vc-tag.warn,.gmeta .vc-tag.ok{cursor:pointer}';
+  document.head.appendChild(css);
+
+  // ---------- 新規画面：QR受付の一覧 ----------
+  function box(){
+    var b = $('vc-box');
+    if(!b && $('p-r')){
+      b = document.createElement('div'); b.id = 'vc-box';
+      $('p-r').insertBefore(b, $('p-r').firstChild);
+      b.addEventListener('click', onBoxClick);
+    }
+    return b;
+  }
+  function rowHtml(r, on, right){
+    return '<div class="vc-row' + (on ? ' on' : '') + '" role="button" tabindex="0" data-r="' + r.id + '">' +
+      '<div class="l1">' + (r.seq ? '<b class="no">No.' + r.seq + '</b>' : '') + '<span class="t">' + hm(r.created_at) + '</span>' +
+      '<span class="n">' + (r.visit_type === 'new' ? 'ご新規様' : 'リピーター様') + '　' + esc(r.pattern) + '　' + peopleText(r) + '</span>' +
+      '<span class="v">' + (right || '') + '</span>' +
+      (right === undefined ? '<button class="x" type="button" data-hide="' + r.id + '" aria-label="この表示を消す">✕</button>' : '') + '</div>' +
+      '<div class="l2">' + ackTag(r) + '</div>' +
+      (r.names ? '<div class="nm">' + esc(r.names) + '</div>' : '') + '</div>';
+  }
+  function render(){
+    var b = box(); if(!b) return;
+    if(!state.ready){ b.innerHTML = ''; return; }
+    var list = unlinked();
+    if(state.selected && !list.some(function(r){ return r.id === state.selected; })) state.selected = null;
+    var rows = list.map(function(r){ return rowHtml(r, r.id === state.selected, r.id === state.selected ? '✅ 選択中' : undefined); }).join('');
+    b.innerHTML = '<div class="card" style="padding:12px 14px">' +
+      '<div class="ct" style="margin-bottom:0;display:flex;justify-content:space-between;align-items:center"><span>📱 QR受付（今日）</span>' +
+        '<span style="font-weight:400">' + (state.rows.length ? '本日 ' + state.rows.length + '組' : '') + '</span></div>' +
+      (rows || '<div class="vc-note">まだQR受付はありません。お客様がQRで受付すると、自動で出てきます。</div>') +
+      (state.selected
+        ? '<div class="vc-note" style="color:var(--tx)">✅ 選択中。下の「区分・パターン・人数・入店時間」に自動で入りました。内容を確認して「入店登録」を押してください（フリーにゃん・キッズデイは今まで通り確認してください）。</div>'
+        : (rows ? '<div class="vc-note">タップすると、区分・パターン・人数・入店時間が自動で入ります。</div>' : '')) +
+      '</div>';
+  }
+  function applyToForm(r){
+    var tp = $('r-tp'); if(tp) tp.value = r.visit_type === 'rep' ? 'rep' : 'new';
+    var pt = $('r-pt'); if(pt) pt.value = r.pattern;
+    aC = r.adults; cC = r.children;
+    var ca = $('ca'), cc = $('cc3'); if(ca) ca.textContent = aC; if(cc) cc.textContent = cC;
+    if(typeof setTime === 'function' && typeof ft === 'function') setTime('r-time', ft(new Date(r.created_at)));
+    if(typeof ppCalc === 'function') ppCalc();
+  }
+  function onBoxClick(e){
+    var h = e.target.closest('[data-hide]');
+    if(h){ e.stopPropagation(); hide(h.dataset.hide); if(state.selected === h.dataset.hide) state.selected = null; render(); return; }
+    var row = e.target.closest('.vc-row'); if(!row) return;
+    var id = row.dataset.r;
+    if(state.selected === id){ state.selected = null; render(); return; }
+    var r = rowById(id); if(!r) return;
+    state.selected = id; applyToForm(r); render();
+  }
+
+  // ---------- 通信 ----------
+  function poll(){
+    if(state.busy) return; state.busy = true;
+    fetch(REST() + '?select=id,created_at,seq,visit_type,adults,children,pattern,names,ack_n,guest_id&day=eq.' + encodeURIComponent(td()) + '&order=created_at.asc', {headers: hdr()})
+      .then(function(r){ if(!r.ok) throw new Error('http ' + r.status); return r.json(); })
+      .then(function(rows){
+        var prev = state.ready ? state.rows.length : null;
+        state.rows = rows; state.ready = true;
+        if(prev !== null && rows.length > prev){ var n = rows[rows.length - 1]; msg('📱 QR受付：' + peopleText(n) + '　' + n.pattern); }
+        render(); decorate();
+      })
+      .catch(function(e){ if(!state.ready && !state.warned){ state.warned = true; console.warn('QR受付（pos_visit_checkins）を読み込めません:', e.message); } })
+      .then(function(){ state.busy = false; });
+  }
+  function claim(id, guestId, done){
+    fetch(REST() + '?id=eq.' + id, {method:'PATCH', headers: hdr({'Content-Type':'application/json', Prefer:'return=minimal'}), body: JSON.stringify({guest_id: String(guestId)})})
+      .then(function(r){
+        if(!r.ok) throw new Error('http ' + r.status);
+        var row = rowById(id); if(row) row.guest_id = String(guestId);
+        render(); decorate(); if(done) done();
+      })
+      .catch(function(){ msg('QR受付の結びつけに失敗しました（通信）', true); });
+  }
+
+  // ---------- 入店登録：選んだ受付をこの組に結びつける＋確認が足りなければ警告 ----------
+  var origReg = window.regGuest;
+  if(typeof origReg === 'function'){
+    window.regGuest = function(){
+      var self = this, args = arguments;
+      var sel = state.selected ? rowById(state.selected) : null;
+      if(sel && sel.guest_id) sel = null;
+      var tpEl = $('r-tp'), tp = tpEl ? tpEl.value : '';
+      var need = (typeof aC === 'number') ? aC : 0;
+      if(state.ready && !skipWarn && tp === 'new' && need > 0){
+        var have = sel ? (sel.ack_n || 0) : 0;
+        if(have < need){
+          var more = unlinked().length;
+          var text = sel
+            ? 'ご新規様：大人' + need + '名に対して、注意事項を確認した方は' + have + '名です。'
+            : 'ご新規様ですが、QR受付が選ばれていません（注意事項の確認なし）。' + (more > 0 ? '\nQR受付が' + more + '組届いています。選び忘れていませんか？' : '');
+          askConfirm(text + '\nこのまま入店登録しますか？',
+            function(){ skipWarn = true; try{ window.regGuest.apply(self, args); } finally{ skipWarn = false; } }, '登録する');
+          return;
+        }
+      }
+      var before = G.length;
+      var r = origReg.apply(self, args);
+      if(sel && G.length > before){
+        claim(sel.id, G[G.length - 1].id);
+        state.selected = null;
+      }
+      return r;
+    };
+  }
+
+  // ---------- 来店カードの目印（確認済み／未確認）と、後からの結びつけ ----------
+  function decorate(){
+    if(obs) obs.disconnect();
+    try{
+      if(!state.ready) return;
+      ['gl-s', 'gl-d'].forEach(function(cid){
+        var c = $(cid); if(!c) return;
+        Array.prototype.forEach.call(c.querySelectorAll('.gi'), function(card){
+          Array.prototype.forEach.call(card.querySelectorAll('.vc-tag[data-vcg]'), function(o){ o.remove(); });
+          var m = /oDet\('([^']+)'\)/.exec(card.getAttribute('onclick') || ''); if(!m) return;
+          var gid = m[1], g = G.find(function(x){ return String(x.id) === gid; }); if(!g) return;
+          var linked = state.rows.filter(function(r){ return r.guest_id === gid; });
+          var n = 0; linked.forEach(function(r){ n += (r.ack_n || 0); });
+          var tag = null;
+          var nums = linked.filter(function(r){ return r.seq; }).map(function(r){ return r.seq; });
+          if(nums.length){
+            var meta0 = card.querySelector('.gmeta');
+            if(meta0){
+              var nt = document.createElement('span');
+              nt.className = 'vc-tag num'; nt.textContent = 'No.' + nums.join('・'); nt.dataset.vcg = gid;
+              meta0.insertBefore(nt, meta0.firstChild);
+            }
+          }
+          if(g.tp === 'new'){
+            if(g.a > 0 && n >= g.a) tag = ['ok', '📝 確認済 ' + n + '名'];
+            else tag = ['warn', linked.length ? '📝 確認 ' + n + '/' + g.a + '名' : '📝 未確認'];
+          } else if(linked.length){ tag = ['ok', '📱 QR受付']; }
+          if(!tag) return;
+          var meta = card.querySelector('.gmeta'); if(!meta) return;
+          var s = document.createElement('span');
+          s.className = 'vc-tag ' + tag[0]; s.textContent = tag[1]; s.dataset.vcg = gid;
+          meta.appendChild(s);
+        });
+      });
+    } finally { attach(); }
+  }
+  function attach(){
+    if(!obs) obs = new MutationObserver(function(){ decorate(); });
+    ['gl-s', 'gl-d'].forEach(function(cid){ var c = $(cid); if(c) obs.observe(c, {childList:true}); });
+  }
+  document.addEventListener('click', function(e){
+    var t = e.target.closest ? e.target.closest('.vc-tag[data-vcg]') : null;
+    if(!t || t.classList.contains('num')) return;
+    e.stopPropagation(); e.preventDefault();
+    openLink(t.dataset.vcg);
+  }, true);
+
+  function openLink(guestId){
+    var g = G.find(function(x){ return String(x.id) === String(guestId); }); if(!g) return;
+    var old = $('vc-modal'); if(old) old.remove();
+    var m = document.createElement('div'); m.className = 'ov on'; m.id = 'vc-modal';
+    m.innerHTML = '<div class="modal"><span class="mh"></span><div class="mt"><span>📱 QR受付を結びつける</span><button class="mc" type="button" data-close="1">✕</button></div><div id="vc-mbody"></div></div>';
+    m.addEventListener('click', function(e){
+      if(e.target === m || e.target.closest('[data-close]')) return m.remove();
+      var p = e.target.closest('[data-r]');
+      if(p) claim(p.dataset.r, guestId, function(){ renderLink(guestId); });
+    });
+    document.body.appendChild(m);
+    renderLink(guestId);
+  }
+  function renderLink(guestId){
+    var body = $('vc-mbody'); if(!body) return;
+    var g = G.find(function(x){ return String(x.id) === String(guestId); }); if(!g) return;
+    var linked = state.rows.filter(function(r){ return r.guest_id === String(guestId); });
+    var n = 0; linked.forEach(function(r){ n += (r.ack_n || 0); });
+    var free = state.rows.filter(function(r){ return !r.guest_id; });
+    var h = '<div class="vc-note" style="margin-top:0">この組：大人' + g.a + '名 ／ 注意事項の確認 ' + n + '名</div>';
+    h += free.length ? free.map(function(r){ return rowHtml(r, false, 'この組にする'); }).join('')
+      : '<div class="vc-note">結びつけられるQR受付は、今ありません。お客様がQRで受付すると、ここに出てきます。</div>';
+    h += '<button class="btn bso bf" type="button" data-close="1" style="margin-top:12px">閉じる</button>';
+    body.innerHTML = h;
+  }
+
+  // ---------- 起動・更新 ----------
+  var origSp = window.sp;
+  if(typeof origSp === 'function'){
+    window.sp = function(id){ var r = origSp.apply(this, arguments); if(id === 'p-r'){ render(); poll(); } return r; };
+  }
+  setInterval(function(){
+    tickN++;
+    var onReg = $('p-r') && $('p-r').classList.contains('active');
+    if(onReg || tickN % 3 === 0) poll();
+  }, 10000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) poll(); });
+  function init(){ render(); attach(); poll(); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>

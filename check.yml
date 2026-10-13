@@ -1,0 +1,52 @@
+name: 文法チェック
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: JavaScriptの文法チェック（.js と .html の中のスクリプト）
+        run: |
+          python3 - <<'PY'
+          import re, subprocess, sys, pathlib, tempfile
+          bad = 0
+          checked = 0
+          def check(code, label, module=False):
+              global bad, checked
+              suf = '.mjs' if module else '.js'
+              with tempfile.NamedTemporaryFile('w', suffix=suf, delete=False, encoding='utf-8') as f:
+                  f.write(code)
+              r = subprocess.run(['node', '--check', f.name], capture_output=True, text=True)
+              checked += 1
+              if r.returncode != 0:
+                  bad += 1
+                  msg = (r.stderr or r.stdout).replace(f.name, label)
+                  print('::error::' + label + ' に文法エラーがあります')
+                  print(msg)
+          for p in sorted(pathlib.Path('.').rglob('*')):
+              if '.git' in p.parts or 'node_modules' in p.parts or not p.is_file():
+                  continue
+              if p.suffix == '.js':
+                  check(p.read_text(encoding='utf-8', errors='replace'), str(p))
+              elif p.suffix == '.html':
+                  html = p.read_text(encoding='utf-8', errors='replace')
+                  for i, m in enumerate(re.finditer(r'<script\b([^>]*)>(.*?)</script>', html, re.S | re.I), 1):
+                      attrs, code = m.group(1), m.group(2)
+                      if re.search(r'\bsrc\s*=', attrs, re.I) or not code.strip():
+                          continue
+                      t = re.search(r'\btype\s*=\s*["\']?([^"\'\s>]+)', attrs, re.I)
+                      typ = t.group(1).lower() if t else ''
+                      if typ and typ not in ('module', 'text/javascript', 'application/javascript'):
+                          continue
+                      line = html.count('\n', 0, m.start(2)) + 1
+                      check(code, f'{p}（{line}行目からのスクリプト）', module=(typ == 'module'))
+          print(f'チェックしたスクリプト: {checked}個 / エラー: {bad}個')
+          sys.exit(1 if bad else 0)
+          PY

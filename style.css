@@ -194,3 +194,22 @@ select.fc{cursor:pointer;}
 .photo-btn{width:100%;padding:12px;border:2px dashed var(--bd);border-radius:12px;background:none;color:var(--tx2);font-family:\'Zen Maru Gothic\',sans-serif;font-size:13px;cursor:pointer;margin-bottom:8px;}
 .rcpt-prev{width:100%;border-radius:10px;margin-top:8px;display:none;}
 .rcpt-prev.show{display:block;}
+
+/* ===== スマホ（幅600px以下）では上の固定部分を小さくする（2026-10-11） ===== */
+@media (max-width:600px){
+  .hdr-wrap{padding-bottom:6px}
+  .hdr{padding:8px 12px 8px;position:relative}
+  .hdr-top{flex-wrap:wrap;margin-bottom:0}
+  .logo{font-size:16px;white-space:nowrap;letter-spacing:0}
+  .hdr-top>div:last-child{width:100%;gap:5px!important;justify-content:flex-start;margin-top:6px}
+  #save-status,#operator-badge,#presence-badge{font-size:11px!important;padding:3px 9px!important;white-space:nowrap}
+  #refresh-btn{width:26px!important;height:26px!important;font-size:13px!important}
+  .hdr-top .bsm{padding:3px 9px!important;margin-left:auto}
+  .hdate{position:absolute;top:8px;right:12px;text-align:right;line-height:1.25}
+  .hdate br{display:none}
+  .hdate span{font-size:11px!important;letter-spacing:0!important}
+  .hdr>div:last-child{position:absolute;top:24px;right:12px;font-size:8px!important;margin:0!important}
+  .nav{margin-top:6px;padding:4px;border-radius:14px}
+  .ni{padding:6px 2px 5px;font-size:10px;gap:2px;border-radius:10px}
+  .ni i{font-size:17px}
+}
