@@ -279,11 +279,6 @@ var MAX_PEOPLE = 20;
     Array.prototype.forEach.call($('acks').querySelectorAll('input[type=checkbox]'),function(el){
       el.addEventListener('change',function(){
         var i=+el.dataset.i; S.acked[i]=el.checked;
-        if(el.checked){
-          // 次の方は、もう一度最後まで読んでからチェックする（ページが短くて動かせない場合は除く）
-          var scrollable=document.documentElement.scrollHeight>window.innerHeight+20;
-          if(io && scrollable){ canTick=false; needLeave=inView; }
-        }
         applyLocks(); refresh();
       });
     });
