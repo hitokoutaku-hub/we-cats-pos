@@ -232,6 +232,8 @@ function loadFromSupabase() {
       if(cms) CarryMembers=cms.value;
       var chs=settings.find(function(s){return s.key==='custom_holidays';});
       if(chs && Array.isArray(chs.value)){ CustomHolidays=chs.value; localStorage.setItem('wc_custom_hols',JSON.stringify(CustomHolidays)); }
+      var shw=settings.find(function(s){return s.key==='show_halloween';});
+      if(shw){ ShowHW=!!shw.value; try{ localStorage.setItem('wc_show_hw',ShowHW?'1':'0'); }catch(e){} applyHWVisibility(); }
       var sls=settings.find(function(s){return s.key==='staff_list';});
       if(sls){
         var sv2=sls.value;
@@ -742,6 +744,7 @@ function loadPriceModal(){
   document.getElementById('pr-hd30').value = Price.hd30;
   document.getElementById('pr-hd60').value = Price.hd60;
   document.getElementById('pr-fn').value = Price.fn;
+  var shwCb=document.getElementById('set-show-hw'); if(shwCb) shwCb.checked=!!ShowHW;
   document.getElementById('pr-cheki').value = Price.cheki;
 }
 function savePriceSettings(){
@@ -751,6 +754,7 @@ function savePriceSettings(){
   Price.hd30 = parseInt(document.getElementById('pr-hd30').value)||0;
   Price.hd60 = parseInt(document.getElementById('pr-hd60').value)||0;
   Price.fn = parseInt(document.getElementById('pr-fn').value)||0;
+  var shwCb2=document.getElementById('set-show-hw'); if(shwCb2 && shwCb2.checked!==!!ShowHW) setShowHW(shwCb2.checked);
   Price.cheki = parseInt(document.getElementById('pr-cheki').value)||0;
   savePrice();
   saveSettingToSupa('price', Price);
@@ -939,6 +943,16 @@ function ppCalc(){
   ppEl.textContent=yn(p30)+'　/　'+yn(p60);
   pbEl.textContent='30分 / 1時間\n'+parts.join(' + ');
 }
+var ShowHW=(function(){ try{ var v=localStorage.getItem('wc_show_hw'); return v===null?true:v==='1'; }catch(e){ return true; } })();
+function showHWField(id,on){ var b=document.getElementById(id); if(b&&b.parentNode) b.parentNode.style.display=on?'':'none'; }
+function applyHWVisibility(){
+  showHWField('hw-btn',ShowHW);
+  if(!ShowHW && isHW){ isHW=false; styleHWBtn(document.getElementById('hw-btn'),false); ppCalc(); }
+}
+function setShowHW(on){
+  ShowHW=!!on; try{ localStorage.setItem('wc_show_hw',ShowHW?'1':'0'); }catch(e){}
+  saveSettingToSupa('show_halloween',ShowHW); applyHWVisibility();
+}
 function styleHWBtn(btn,on){
   if(!btn)return;
   if(on){btn.style.background='linear-gradient(135deg,#fff1e0,#ffd7a8)';btn.style.borderColor='#e8963c';btn.style.color='#a0520f';btn.style.fontWeight='700';btn.textContent='🎃 ハロウィン　ON ✓';}
@@ -1110,7 +1124,7 @@ function oCO(id){
   coId=id;
   window._coFN=!!g.fn;  // 退店処理中のフリーにゃん状態
   window._coHW=!!g.hw;  // 退店処理中のハロウィン状態
-  updateCOHWBtn();
+  updateCOHWBtn(); showHWField('co-hw-btn',ShowHW||!!g.hw);
   document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span></div>';
   setTime('co-ci',g.ci);setTime('co-co',ft(new Date()));
   document.getElementById('co-cup').value=0;document.getElementById('co-tkt').value=0;document.getElementById('co-sup').value=0;
@@ -1787,7 +1801,7 @@ function openPastAdd(){
   document.getElementById('ge-id').setAttribute('data-date', tStr);
   var dateEl=document.getElementById('ge-date');
   if(dateEl)dateEl.value=tStr;
-  window._geFN=false;window._geKD=false;window._geHW=false;updateGEHWBtn();
+  window._geFN=false;window._geKD=false;window._geHW=false;updateGEHWBtn();showHWField('ge-hw-btn',ShowHW);
   var geFnBtn0=document.getElementById('ge-fn-btn'),geKdBtn0=document.getElementById('ge-kd-btn');
   if(geFnBtn0){geFnBtn0.style.background='var(--sf2)';geFnBtn0.style.borderColor='var(--bd)';geFnBtn0.style.color='var(--tx2)';geFnBtn0.textContent='🐱 フリーにゃん OFF';}
   if(geKdBtn0){geKdBtn0.style.background='var(--sf2)';geKdBtn0.style.borderColor='var(--bd)';geKdBtn0.style.color='var(--tx2)';geKdBtn0.textContent='🧒 キッズデイ OFF';}
@@ -1808,7 +1822,7 @@ function openDayAdd(){
   document.getElementById('ge-id').setAttribute('data-date', fYMD(vD));
   var dateEl2=document.getElementById('ge-date');
   if(dateEl2)dateEl2.value=fYMD(vD);
-  window._geFN=false;window._geKD=false;window._geHW=false;updateGEHWBtn();
+  window._geFN=false;window._geKD=false;window._geHW=false;updateGEHWBtn();showHWField('ge-hw-btn',ShowHW);
   var geFnBtn0=document.getElementById('ge-fn-btn'),geKdBtn0=document.getElementById('ge-kd-btn');
   if(geFnBtn0){geFnBtn0.style.background='var(--sf2)';geFnBtn0.style.borderColor='var(--bd)';geFnBtn0.style.color='var(--tx2)';geFnBtn0.textContent='🐱 フリーにゃん OFF';}
   if(geKdBtn0){geKdBtn0.style.background='var(--sf2)';geKdBtn0.style.borderColor='var(--bd)';geKdBtn0.style.color='var(--tx2)';geKdBtn0.textContent='🧒 キッズデイ OFF';}
@@ -2223,7 +2237,7 @@ function oGEdit(id){
   setTime('ge-co',g.co||'');document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
   document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
   buildMemberSelects();var gem=document.getElementById('ge-member');if(gem)gem.value=g.member||'';
-  window._geFN=!!g.fn;window._geKD=!!g.kd;window._geHW=!!g.hw;updateGEHWBtn();
+  window._geFN=!!g.fn;window._geKD=!!g.kd;window._geHW=!!g.hw;updateGEHWBtn();showHWField('ge-hw-btn',ShowHW||!!g.hw);
   var geFnBtn=document.getElementById('ge-fn-btn'),geKdBtn=document.getElementById('ge-kd-btn');
   if(geFnBtn){if(window._geFN){geFnBtn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';geFnBtn.style.borderColor='var(--ac2)';geFnBtn.style.color='#5a8050';geFnBtn.textContent='🐱 フリーにゃん ON ✓';}else{geFnBtn.style.background='var(--sf2)';geFnBtn.style.borderColor='var(--bd)';geFnBtn.style.color='var(--tx2)';geFnBtn.textContent='🐱 フリーにゃん OFF';}}
   if(geKdBtn){if(window._geKD){geKdBtn.style.background='linear-gradient(135deg,#fff8e8,#ffe0a0)';geKdBtn.style.borderColor='var(--wn)';geKdBtn.style.color='#a06010';geKdBtn.textContent='🧒 キッズデイ ON ✓';}else{geKdBtn.style.background='var(--sf2)';geKdBtn.style.borderColor='var(--bd)';geKdBtn.style.color='var(--tx2)';geKdBtn.textContent='🧒 キッズデイ OFF';}}
@@ -2933,3 +2947,4 @@ function init(){
   startPresenceLoop();
 }
 init();
+try{ applyHWVisibility(); }catch(e){}

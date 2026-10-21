@@ -717,6 +717,10 @@
   <div class="stit">特別コース</div>
   <div class="fg"><label class="fl">フリーにゃんタイム（1名）</label><input type="number" class="fc" id="pr-fn" min="0"></div>
   <div class="fg"><label class="fl">チェキ（1枚）</label><input type="number" class="fc" id="pr-cheki" min="0"></div>
+  <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin:2px 0 10px;border:1.5px solid var(--bd);border-radius:10px;background:var(--sf2);cursor:pointer;font-size:14px;">
+    <input type="checkbox" id="set-show-hw" style="width:20px;height:20px;accent-color:#e8963c;">
+    <span>🎃 ハロウィンのボタンを表示する<br><span style="font-size:11px;color:var(--tx2);">オフにすると、受付の画面からボタンが消えます（ハロウィンで登録した来店は、退店処理でそのまま計算されます）</span></span>
+  </label>
   <div style="display:flex;gap:8px;margin-top:4px;">
     <button class="btn bs" style="flex:1;" onclick="cModal('m-price')">キャンセル</button>
     <button class="btn bp" style="flex:2;" onclick="savePriceSettings()">💾 保存する</button>
