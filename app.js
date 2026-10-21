@@ -171,7 +171,7 @@ function loadFromSupabase() {
       var cloudG = guests.filter(function(g){return !pendingDelG[String(g.id)];}).map(function(g){return {
         id:g.id, d:g.date, tp:g.type, pt:g.pattern, member:g.member||'', operator:g.operator||'',
         a:g.adults, c:g.children, ci:g.checkin, co:g.checkout,
-        pr:g.price, tkt:g.gift_cert||0, st:g.status, fn:g.free_nyan,
+        pr:g.price, tkt:g.gift_cert||0, st:g.status, fn:g.free_nyan, hw:(g.halloween===true||g.halloween===false)?g.halloween:undefined,
         bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
       };});
       var cloudGIds={};cloudG.forEach(function(g){cloudGIds[String(g.id)]=true;});
@@ -282,13 +282,16 @@ function loadFromSupabase() {
 }
 
 function saveGuestToSupa(g) {
-  supaUpsert('pos_guests',{
+  var row={
     id:String(g.id), date:g.d, type:g.tp, pattern:g.pt, member:g.member||'', operator:g.operator||'',
     adults:g.a, children:g.c, checkin:g.ci, checkout:g.co||'',
     price:g.pr, gift_cert:g.tkt||0, status:g.st, free_nyan:g.fn,
     binder_color:g.bc||'', binder_name:g.bcn||'',
     memo:g.mo||'', survey:g.aq||{}
-  });
+  };
+  // ハロウィンを使った（または切り替えた）来店だけ送る。使っていない来店は今まで通りの内容で保存する
+  if(g.hw!==undefined) row.halloween=!!g.hw;
+  supaUpsert('pos_guests',row);
 }
 function saveMerchToSupa(m) {
   supaUpsert('pos_merch',{id:m.d,date:m.d,items:m.i,total:m.total,gift_cert:m.tkt||0});
@@ -623,7 +626,7 @@ function loadExpBase(){return JSON.parse(localStorage.getItem('wc_expense')||'{"
 function saveExpBase(d){localStorage.setItem('wc_expense',JSON.stringify(d));}
 
 var coId=null;
-var aC=1,cC=0,isFN=false,isKD=false;
+var aC=1,cC=0,isFN=false,isKD=false,isHW=false;
 var selBC_id=null;
 var aqCh={tri:[],exp:'',cats:[]};
 var vD=new Date(),vM=new Date(),aM=new Date(),kM=new Date();
@@ -880,7 +883,7 @@ function getFNKDBlock(date){
   }
   return null;
 }
-function calcP(a,c,ci,co,dt,fn,forceKD){
+function calcP(a,c,ci,co,dt,fn,forceKD,hw){
   var ds=dt||td();
   if(fn){return {t:Price.fn*(a+c),bd:'フリーにゃんタイム ¥'+Price.fn+'×'+(a+c)+'名',dur:'〜4時間',m:0};}
   var hol=isHol(ds),sat=(forceKD!==undefined)?!!forceKD:isSat(ds);
@@ -898,6 +901,16 @@ function calcP(a,c,ci,co,dt,fn,forceKD){
     var ext=mn<=60?0:Math.floor(Price.wdext*Math.ceil((mn-60)/30)/2);
     return base+ext;
   }
+  // ===== ハロウィン：子ども（小学生以下）は1時間まで無料（2名まで）。1時間を超えた分は、大人と同じ延長料金。
+  //   3人目からの子どもは通常料金。ハロウィンの組には、キッズデイの半額はかけない。
+  if(hw){
+    var apH=adultP(), freeN=Math.min(c,2), others=Math.max(0,c-2);
+    var kidHW=mn<=60?0:Price.wdext*Math.ceil((mn-60)/30);
+    var bdH='大人 '+yn(apH)+'×'+a+'名';
+    if(freeN>0)bdH+=' + 子ども '+(kidHW?yn(kidHW):'無料')+'×'+freeN+'名（ハロウィン）';
+    if(others>0)bdH+=' + 子ども '+yn(apH)+'×'+others+'名';
+    return {t:apH*a+kidHW*freeN+apH*others,bd:bdH,dur:dur,m:m};
+  }
   var kidsHalf = sat && mn>30;      // 表示用：実際に半額が適用されたか
   var ap=adultP(),cp=childP();
   var t=ap*a+(c>0?cp*c:0);
@@ -911,6 +924,12 @@ function ppCalc(){
   var t=getTime('r-time');if(!t)return;
   var ds=td(),hol=isHol(ds),sat=isSat(ds);
   if(isFN){ppEl.textContent=yn(2600*(aC+cC));pbEl.textContent='フリーにゃんタイム　¥2,600×'+(aC+cC)+'名';return;}
+  if(isHW){
+    var h30=hol?Price.hd30:Price.wd30,h60=hol?Price.hd60:Price.wd60,hfr=Math.min(cC,2),hot=Math.max(0,cC-2);
+    ppEl.textContent=yn(h30*(aC+hot))+'　/　'+yn(h60*(aC+hot));
+    pbEl.textContent='30分 / 1時間\n大人 '+yn(h60)+'×'+aC+'名'+(hfr?' + 子ども 無料×'+hfr+'名（ハロウィン・1時間まで）':'')+(hot?' + 子ども '+yn(h60)+'×'+hot+'名':'');
+    return;
+  }
   var a30=hol?Price.hd30:Price.wd30,a60=hol?Price.hd60:Price.wd60;
   // キッズデイ＝土曜。1時間以上で小学生以下半額（30分は対象外）
   var c30=a30,c60=sat?Math.floor(a60/2):a60;
@@ -920,7 +939,27 @@ function ppCalc(){
   ppEl.textContent=yn(p30)+'　/　'+yn(p60);
   pbEl.textContent='30分 / 1時間\n'+parts.join(' + ');
 }
+function styleHWBtn(btn,on){
+  if(!btn)return;
+  if(on){btn.style.background='linear-gradient(135deg,#fff1e0,#ffd7a8)';btn.style.borderColor='#e8963c';btn.style.color='#a0520f';btn.style.fontWeight='700';btn.textContent='🎃 ハロウィン　ON ✓';}
+  else{btn.style.background='var(--sf2)';btn.style.borderColor='var(--bd)';btn.style.color='var(--tx2)';btn.style.fontWeight='normal';btn.textContent='🎃 ハロウィン　OFF';}
+}
+function togHW(){
+  if(!isHW && isFN) togFN();
+  isHW=!isHW; styleHWBtn(document.getElementById('hw-btn'),isHW); ppCalc();
+}
+function updateCOHWBtn(){ styleHWBtn(document.getElementById('co-hw-btn'),!!window._coHW); }
+function togCOHW(){
+  if(!window._coHW && window._coFN){ window._coFN=false; updateCOFNBtn(); }
+  window._coHW=!window._coHW; updateCOHWBtn(); rcCO();
+}
+function updateGEHWBtn(){ styleHWBtn(document.getElementById('ge-hw-btn'),!!window._geHW); }
+function togGEHW(){
+  if(!window._geHW && window._geFN){ togGEFN(); }
+  window._geHW=!window._geHW; updateGEHWBtn();
+}
 function togFN(){
+  if(!isFN && isHW) togHW();
   if(!isFN){var blk=getFNKDBlock(td());if(blk&&blk.noFN){toast('⚠️ '+blk.name+'期間中はフリーにゃんタイムを利用できません',true);return;}}
   isFN=!isFN;
   var btn=document.getElementById('fn-btn');if(!btn)return;
@@ -938,6 +977,7 @@ function togKD(){
 }
 function togGEFN(){
   if(!window._geFN){var geDate=(document.getElementById('ge-date')||{}).value||td();var blk=getFNKDBlock(geDate);if(blk&&blk.noFN){toast('⚠️ '+blk.name+'期間中はフリーにゃんタイムを利用できません',true);return;}}
+  if(!window._geFN && window._geHW){ window._geHW=false; updateGEHWBtn(); }
   window._geFN=!window._geFN;
   var btn=document.getElementById('ge-fn-btn');if(!btn)return;
   if(window._geFN){btn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';btn.style.borderColor='var(--ac2)';btn.style.color='#5a8050';btn.textContent='🐱 フリーにゃん ON ✓';}
@@ -1049,11 +1089,12 @@ function regGuest(){
   var expEl=document.querySelector('#aq-exp .chip.on');var exp=expEl?expEl.getAttribute('data-v'):'';
   var selBcObj=selBC_id?BCs.find(function(x){return x.id===selBC_id;}):null;
   var g={id:Date.now(),d:td(),tp:document.getElementById('r-tp').value,pt:document.getElementById('r-pt').value,member:document.getElementById('r-member')?document.getElementById('r-member').value:'',operator:CurrentOperator||'',a:aC,c:cC,ci:t,co:null,mo:document.getElementById('r-memo').value,pr:0,st:'stay',fn:isFN,kd:isKD,bc:selBcObj?selBcObj.c:'',bcn:selBcObj?selBcObj.n:'',aq:{tri:aqCh.tri.slice(),exp:exp,cats:aqCh.cats.slice()}};
+  if(isHW)g.hw=true;
   G.push(g);sv();saveGuestToSupa(g);logAction('入店登録','区分:'+g.tp+' '+g.pt+' 大人'+g.a+'名 入店'+g.ci);toast('入店登録しました 🐾');
   aC=1;cC=0;document.getElementById('ca').textContent='1';document.getElementById('cc3').textContent='0';
   document.getElementById('r-tp').value='new';document.getElementById('r-pt').value='友人';
   setTime('r-time',ft(new Date()));document.getElementById('r-memo').value='';
-  isFN=false;isKD=false;selBC_id=null;aqCh={tri:[],exp:'',cats:[]};var rm=document.getElementById('r-member');if(rm)rm.value='';
+  isFN=false;isKD=false;isHW=false;styleHWBtn(document.getElementById('hw-btn'),false);selBC_id=null;aqCh={tri:[],exp:'',cats:[]};var rm=document.getElementById('r-member');if(rm)rm.value='';
   var fnBtn=document.getElementById('fn-btn');
   if(fnBtn){fnBtn.style.background='var(--sf2)';fnBtn.style.borderColor='var(--bd)';fnBtn.style.color='var(--tx2)';fnBtn.textContent='🐱 フリーにゃん　OFF';}
   var kdBtn=document.getElementById('kd-btn');
@@ -1068,6 +1109,8 @@ function oCO(id){
   var g=G.find(function(x){return String(x.id)===String(id);});if(!g)return;
   coId=id;
   window._coFN=!!g.fn;  // 退店処理中のフリーにゃん状態
+  window._coHW=!!g.hw;  // 退店処理中のハロウィン状態
+  updateCOHWBtn();
   document.getElementById('co-info').innerHTML='<div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="tag pk">'+(g.tp==='new'?'ご新規様':'リピーター様')+'</span><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span></div>';
   setTime('co-ci',g.ci);setTime('co-co',ft(new Date()));
   document.getElementById('co-cup').value=0;document.getElementById('co-tkt').value=0;document.getElementById('co-sup').value=0;
@@ -1078,6 +1121,7 @@ function oCO(id){
 }
 function togCOFN(){
   if(!window._coFN){var g4=G.find(function(x){return String(x.id)===String(coId);});var blk=getFNKDBlock(g4?g4.d:td());if(blk&&blk.noFN){toast('⚠️ '+blk.name+'期間中はフリーにゃんタイムを利用できません',true);return;}}
+  if(!window._coFN && window._coHW){ window._coHW=false; updateCOHWBtn(); }
   window._coFN=!window._coFN;
   updateCOFNBtn();
   rcCO();
@@ -1102,7 +1146,7 @@ function rcCO(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined);isKD=g.kd?true:isSat(g.d);
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);isKD=g.kd?true:isSat(g.d);
   document.getElementById('co-dur').textContent=r.dur||'—';
   document.getElementById('co-det').textContent=r.bd;
   document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
@@ -1119,10 +1163,10 @@ function confCO(){
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined);isKD=g.kd?true:isSat(g.d);
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);isKD=g.kd?true:isSat(g.d);
   var mo=document.getElementById('co-mo').value;
   if(otha>0)mo=(mo?mo+' ':'')+(othn||'その他割引')+' -¥'+otha.toLocaleString();
-  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-sup-otha);g.tkt=tkt;g.mo=mo;g.st='done';g.fn=window._coFN;
+  g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-sup-otha);g.tkt=tkt;g.mo=mo;g.st='done';g.fn=window._coFN;if(window._coHW||g.hw!==undefined)g.hw=!!window._coHW;
   sv();
   cModal('m-co');
   rfAll();
@@ -1141,7 +1185,7 @@ function showRcpt(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined);isKD=g.kd?true:isSat(g.d);
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);isKD=g.kd?true:isSat(g.d);
   var tot=Math.max(0,r.t-disc);
   document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
   document.getElementById('rc-dur').textContent=r.dur||'—';
@@ -1171,6 +1215,7 @@ function oDet(id){
   if(g.pr)h+='<tr><td class="il">料金</td><td style="color:var(--ok);font-family:\'Noto Sans JP\',sans-serif;font-size:18px;">'+yn(g.pr)+'</td></tr>';
   if(g.fn)h+='<tr><td class="il">コース</td><td><span class="tag gr">🐱 フリーにゃん</span></td></tr>';
   if(g.kd)h+='<tr><td class="il">コース</td><td><span class="tag gd">🧒 キッズデイ（子ども1時間以上半額）</span></td></tr>';
+  if(g.hw)h+='<tr><td class="il">コース</td><td><span class="tag gd">🎃 ハロウィン（子ども1時間まで無料・2名まで）</span></td></tr>';
   if(aq.tri&&aq.tri.length)h+='<tr><td class="il">きっかけ</td><td>'+aq.tri.join(' / ')+'</td></tr>';
   if(aq.exp)h+='<tr><td class="il">経験</td><td>'+aq.exp+'</td></tr>';
   if(aq.cats&&aq.cats.length)h+='<tr><td class="il">推し猫</td><td>'+aq.cats.join('・')+'</td></tr>';
@@ -1210,7 +1255,7 @@ function rGuests(){
       var bcD=g.bc?'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+g.bc+';margin-right:3px;border:1px solid rgba(0,0,0,.1);"></span>':'';
       sh+='<div class="gi" style="'+bcS+'" onclick="oDet(\''+g.id+'\')" >';
       sh+='<div class="gtop"><span class="gname">'+bcD+(g.tp==='new'?'ご新規様':'リピーター様')+(g.bcn?' <span style="font-size:10px;color:var(--tx2);">('+g.bcn+')</span>':'')+'</span><span class="sbdg">'+dur+'</span></div>';
-      sh+='<div class="gmeta"><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱フリーにゃん</span>':'')+(g.mo?'<span class="tag">'+g.mo+'</span>':'')+'</div>';
+      sh+='<div class="gmeta"><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱フリーにゃん</span>':'')+(g.hw?'<span class="tag gd">🎃ハロウィン</span>':'')+(g.mo?'<span class="tag">'+g.mo+'</span>':'')+'</div>';
       sh+='<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn bso bsm" onclick="event.stopPropagation();oGEdit(\''+g.id+'\')" >✏️</button><button class="btn bsu bsm" style="flex:1;" onclick="event.stopPropagation();oCO(\''+g.id+'\')" >退店処理</button></div>';
       sh+='</div>';
     }
@@ -1742,7 +1787,7 @@ function openPastAdd(){
   document.getElementById('ge-id').setAttribute('data-date', tStr);
   var dateEl=document.getElementById('ge-date');
   if(dateEl)dateEl.value=tStr;
-  window._geFN=false;window._geKD=false;
+  window._geFN=false;window._geKD=false;window._geHW=false;updateGEHWBtn();
   var geFnBtn0=document.getElementById('ge-fn-btn'),geKdBtn0=document.getElementById('ge-kd-btn');
   if(geFnBtn0){geFnBtn0.style.background='var(--sf2)';geFnBtn0.style.borderColor='var(--bd)';geFnBtn0.style.color='var(--tx2)';geFnBtn0.textContent='🐱 フリーにゃん OFF';}
   if(geKdBtn0){geKdBtn0.style.background='var(--sf2)';geKdBtn0.style.borderColor='var(--bd)';geKdBtn0.style.color='var(--tx2)';geKdBtn0.textContent='🧒 キッズデイ OFF';}
@@ -1763,7 +1808,7 @@ function openDayAdd(){
   document.getElementById('ge-id').setAttribute('data-date', fYMD(vD));
   var dateEl2=document.getElementById('ge-date');
   if(dateEl2)dateEl2.value=fYMD(vD);
-  window._geFN=false;window._geKD=false;
+  window._geFN=false;window._geKD=false;window._geHW=false;updateGEHWBtn();
   var geFnBtn0=document.getElementById('ge-fn-btn'),geKdBtn0=document.getElementById('ge-kd-btn');
   if(geFnBtn0){geFnBtn0.style.background='var(--sf2)';geFnBtn0.style.borderColor='var(--bd)';geFnBtn0.style.color='var(--tx2)';geFnBtn0.textContent='🐱 フリーにゃん OFF';}
   if(geKdBtn0){geKdBtn0.style.background='var(--sf2)';geKdBtn0.style.borderColor='var(--bd)';geKdBtn0.style.color='var(--tx2)';geKdBtn0.textContent='🧒 キッズデイ OFF';}
@@ -2178,7 +2223,7 @@ function oGEdit(id){
   setTime('ge-co',g.co||'');document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
   document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
   buildMemberSelects();var gem=document.getElementById('ge-member');if(gem)gem.value=g.member||'';
-  window._geFN=!!g.fn;window._geKD=!!g.kd;
+  window._geFN=!!g.fn;window._geKD=!!g.kd;window._geHW=!!g.hw;updateGEHWBtn();
   var geFnBtn=document.getElementById('ge-fn-btn'),geKdBtn=document.getElementById('ge-kd-btn');
   if(geFnBtn){if(window._geFN){geFnBtn.style.background='linear-gradient(135deg,#f0f8ee,#e4f4e0)';geFnBtn.style.borderColor='var(--ac2)';geFnBtn.style.color='#5a8050';geFnBtn.textContent='🐱 フリーにゃん ON ✓';}else{geFnBtn.style.background='var(--sf2)';geFnBtn.style.borderColor='var(--bd)';geFnBtn.style.color='var(--tx2)';geFnBtn.textContent='🐱 フリーにゃん OFF';}}
   if(geKdBtn){if(window._geKD){geKdBtn.style.background='linear-gradient(135deg,#fff8e8,#ffe0a0)';geKdBtn.style.borderColor='var(--wn)';geKdBtn.style.color='#a06010';geKdBtn.textContent='🧒 キッズデイ ON ✓';}else{geKdBtn.style.background='var(--sf2)';geKdBtn.style.borderColor='var(--bd)';geKdBtn.style.color='var(--tx2)';geKdBtn.textContent='🧒 キッズデイ OFF';}}
@@ -2204,7 +2249,7 @@ function saveGEdit(){
     var co=getTime('ge-co');
     var prInput=document.getElementById('ge-pr').value;
     var pr=prInput!==''?parseInt(prInput):0;
-    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,!!window._geFN,window._geKD?true:undefined);pr=r.t;}
+    if(prInput===''&&co){var r=calcP(a,c,ci,co,dateAttr,!!window._geFN,window._geKD?true:undefined,!!window._geHW);pr=r.t;}
     var discAmt2=parseInt(document.getElementById('ge-disc-amt').value)||0;
     var discName2=document.getElementById('ge-disc-name').value.trim();
     var tkt2=0;
@@ -2216,6 +2261,7 @@ function saveGEdit(){
     if(discName2&&discAmt2>0)moVal2=(moVal2?moVal2+' ':'')+discName2+' -¥'+discAmt2.toLocaleString();
     var expEl0=document.querySelector('#eaq-exp .chip.on');var exp0=expEl0?expEl0.getAttribute('data-v'):'';
     var newG={id:newId,d:dateAttr,tp:document.getElementById('ge-tp').value,pt:document.getElementById('ge-pt').value,member:document.getElementById('ge-member')?document.getElementById('ge-member').value:'',a:a,c:c,ci:ci,co:co||null,pr:pr,tkt:tkt2,mo:moVal2,st:co?'done':'stay',fn:!!window._geFN,kd:!!window._geKD,bc:'',bcn:'',aq:{tri:eaqCh.tri.slice(),exp:exp0,cats:eaqCh.cats.slice()}};
+    if(window._geHW)newG.hw=true;
     G.push(newG);sv();saveGuestToSupa(newG);rfAll();
     // 連続入力のためフォームをリセット（日付は保持）。モーダルは開いたまま
     resetPastForm(dateAttr);
@@ -2225,7 +2271,7 @@ function saveGEdit(){
   var a=parseInt(document.getElementById('ge-a').value)||1;var c=parseInt(document.getElementById('ge-c').value)||0;
   var ci=getTime('ge-ci');var co=getTime('ge-co');
   var prInput=document.getElementById('ge-pr').value;var pr=prInput!==''?parseInt(prInput):0;
-  if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,!!window._geFN,window._geKD?true:undefined);pr=r.t;}
+  if(prInput===''&&co){var r=calcP(a,c,ci,co,g.d,!!window._geFN,window._geKD?true:undefined,!!window._geHW);pr=r.t;}
   var discAmt=parseInt(document.getElementById('ge-disc-amt').value)||0;
   var discName=document.getElementById('ge-disc-name').value.trim();
   var tktE=0;
@@ -2235,7 +2281,7 @@ function saveGEdit(){
   }
   var moVal=document.getElementById('ge-mo').value;
   if(discName&&discAmt>0)moVal=(moVal?moVal+' ':'')+discName+' -¥'+discAmt.toLocaleString();
-  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.tkt=tktE;g.mo=moVal;g.st=co?'done':'stay';g.fn=!!window._geFN;g.kd=!!window._geKD;
+  g.tp=document.getElementById('ge-tp').value;g.pt=document.getElementById('ge-pt').value;g.member=document.getElementById('ge-member')?document.getElementById('ge-member').value:'';g.a=a;g.c=c;g.ci=ci;g.co=co||null;g.pr=pr;g.tkt=tktE;g.mo=moVal;g.st=co?'done':'stay';g.fn=!!window._geFN;g.kd=!!window._geKD;if(window._geHW||g.hw!==undefined)g.hw=!!window._geHW;
   var expElE=document.querySelector('#eaq-exp .chip.on');g.aq={tri:eaqCh.tri.slice(),exp:expElE?expElE.getAttribute('data-v'):'',cats:eaqCh.cats.slice()};
   sv();var editedG=G.find(function(x){return String(x.id)===String(id);});if(editedG)saveGuestToSupa(editedG);cModal('m-gedit');rfAll();toast('編集しました ✅');
 }
@@ -2815,7 +2861,7 @@ function recalcAllGuests(){
       if(g.st!=='done'||!g.co){continue;}
       // 手動割引・手動金額の記録（メモに割引記載）はスキップして保護
       if(g.mo && (g.mo.indexOf('-¥')>=0 || g.mo.indexOf('割引')>=0)){skipped++;continue;}
-      var r=calcP(g.a,g.c,g.ci,g.co,g.d,g.fn);
+      var r=calcP(g.a,g.c,g.ci,g.co,g.d,g.fn,undefined,!!g.hw);
       if(g.pr!==r.t){
         g.pr=r.t;changed++;
         saveGuestToSupa(g);

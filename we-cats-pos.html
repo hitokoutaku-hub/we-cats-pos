@@ -48,7 +48,7 @@
     </div>
   </div>
   <div class="hdate" id="hdate"></div>
-  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20261011e</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20261020a</div>
 </div>
 
 <div class="nav">
@@ -108,6 +108,10 @@
     <div class="ct">👥 人数・時間</div>
     <div class="fg"><label class="fl">大人</label>
       <div class="cr"><button class="cb" onclick="cc2('a',-1)">－</button><div class="cv" id="ca">1</div><button class="cb" onclick="cc2('a',1)">＋</button></div>
+    <div class="fg">
+      <label class="fl">ハロウィン（子ども1時間まで無料・2名まで）</label>
+      <button id="hw-btn" type="button" onclick="togHW()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🎃 ハロウィン　OFF</button>
+    </div>
     </div>
     <div class="fg"><label class="fl">子ども（小学生以下）</label>
       <div class="cr"><button class="cb" onclick="cc2('c',-1)">－</button><div class="cv" id="cc3">0</div><button class="cb" onclick="cc2('c',1)">＋</button></div>
@@ -380,6 +384,7 @@
   <div class="pbox"><div class="pbox-l">滞在時間</div><div class="pbox-a" id="co-dur">—</div></div>
   <div id="co-det" style="font-size:11px;color:var(--tx2);margin-bottom:10px;text-align:center;"></div>
   <div class="fg"><button id="co-fn-btn" onclick="togCOFN()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🐱 フリーにゃん　OFF</button></div>
+  <div class="fg"><button id="co-hw-btn" type="button" onclick="togCOHW()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;cursor:pointer;">🎃 ハロウィン　OFF</button></div>
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px;">
     <div class="ct" onclick="toggleSection('co-discount-body',this)" style="cursor:pointer;padding:12px 14px;margin:0;font-size:12px;user-select:none;">🎫 割引・クーポンなど <span style="float:right;font-size:12px;color:var(--tx2);">▼</span></div>
     <div id="co-discount-body" style="display:none;padding:0 14px 14px;">
@@ -655,6 +660,9 @@
     <div class="fg"><label class="fl">キッズデイ</label>
       <button type="button" id="ge-kd-btn" onclick="togGEKD()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:13px;cursor:pointer;">🧒 キッズデイ OFF</button>
     </div>
+    <div class="fg"><label class="fl">ハロウィン</label>
+      <button type="button" id="ge-hw-btn" onclick="togGEHW()" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid var(--bd);background:var(--sf2);color:var(--tx2);font-family:'Zen Maru Gothic',sans-serif;font-size:13px;cursor:pointer;">🎃 ハロウィン　OFF</button>
+    </div>
   </div>
   <div style="font-size:10px;color:var(--tx2);margin:-4px 0 8px;">※切り替えると「料金」欄が空欄の場合、保存時に自動で再計算されます</div>
   <div class="fg"><label class="fl">料金（手動入力）</label><input type="number" class="fc" id="ge-pr" min="0" placeholder="空白で自動計算"></div>
@@ -765,7 +773,7 @@
 </div></div>
 
 
-<script src="app.js?v=20260918a"></script>
+<script src="app.js?v=20261020a"></script>
 <script>
 // =====================================================
 // WE CATS POS × 入口QR（来店チェックイン）・猫総選挙 の連携
