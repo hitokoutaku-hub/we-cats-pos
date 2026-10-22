@@ -593,7 +593,7 @@ function loadVisits(){
       if(i === 0 || r.ranking[i - 1].visits !== m.visits) rank = i + 1;
       return '<button class="row" type="button" data-mid="' + m.id + '"><span class="rk' + (rank === 1 ? ' r1' : '') + '">' + rank + '</span>' +
         '<span class="grow"><span class="nm">' + esc(m.nickname) + (m.purged ? '<span class="tag t-inv">削除済み</span>' : '') + '</span>' +
-        '<span class="sm">No.' + m.no + ' ・ 最初 ' + md(m.first_visit) + ' ・ 最後 ' + md(m.last_visit) + '</span></span>' +
+        '<span class="sm">No.' + m.no + ' ・ 最初 ' + md(m.first_visit) + ' ・ 最後 ' + md(m.last_visit) + (m.pos_visits ? ' ・ うちPOSから引き継ぎ ' + m.pos_visits + '回' : '') + '</span></span>' +
         '<span class="num"><b>' + m.visits + '</b><span class="sm"> 回</span></span></button>';
     }).join('');
     $('t-visits').innerHTML = '<div class="card" id="v-ins"><p class="empty">集計しています…</p></div>' +
@@ -602,7 +602,7 @@ function loadVisits(){
         years.map(function(y){ return '<option value="' + y + '"' + (y === r.year ? ' selected' : '') + '>' + y + '年</option>'; }).join('') + '</select>' +
         '<span class="sm">QR来店 合計 ' + r.total + '件</span></div>' +
       '<div class="card" style="padding:4px 12px">' + (rows || '<p class="empty">この年の来店記録はまだありません。</p>') + '</div>' +
-      '<p class="note">入口のQRを読み取った日数（1日1回）の多い順です。同じ回数なら、先にその回数に到達した方が上になります。年間来店TOPの表彰に使えます。</p>';
+      '<p class="note">入口のQRを読み取った日数（1日1回）の多い順です。POSの常連さんと紐づけた方は、その年の、入口QRを使い始める前のPOSの来店日数も足しています（同じ日は1回）。同じ回数なら、先にその回数に到達した方が上になります。年間来店TOPの表彰に使えます。</p>';
     loadInsights();
   });
 }
