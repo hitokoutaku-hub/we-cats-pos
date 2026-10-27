@@ -231,7 +231,7 @@ function oshiCard(me){
     '<div class="top' + ((myBg(me) || me.cat.photo) ? ' bg" style="background-image:url(\'' + (myBg(me) || photo(me.cat.photo)) + '\')' : '') + '"><div class="av">' + catImg(me.cat.photo) + '</div><div>' +
       '<p class="lbl">わたしの推し猫</p><p class="cn">' + esc(me.cat.name) + grad + '</p>' +
       '<p class="me">' + esc(me.nickname) + ' さん ・ No.' + me.member_no + '</p>' +
-      (me.vote_cat && me.period !== 'before' ? '<p class="me vc" style="font-weight:700">🗳️ 総選挙で応援中：' + esc(me.vote_cat.name) + '</p>' : '') +
+      (me.vote_cat && me.voted_today && me.period === 'open' ? '<p class="me vc" style="font-weight:700">🗳️ 今日の応援：' + esc(me.vote_cat.name) + '</p>' : '') +
       (me.perk && me.perk.title ? '<span class="ttl">🏅 ' + esc(me.perk.title) + '</span>' : '') + '</div></div>' +
     '<div class="body"><div class="vstats">' +
       '<div><span>今年のご来店</span><b>' + me.year_visits + '<small>回</small></b></div>' +
@@ -407,9 +407,9 @@ function capText(){ var c = info ? info.bonus_cap : 1; return c > 0 ? '1日' + c
 function rulesBox(){
   return '<div class="card"><p class="maru" style="margin-bottom:8px">参加のルール</p><ul class="rules">' +
     '<li>お店の入口のQRコードを読み取ると、来店が記録されます（1日1回）</li>' +
-    '<li>総選挙の期間中は、来店1回（1日1回）につき推し猫に1ポイント。ガチャやチェキについてくる「ボーナスカード」を読み取ると、ボーナスポイントが入ります（来店を記録した日だけ・' + capText() + (info && info.card_once === false ? '' : '・カード1枚につき1回') + '）</li>' +
+    '<li>総選挙の期間中は、来店1回（1日1回）につき、その日に応援する子に1ポイント。ガチャやチェキについてくる「ボーナスカード」を読み取ると、ボーナスポイントが入ります（来店を記録した日だけ・' + capText() + (info && info.card_once === false ? '' : '・カード1枚につき1回') + '）</li>' +
     '<li>記録・投票はお店のQRコードからだけ。1台のスマホで記録できるのは1日1人までです</li>' +
-    '<li>推し猫は、推し猫カードからいつでも変えられます。総選挙で応援する子は、総選挙が始まって最初の来店のときに選び、その総選挙の間は変更できません（その子が卒業したときだけ選び直せます）</li>' +
+    '<li>推し猫は、推し猫カードからいつでも変えられます。総選挙で応援する子は、来店のたびに選べます（前回応援した子か推し猫に印が付いています）。ボーナスカードのポイントは、その日に応援した子に入ります</li>' +
     '<li>順位やほかの方のポイントは、結果発表まで非公開です</li>' +
     '<li>総選挙1位の猫を最も応援した方を「最優秀サポーター」として表彰します（同点の場合は全員）。年間の来店回数に応じた表彰を行うこともあります</li>' +
     '<li>ご登録の連絡先は、入賞のご連絡と登録の復元にだけ使います。ご連絡はInstagramのDMかSMS（ショートメッセージ）で行い、お電話はしません。キャンペーンなどの宣伝は送りません</li>' +
@@ -586,22 +586,22 @@ function showVoteChooser(r){
   show((r.graduated
       ? '<div class="card center"><p class="hero">🎓</p><p class="big maru">' + esc(r.graduated) + 'が<br>卒業しました！</p>' +
         '<p class="muted">新しい家族のもとへ旅立ちました。これまでの応援ポイントは' + esc(r.graduated) + 'に残ります。<br>この総選挙で応援する子を、もう一度選んでください。</p></div>'
-      : '<div class="card center"><p class="hero">🗳️</p><p class="big maru">' + esc(info.title || '猫総選挙') + 'スタート！</p>' +
-        '<p>今回の総選挙で応援する子を選んでね。</p>' +
-        (sel ? '<p class="muted">推し猫の' + esc(selName) + 'に印が付いています。同じでよければ、そのまま下のボタンを押してください。</p>' : '') + '</div>') +
+      : '<div class="card center"><p class="hero">🗳️</p><p class="big maru">今日はどの子を応援する？</p>' +
+        '<p>来店1回につき、選んだ子に1ポイント。毎回ちがう子を選べます。</p>' +
+        (sel ? '<p class="muted">' + esc(selName) + 'に印が付いています。同じでよければ、そのまま下のボタンを押してください。</p>' : '') + '</div>') +
     '<div class="card">' + catGrid(r.cats, sel, 'vcats') +
     '<button class="btn" id="v-go" type="button"' + (sel ? '' : ' disabled') + '>この子を応援する</button></div>');
   pickIn('vcats', function(id, name){ sel = id; selName = name; $('v-go').disabled = false; });
   $('v-go').onclick = function(){
     if(!sel) return;
-    askConfirm('応援する子の確認', '今回の総選挙で応援する子は <b>' + esc(selName) + '</b> ちゃんです。', 'この総選挙の間は変更できません。推し猫は別に変えられます。', function(){ checkin(sel); });
+    checkin(sel);
   };
 }
 // 推し猫を変える（いつでも）
 function showOshiChooser(me){
   var sel = me.cat.status === 'active' ? me.cat.id : null, selName = me.cat.name;
   show('<div class="card center"><p class="big maru">推し猫を変える</p><p class="muted">いまの推し猫：' + esc(me.cat.name) +
-    (me.vote_cat ? '<br>総選挙で応援する子（' + esc(me.vote_cat.name) + '）は変わりません。' : '') + '</p></div>' +
+    (me.period === 'open' ? '<br>総選挙で応援する子は、来店のたびに選べます。' : '') + '</p></div>' +
     '<div class="card">' + catGrid(info.cats, sel, 'ocats') + '<button class="btn" id="o-go" type="button">この子を推し猫にする</button>' +
     '<button class="btn sub" id="o-back" type="button">やめる</button></div>');
   pickIn('ocats', function(id, name){ sel = id; selName = name; });
@@ -631,7 +631,7 @@ function useCard(code){
       closed:['総選挙の期間外です', 'ボーナスカードは、総選挙の期間中だけ使えます。'],
       disabled:['いまボーナスはお休み中です', 'カードはスタッフに返してね。'],
       invalid:['このカードは使えません', '古いカードかもしれません。スタッフに声をかけてください。'],
-      no_vote_cat:['先に応援する子を選んでね', '入口のQRを読み取って、今回の総選挙で応援する子を選んでから、もう一度このカードを読み取ってください。']
+      no_vote_cat:['先に応援する子を選んでね', '入口のQRを読み取って、今日応援する子を選んでから、もう一度このカードを読み取ってください。']
     };
     if(r.error === 'auth'){ member = null; store('el_member', null); return showWelcome('このスマホの登録情報が見つかりませんでした。入口のQRを読み取って「前に登録した」から復元してください。'); }
     var t = M[r.error] || ['うまくいきませんでした', 'もう一度読み取ってください。'];
