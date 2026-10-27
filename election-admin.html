@@ -318,7 +318,7 @@ var $ = function(id){ return document.getElementById(id); };
 var staffPw = '', staffName = '', ownerPw = '', contactPw = '';
 var ov = null, members = [], ownerData = null, curMember = null, posVisits = null;
 var PAW = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="6" cy="9" rx="2.2" ry="2.8"/><ellipse cx="10" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="14.5" cy="5.5" rx="2.2" ry="2.8"/><ellipse cx="18.5" cy="9" rx="2.2" ry="2.8"/><path d="M12 11c-3.3 0-6.5 3.6-6.5 6.4 0 2 1.6 2.9 3.4 2.6 1.2-.2 2-.8 3.1-.8s1.9.6 3.1.8c1.8.3 3.4-.6 3.4-2.6 0-2.8-3.2-6.4-6.5-6.4z"/></svg>';
-var ERR = {wrong_password:'パスワードが違います。', locked:'間違いが続いたため10分間ロック中です。', too_short:'4文字以上にしてください。',
+var ERR = {not_found:'その会員は見つかりませんでした（すでに削除されています）。', wrong_password:'パスワードが違います。', locked:'間違いが続いたため10分間ロック中です。', too_short:'4文字以上にしてください。',
   dates:'終了日は開始日より後にしてください。', name:'名前は20文字以内で入力してください。', not_ended:'総選挙が終了してから実行できます。',
   setup_needed:'先にパスワードの初期設定をしてください。', same:'3つとも別のパスワードにしてください。', already_setup:'パスワードはすでに設定されています。再読み込みしてください。',
   confirm:'確認の文字が違います。', live:'会員が20人を超えているため、本番の運用中と判断して消せないようにしています。', no_permission:'この操作はオーナーから許可されていません。'};
@@ -456,11 +456,12 @@ function loadMembers(){
 }
 function renderMembers(){
   var q = $('search').value.trim().toLowerCase().replace(/^no\.?/, '');
-  var list = members.filter(function(m){ return !q || String(m.no) === q || m.nickname.toLowerCase().indexOf(q) >= 0; });
+  var list = members.filter(function(m){ return !q || String(m.no) === q || m.nickname.toLowerCase().indexOf(q) >= 0 || (m.memo || '').toLowerCase().indexOf(q) >= 0; });
   $('mlist').innerHTML = list.map(function(m){
     return '<button class="row" type="button" data-mid="' + m.id + '"><span class="grow"><span class="nm">' + esc(m.nickname) +
       (m.purged ? '<span class="tag t-inv">削除済み</span>' : '') + '</span>' +
-      '<span class="sm">No.' + m.no + ' ・ 推し：' + esc(m.cat) + (m.cat_status === 'graduated' ? '（卒業）' : '') + (m.vote_cat ? ' ・ 応援：' + esc(m.vote_cat) : '') + ' ・ 今年' + m.year_visits + '回来店 ・ 最終 ' + md(m.last_visit) + '</span></span>' +
+      '<span class="sm">No.' + m.no + ' ・ 推し：' + esc(m.cat) + (m.cat_status === 'graduated' ? '（卒業）' : '') + (m.vote_cat ? ' ・ 応援：' + esc(m.vote_cat) : '') + ' ・ 今年' + m.year_visits + '回来店 ・ 最終 ' + md(m.last_visit) + '</span>' +
+      (m.memo ? '<span class="sm" style="display:block;color:var(--ac-d)">📝 ' + esc(m.memo.length > 40 ? m.memo.slice(0, 40) + '…' : m.memo) + '</span>' : '') + '</span>' +
       '<span class="num"><b>' + m.points + '</b><span class="sm"> pt</span></span></button>';
   }).join('') || '<p class="empty">' + (members.length ? '見つかりませんでした。' : 'まだ登録はありません。') + '</p>';
 }
@@ -488,6 +489,9 @@ function renderMemberSheet(votes, visits){
   }).join('');
   var contact = m.purged ? '削除済み' : '<button class="lock" type="button" id="show-contact">🔒 表示する</button>';
   sheet('No.' + m.no + ' ' + m.nickname,
+    '<div style="margin:0 0 12px"><label class="sm" for="memo-in" style="display:block;margin-bottom:4px">📝 スタッフ用メモ（本名・特徴など。お客様には表示されません）</label>' +
+      '<textarea class="in" id="memo-in" rows="3" maxlength="300" style="width:100%;resize:vertical" placeholder="例：本名 山田花子さん／いつも窓際の席／ご夫婦で来店">' + esc(m.memo || '') + '</textarea>' +
+      '<button class="btn full" id="memo-save" type="button" style="margin-top:6px">メモを保存</button></div>' +
     '<div class="kv"><span>推し猫</span><span>' + esc(m.cat) + (m.cat_status === 'graduated' ? '（卒業）' : '') + '</span></div>' +
     '<div class="kv"><span>今回の総選挙で応援</span><span>' + (m.vote_cat ? esc(m.vote_cat) : 'まだ選んでいません') + (m.switch_count ? '　卒業による選び直し ' + m.switch_count + '回' : '') + '</span></div>' +
     '<div class="kv"><span>応援ポイント（今回の総選挙）</span><span>' + m.points + ' pt</span></div>' +
@@ -502,7 +506,9 @@ function renderMemberSheet(votes, visits){
     '<div class="kv"><span>連絡先</span><span id="contact-val">' + contact + '</span></div>' +
     (m.purged ? '' : '<button class="btn full" id="issue-code" type="button" style="margin:12px 0 4px">復元コードを発行する</button><p class="note">登録が見つからないお客さまには、本人確認のうえコードを伝えてください（15分有効）。</p>') +
     '<h3 style="font-size:15px;margin:16px 0 4px">投票の記録（' + votes.length + '件）</h3>' + (vrows || '<p class="empty">まだ投票はありません。</p>') +
-    '<p class="note">無効にする・有効に戻すには、オーナー用パスワード（または許可されたマネージャー用パスワード）が必要です。</p>');
+    '<p class="note">無効にする・有効に戻すには、オーナー用パスワード（または許可されたマネージャー用パスワード）が必要です。</p>' +
+    '<button class="btn full ng" id="del-member" type="button" style="margin-top:18px">この会員を削除する</button>' +
+    '<p class="note">来店記録・投票・予約なども一緒に消え、元に戻せません。オーナー用パスワードが必要です。</p>');
 }
 $('sh-body').addEventListener('click', function(e){
   if(e.target.id === 'show-contact'){
@@ -522,6 +528,27 @@ $('sh-body').addEventListener('click', function(e){
       if(!r.ok) return toast(errText(r));
       sheet('復元コード', '<p>お客さまのスマホで、投票ページの「前に登録した」→「コードで復元する」に入力してもらってください。</p><p class="code">' + r.code + '</p><p class="note" style="text-align:center">15分間有効・1回だけ使えます</p>');
     }).catch(function(){ toast('通信できませんでした'); });
+  }
+  if(e.target.id === 'memo-save'){
+    var memo = $('memo-in').value;
+    rpc('el_admin_set_memo', {p_pw:staffPw, p_id:curMember.id, p_memo:memo}).then(function(r){
+      if(!r.ok) return toast(errText(r));
+      toast('メモを保存しました');
+      curMember.memo = memo.trim() || null; renderMembers();
+    }).catch(function(){ toast('通信できませんでした'); });
+  }
+  if(e.target.id === 'del-member'){
+    var dm = curMember;
+    if(!confirm('No.' + dm.no + '「' + dm.nickname + '」さんを削除します。\n来店記録・投票・予約なども一緒に消え、元に戻せません。よろしいですか？')) return;
+    var go3 = function(pw){
+      rpc('el_owner_delete_member', {p_pw:pw, p_id:dm.id}).then(function(r){
+        if(!r.ok){ if(r.error === 'not_found'){ closeOv('pwsheet'); closeOv('sheet'); toast(errText(r)); return loadMembers(); } ownerPw = ''; if($('pwsheet').hidden) ask3(); $('ps-err').textContent = errText(r); return; }
+        ownerPw = pw; closeOv('pwsheet'); closeOv('sheet'); toast('No.' + r.no + '「' + r.nickname + '」さんを削除しました');
+        loadMembers();
+      }).catch(function(){ toast('通信できませんでした'); });
+    };
+    var ask3 = function(){ askPw('会員の削除', 'オーナー用パスワード', '削除すると元に戻せません。', go3); };
+    ownerPw ? go3(ownerPw) : ask3();
   }
   var vb = e.target.closest('[data-vote]');
   if(vb){
