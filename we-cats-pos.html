@@ -19,17 +19,20 @@
 </head>
 <body>
 
-<!-- パスワード認証画面 -->
+<!-- ログイン画面（Supabase Auth：お店アカウントのメール＋パスワード） -->
 <div id="auth-screen" style="position:fixed;inset:0;background:linear-gradient(135deg,#f4a4ad,#e8838f);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;">
   <div style="font-family:'Noto Sans JP',sans-serif;font-size:26px;font-weight:800;color:#fff;letter-spacing:.5px;margin-bottom:8px;">🐱 WE CATS POS</div>
   <div style="font-size:13px;color:rgba(255,255,255,.85);margin-bottom:48px;letter-spacing:1px;">cat cafe</div>
   <div style="background:rgba(255,255,255,.18);border-radius:20px;padding:32px 28px;width:100%;max-width:320px;backdrop-filter:blur(10px);">
-    <div style="font-size:13px;color:#fff;text-align:center;margin-bottom:16px;opacity:.9;">パスワードを入力してください</div>
-    <input type="password" id="auth-input" maxlength="20" placeholder="パスワード"
+    <div style="font-size:13px;color:#fff;text-align:center;margin-bottom:16px;opacity:.9;">お店のアカウントでログインしてください</div>
+    <input type="email" id="auth-email" placeholder="メールアドレス" autocomplete="username" autocapitalize="off" spellcheck="false"
+      style="width:100%;padding:14px;border-radius:12px;border:none;font-size:16px;text-align:center;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:10px;"
+      onkeydown="if(event.key==='Enter')document.getElementById('auth-input').focus()">
+    <input type="password" id="auth-input" maxlength="72" placeholder="パスワード" autocomplete="current-password"
       style="width:100%;padding:14px;border-radius:12px;border:none;font-size:18px;text-align:center;letter-spacing:4px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:12px;"
       onkeydown="if(event.key==='Enter')checkAuth()">
-    <button onclick="checkAuth()" style="width:100%;padding:14px;background:#fff;color:#e8838f;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">入る</button>
-    <div id="auth-error" style="color:#fff0e0;font-size:12px;text-align:center;margin-top:10px;display:none;">パスワードが違います</div>
+    <button id="auth-btn" onclick="checkAuth()" style="width:100%;padding:14px;background:#fff;color:#e8838f;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">ログイン</button>
+    <div id="auth-error" style="color:#fff0e0;font-size:12px;text-align:center;margin-top:10px;display:none;"></div>
   </div>
 </div>
 
@@ -39,10 +42,10 @@
 <div class="hdr">
   <div class="hdr-top">
     <div class="logo">🐱 WE CATS POS</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div id="save-status" style="font-size:11px;color:#fff;background:rgba(255,255,255,.25);padding:5px 10px;border-radius:14px;white-space:nowrap;">💾 —</div>
-      <button onclick="manualRefresh()" id="refresh-btn" style="font-size:14px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer;">🔄</button>
-      <div id="operator-badge" style="font-size:11px;color:#fff;background:rgba(255,255,255,.25);padding:5px 10px;border-radius:14px;cursor:pointer;white-space:nowrap;" onclick="openOperatorPicker()">👤 選択</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div id="save-status" style="font-size:13px;color:#fff;background:rgba(255,255,255,.25);padding:7px 10px;border-radius:14px;white-space:nowrap;">💾 —</div>
+      <button onclick="manualRefresh()" id="refresh-btn" style="font-size:18px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;width:40px;height:40px;flex-shrink:0;cursor:pointer;">🔄</button>
+      <div id="operator-badge" style="font-size:13px;color:#fff;background:rgba(255,255,255,.25);padding:7px 10px;border-radius:14px;cursor:pointer;white-space:nowrap;" onclick="openOperatorPicker()">👤 選択</div>
       <div id="presence-badge" style="display:none;font-size:11px;color:#fff;background:rgba(255,255,255,.25);padding:5px 10px;border-radius:14px;cursor:pointer;" onclick="oModal('m-menu')"></div>
       <button class="btn bso bsm" onclick="oModal('m-menu')" style="padding:7px 11px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;">⚙️</button>
     </div>
@@ -64,10 +67,20 @@
 
 <!-- ===== GUESTS ===== -->
 <div class="pg active" id="p-g">
-  <div class="sr2">
+  <style>
+    #p-g .sr2.sr3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+    #p-g .sr3 .sv{font-size:22px;overflow-wrap:anywhere}
+    .g-in-btn{width:100%;height:56px;margin-bottom:10px;background:var(--ac);color:#fff;border:none;border-radius:16px;font-family:'Noto Sans JP',sans-serif;font-weight:800;font-size:18px;letter-spacing:1px;cursor:pointer;box-shadow:0 4px 12px rgba(232,131,143,.35)}
+    .g-in-btn:active{transform:translateY(1px);box-shadow:0 2px 6px rgba(232,131,143,.35)}
+    .gi .g-el{font-family:'Noto Sans JP',sans-serif;font-size:20px;font-weight:800;color:var(--ac);margin-top:6px;line-height:1.3}
+    .gi .g-co{font-size:16px;font-weight:800;padding:14px;min-height:50px}
+  </style>
+  <div class="sr2 sr3">
     <div class="sc pk"><div class="sl">本日の来店</div><div class="sv" id="sg">0</div><div class="su">名</div></div>
+    <div class="sc pk"><div class="sl">滞在中</div><div class="sv" id="sst">0</div><div class="su">組</div></div>
     <div class="sc gr"><div class="sl">本日の売上</div><div class="sv g" id="ss">0</div><div class="su">円</div></div>
   </div>
+  <button class="g-in-btn" onclick="sp('p-r')">＋ 入店する</button>
   <div style="margin-bottom:10px;">
     <button onclick="openPastAdd()" style="width:100%;padding:11px;background:var(--sf2);border:1.5px dashed var(--lp);border-radius:14px;color:var(--ac);font-family:'Noto Sans JP',sans-serif;font-weight:600;font-size:13px;cursor:pointer;">➕ 本日の来店記録追加</button>
   </div>
@@ -81,6 +94,14 @@
 
 <!-- ===== REGISTER ===== -->
 <div class="pg" id="p-r">
+  <div class="card">
+    <div class="ct">⚡ クイック入力（人数＋入店時間＝今）</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <button type="button" class="btn bso" onclick="quickParty(1,0)" style="min-height:52px;font-size:14px;font-weight:700;">大人1名</button>
+      <button type="button" class="btn bso" onclick="quickParty(2,0)" style="min-height:52px;font-size:14px;font-weight:700;">大人2名</button>
+      <button type="button" class="btn bso" onclick="quickParty(1,1)" style="min-height:52px;font-size:13px;font-weight:700;line-height:1.3;">大人1名<br>子ども1名</button>
+    </div>
+  </div>
   <div class="card">
     <div class="ct">🐾 基本情報</div>
     <div class="fg"><label class="fl">お客様区分</label>
@@ -214,18 +235,22 @@
 
 <!-- ===== STATS ===== -->
 <div class="pg" id="p-s">
-  <div class="tabs">
-    <div class="tab active" id="ts-d" onclick="stab('d')">📅 日別</div>
-    <div class="tab" id="ts-m" onclick="stab('m')">📅 月別</div>
-  </div>
-  <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px;">
-    <div class="tag ac" id="ts-a" onclick="stab('a')" style="cursor:pointer;white-space:nowrap;padding:7px 12px;">📋 アンケート</div>
-    <div class="tag ac" id="ts-p" onclick="stab('p')" style="cursor:pointer;white-space:nowrap;padding:7px 12px;">🗂️ 過去データ</div>
-    <div class="tag ac" id="ts-e" onclick="stab('e')" style="cursor:pointer;white-space:nowrap;padding:7px 12px;">📈 年間売上</div>
-    <div class="tag ac" id="ts-z" onclick="stab('z')" style="cursor:pointer;white-space:nowrap;padding:7px 12px;">📊 分析</div>
+  <style>
+    .s-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+    .s-btn{display:flex;align-items:center;justify-content:center;gap:6px;min-height:52px;padding:10px 8px;background:var(--sf);border:1.5px solid var(--bd);border-radius:14px;color:var(--tx);font-size:15px;font-weight:700;cursor:pointer;user-select:none;box-shadow:var(--sh)}
+    .s-btn.active{background:var(--ac);border-color:var(--ac);color:#fff}
+    .mtoday{flex-shrink:0;background:var(--ac);border:none;color:#fff;border-radius:12px;padding:0 14px;min-height:44px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Zen Maru Gothic',sans-serif}
+  </style>
+  <div class="s-grid">
+    <div class="s-btn active" id="ts-d" onclick="stab('d')">📅 日別</div>
+    <div class="s-btn" id="ts-m" onclick="stab('m')">🗓️ 月別</div>
+    <div class="s-btn" id="ts-a" onclick="stab('a')">📋 アンケート</div>
+    <div class="s-btn" id="ts-p" onclick="stab('p')">🗂️ 過去データ</div>
+    <div class="s-btn" id="ts-e" onclick="stab('e')">📈 年間売上</div>
+    <div class="s-btn" id="ts-z" onclick="stab('z')">📊 分析</div>
   </div>
   <div id="s-d">
-    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="d-lbl"></div><input type="date" id="d-cal" onchange="jumpD(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:150px;"></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chD(-1)">＜前日</button><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;"><div class="mnlbl" id="d-lbl"></div><input type="date" id="d-cal" onchange="jumpD(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:150px;"><button class="mtoday" onclick="jumpD(td())">今日</button></div><button class="mnbtn" onclick="chD(1)">翌日＞</button></div>
     <div class="sr2">
       <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="d-g">0</div><div class="su">名</div></div>
       <div class="sc gr"><div class="sl">売上合計</div><div class="sv g" id="d-s">0</div><div class="su">円</div></div>
@@ -235,7 +260,7 @@
     <div id="d-list"></div>
   </div>
   <div id="s-m" style="display:none;">
-    <div class="mnav"><button class="mnbtn" onclick="chM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="m-lbl"></div><input type="month" id="m-cal" onchange="jumpM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"></div><button class="mnbtn" onclick="chM(1)">翌月＞</button></div>
+    <div class="mnav"><button class="mnbtn" onclick="chM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;"><div class="mnlbl" id="m-lbl"></div><input type="month" id="m-cal" onchange="jumpM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"><button class="mtoday" onclick="jumpM(td().slice(0,7))">今月</button></div><button class="mnbtn" onclick="chM(1)">翌月＞</button></div>
     <div class="sr2">
       <div class="sc pk"><div class="sl">来店人数</div><div class="sv" id="m-g">0</div><div class="su">名</div></div>
       <div class="sc gr"><div class="sl">月間売上</div><div class="sv g" id="m-s">0</div><div class="su">円</div></div>
@@ -281,6 +306,7 @@
         <div style="display:flex;align-items:center;gap:6px;">
           <span class="mnlbl" id="z-d-lbl">📅</span>
           <button onclick="openZDCal()" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">📆 日付選択</button>
+          <button class="mtoday" onclick="jumpZD(td())">今日</button>
         </div>
         <button class="mnbtn" onclick="chZD(1)">翌日＞</button></div>
       <input type="date" id="z-d-cal" onchange="jumpZD(this.value)" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;">
@@ -291,7 +317,7 @@
       <div class="card"><div class="ct">🛍️ 物販商品別</div><div id="z-d-merch"></div></div>
     </div>
     <div id="z-m" style="display:none;">
-      <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="z-m-lbl"></div><input type="month" id="z-m-cal" onchange="jumpZM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
+      <div class="mnav"><button class="mnbtn" onclick="chZM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;"><div class="mnlbl" id="z-m-lbl"></div><input type="month" id="z-m-cal" onchange="jumpZM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"><button class="mtoday" onclick="jumpZM(td().slice(0,7))">今月</button></div><button class="mnbtn" onclick="chZM(1)">翌月＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-m-type"></div></div>
       <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-m-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-m-pattern"></div></div>
@@ -301,7 +327,7 @@
       <div class="card"><div class="ct">📸 猫別チェキ人気ランキング</div><div id="z-m-cheki-cat"></div></div>
     </div>
     <div id="z-y" style="display:none;">
-      <div class="mnav"><button class="mnbtn" onclick="chZY(-1)">＜前年</button><div class="mnlbl" id="z-y-lbl"></div><button class="mnbtn" onclick="chZY(1)">翌年＞</button></div>
+      <div class="mnav"><button class="mnbtn" onclick="chZY(-1)">＜前年</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="z-y-lbl"></div><button class="mtoday" onclick="chZY(new Date().getFullYear()-zY.getFullYear())">今年</button></div><button class="mnbtn" onclick="chZY(1)">翌年＞</button></div>
       <div class="card"><div class="ct">👥 新規 / リピーター</div><div id="z-y-type"></div></div>
       <div class="card"><div class="ct">⭐ 常連さん来店回数</div><div id="z-y-member"></div></div>
       <div class="card"><div class="ct">🚶 来店パターン</div><div id="z-y-pattern"></div></div>
@@ -363,7 +389,7 @@
 
 <!-- ===== CASH ===== -->
 <div class="pg" id="p-k">
-  <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;"><div class="mnlbl" id="k-lbl"></div><input type="month" id="k-cal" onchange="jumpKM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
+  <div class="mnav"><button class="mnbtn" onclick="chKM(-1)">＜前月</button><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;"><div class="mnlbl" id="k-lbl"></div><input type="month" id="k-cal" onchange="jumpKM(this.value)" style="background:var(--sf2);border:1.5px solid var(--ac);color:var(--ac);border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;-webkit-appearance:none;appearance:none;min-height:44px;min-width:130px;"><button class="mtoday" onclick="jumpKM(td().slice(0,7))">今月</button></div><button class="mnbtn" onclick="chKM(1)">翌月＞</button></div>
   <button class="btn bp bf" onclick="oCash()" style="margin-bottom:12px;">＋ 金種登録</button>
   <div class="card"><div class="ct">📈 月内残高推移</div><div class="chart-wrap"><canvas id="k-chart"></canvas></div></div>
   <div id="k-list"></div>
@@ -497,6 +523,10 @@
 <!-- CASH -->
 <div class="ov" id="m-cash"><div class="modal"><span class="mh"></span>
   <div class="mt"><span>💴 金種登録</span><button class="mc" onclick="cModal('m-cash')">✕</button></div>
+  <div id="k-bar" style="position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 10px;padding:10px 12px;background:var(--sf);border:1.5px solid var(--ac);border-radius:12px;box-shadow:var(--sh);font-size:13px;">
+    <div>金種合計 <b id="k-bar-grand" style="font-size:17px;color:var(--ac);font-family:'Noto Sans JP',sans-serif;">¥0</b></div>
+    <div>過不足 <b id="k-bar-diff" style="font-size:17px;font-family:'Noto Sans JP',sans-serif;">—</b></div>
+  </div>
   <div class="fg"><label class="fl">日付</label><input type="date" class="fc" id="k-d" onchange="loadPrev()"></div>
   <div style="display:grid;grid-template-columns:58px 40px 1fr 72px;gap:5px;padding:3px 0 5px;font-size:9px;color:var(--tx2);">
     <div style="text-align:right;">金種</div><div style="text-align:center;">前日</div><div style="text-align:center;">今日の枚数</div><div style="text-align:right;">小計</div>
@@ -546,20 +576,24 @@
 <!-- MENU -->
 <div class="ov" id="m-menu"><div class="modal"><span class="mh"></span>
   <div class="mt"><span>⚙️ メニュー</span><button class="mc" onclick="cModal('m-menu')">✕</button></div>
+  <style>
+    #m-menu .mn-grp{display:flex;flex-direction:column;gap:8px}
+    #m-menu .mn-h{font-size:13px;font-weight:800;color:var(--ac);margin:4px 0 0}
+    #m-menu .mn-sh{font-size:12px;font-weight:700;color:var(--tx2);margin-top:4px}
+    #m-menu .mn-grp .btn.bf{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px}
+    #m-menu .mn-grp .btn.bf small{font-size:11px;font-weight:400;color:var(--tx2);line-height:1.4}
+    #m-menu .mn-grp .btn.mn-danger{color:var(--ng);border-color:var(--ng)}
+    #m-menu .mn-grp .btn.mn-danger small{color:var(--ng)}
+  </style>
   <div style="display:flex;flex-direction:column;gap:8px;">
-    <button class="btn bso bf" onclick="cModal('m-menu');oModal('m-price')">💴 料金設定</button>
-    <button class="btn bso bf" onclick="cModal('m-menu');openStaffModal()">👥 スタッフ管理</button>
-    <button class="btn bso bf" onclick="cModal('m-menu');openCatModal()">🐱 猫の名前管理</button>
-    <button class="btn bso bf" onclick="cModal('m-menu');location.href='photo-contest-admin.html'">📸 フォトコン管理</button>
-    <button class="btn bso bf" onclick="cModal('m-menu');openOwnerLogin()">🔐 オーナーログイン</button>
-    <button class="btn bso bf" onclick="expData()">📤 データエクスポート</button>
-    <button class="btn bso bf" onclick="document.getElementById('imp-f').click()">📥 データインポート</button>
-    <input type="file" id="imp-f" accept=".json" style="display:none;" onchange="impData(event)">
-    <div class="sep"></div>
-    <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px;">👥 今アクセス中</div>
-    <button class="btn bso bf" onclick="cModal('m-menu');openAccessLog()" style="margin-bottom:4px;">📋 入室履歴を見る</button>
-    <div class="sep"></div>
-    <div style="font-size:12px;font-weight:700;color:var(--tx2);margin-bottom:4px;">🎌 特別休日料金の期間（夏休み・お盆・年末年始など）</div>
+    <!-- お店の設定 -->
+    <div class="mn-h">🏠 お店の設定</div>
+    <div class="mn-grp" id="mn-shop">
+      <button class="btn bso bf" onclick="cModal('m-menu');oModal('m-price')">💴 料金設定<small>入店料・延長料などの金額</small></button>
+      <button class="btn bso bf" onclick="cModal('m-menu');openStaffModal()">👥 スタッフ管理<small>スタッフの追加・削除</small></button>
+      <button class="btn bso bf" onclick="cModal('m-menu');openCatModal()">🐱 猫の名前管理<small>チェキ・総選挙に出る猫</small></button>
+      <button class="btn bso bf" onclick="cModal('m-menu');location.href='photo-contest-admin.html'">📸 フォトコン管理<small>フォトコンの開催・結果</small></button>
+    <div class="mn-sh">🎌 特別休日料金の期間（夏休み・お盆・年末年始など）</div>
     <div id="ch-list" style="margin-bottom:8px;"></div>
     <div style="background:var(--sf2);border-radius:12px;padding:10px;border:1.5px solid var(--bd);margin-bottom:8px;">
       <input type="text" id="ch-name" placeholder="名前（例：お盆休み）" class="fc" style="margin-bottom:6px;">
@@ -574,10 +608,32 @@
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);margin-bottom:6px;">
         <input type="checkbox" id="ch-noKD" style="width:16px;height:16px;">この期間はキッズデイを禁止する
       </label>
-      <button onclick="addCustomHoliday()" class="btn bp bf" style="font-size:12px;padding:8px;">＋ この期間を休日料金にする</button>
+      <button onclick="addCustomHoliday()" class="btn bp bf" style="font-size:12px;padding:8px;align-items:center;">＋ この期間を休日料金にする</button>
     </div>
-    <div id="presence-view" style="font-size:12px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);margin-bottom:8px;">読み込み中...</div>
     <div id="menu-price-view" style="font-size:11px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);"></div>
+    </div>
+    <div class="sep"></div>
+    <!-- 入口QR・総選挙（ボタンは下のスクリプトが #mn-qr に入れます） -->
+    <div class="mn-h">📱 入口QR・総選挙</div>
+    <div class="mn-grp" id="mn-qr"></div>
+    <div class="sep"></div>
+    <!-- データ -->
+    <div class="mn-h">💾 データ</div>
+    <div class="mn-grp" id="mn-data">
+      <button class="btn bso bf" onclick="expData()">📤 データエクスポート<small>バックアップ用に保存</small></button>
+      <button class="btn bso bf mn-danger" onclick="document.getElementById('imp-f').click()">📥 データインポート<small>⚠️ 今のデータが上書きされます</small></button>
+      <input type="file" id="imp-f" accept=".json" style="display:none;" onchange="impData(event)">
+    </div>
+    <div class="sep"></div>
+    <!-- オーナー・履歴 -->
+    <div class="mn-h">🔐 オーナー・履歴</div>
+    <div class="mn-grp" id="mn-owner">
+      <button class="btn bso bf" onclick="cModal('m-menu');openOwnerLogin()">🔐 オーナーログイン<small>オーナーだけの設定を開く</small></button>
+      <button class="btn bso bf" onclick="cModal('m-menu');openAccessLog()">📋 入室履歴を見る<small>だれがいつPOSに入ったか</small></button>
+      <div class="mn-sh">👥 今アクセス中</div>
+      <div id="presence-view" style="font-size:12px;color:var(--tx2);line-height:1.9;background:var(--sf2);padding:10px;border-radius:10px;border:1.5px solid var(--bd);margin-bottom:8px;">読み込み中...</div>
+      <button class="btn bso bf mn-danger" onclick="cModal('m-menu');authLogout()">🚪 ログアウト<small id="auth-who">この端末のログインを解除します</small></button>
+    </div>
   </div>
 </div></div>
 
@@ -744,6 +800,7 @@
       <div style="font-size:13px;font-weight:700;color:var(--ac);">📋 編集履歴</div>
       <button onclick="ownerLogout()" style="background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;">ログアウト</button>
     </div>
+    <button class="btn bp bf" id="exp-owner-btn" style="margin-bottom:14px;" onclick="openExpSum()">📊 月の総括（売上−経費）</button>
     <div style="background:linear-gradient(135deg,#fff8e8,#fff0d0);border:1.5px solid var(--wn);border-radius:12px;padding:12px;margin-bottom:14px;">
       <div style="font-size:12px;font-weight:700;color:#a06010;margin-bottom:4px;">🔧 過去データの料金を再計算</div>
       <div style="font-size:10px;color:var(--tx2);line-height:1.6;margin-bottom:8px;">料金修正前に登録された記録を、現在の正しい料金で計算し直します。手動で金額を入れた記録（メモに割引がある等）は変更しません。</div>
@@ -751,6 +808,76 @@
     </div>
     <div id="log-list"></div>
   </div>
+</div></div>
+
+<!-- 経費（pos_expenses）：入力（スタッフ）・集計（オーナー）・レシート写真 -->
+<style>
+  #m-exp .exp-dt{display:flex;gap:6px;align-items:center}
+  #m-exp .exp-dt .fc{flex:1}
+  #m-exp .exp-dt .btn{flex-shrink:0;padding:10px 12px;font-size:13px}
+  .exp-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .exp-chip{flex:1 1 30%;background:#fff;border:1.5px solid var(--bd);border-radius:14px;padding:10px 4px;font-size:13px;font-weight:700;color:var(--tx);cursor:pointer;font-family:inherit}
+  .exp-chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+  .exp-amt-wrap{display:flex;align-items:center;gap:6px;border:2px solid var(--ac);border-radius:14px;padding:6px 12px;background:#fff}
+  .exp-amt-wrap span{font-size:26px;font-weight:800;color:var(--tx2)}
+  #exp-amt{flex:1;min-width:0;border:none;outline:none;font-size:34px;font-weight:800;text-align:right;font-family:inherit;color:var(--tx);background:transparent}
+  #exp-rcpt-prev{display:none;max-width:100%;max-height:200px;margin:8px auto 0;border-radius:10px;border:1.5px solid var(--bd)}
+  .exp-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px}
+  .exp-row .exp-d{flex-shrink:0;width:40px;color:var(--tx2)}
+  .exp-row .exp-c{flex:1;min-width:0;font-weight:700}
+  .exp-row small{display:block;font-size:11px;font-weight:400;color:var(--tx2);overflow-wrap:anywhere}
+  .exp-row .exp-a{flex-shrink:0;font-weight:800;text-align:right}
+  .exp-row .exp-ph{flex-shrink:0;border:1px solid var(--bd);background:#fff;border-radius:10px;padding:3px 6px;cursor:pointer}
+  .exp-row .exp-del{flex-shrink:0;background:#fef0ec;border:1px solid var(--pk);color:var(--ng);padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:inherit}
+  .exp-empty{text-align:center;color:var(--tx2);font-size:12px;padding:12px}
+  .exp-nav{display:flex;gap:6px;align-items:center;margin-bottom:10px}
+  .exp-nav .btn{flex-shrink:0;padding:8px 10px;font-size:12px}
+  .exp-nav #exp-sum-ym{flex:1;text-align:center;font-weight:800;font-size:16px}
+  .exp-box{background:var(--sf2);border:1.5px solid var(--bd);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .exp-box .exp-v{font-size:24px;font-weight:800}
+  .exp-k{font-size:12px;font-weight:700;color:var(--tx2)}
+  .exp-sub{font-size:11px;color:var(--tx2);margin-top:2px}
+  .exp-line{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-top:1px dashed var(--bd)}
+  .exp-rest{border-color:var(--ok)}
+  .exp-rest.minus .exp-v{color:var(--ng)}
+</style>
+<div class="ov" id="m-exp"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>🧾 オーナーが出した経費</span><button class="mc" onclick="cModal('m-exp')">✕</button></div>
+  <div class="fg"><label class="fl">日付</label>
+    <div class="exp-dt"><input type="date" class="fc" id="exp-date"><button type="button" class="btn bso" onclick="expSetDate('today')">今日</button><button type="button" class="btn bso" onclick="expSetDate('yesterday')">昨日</button></div>
+  </div>
+  <div class="fg"><label class="fl">項目</label><div class="exp-chips" id="exp-cats"></div></div>
+  <div class="fg"><label class="fl">金額（必須）</label>
+    <div class="exp-amt-wrap"><span>¥</span><input type="text" id="exp-amt" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="0" oninput="expAmtInput(this)" onkeydown="if(event.key==='Enter')expSave()"></div>
+  </div>
+  <div class="fg"><label class="fl">メモ（なくてもOK）</label><input type="text" class="fc" id="exp-memo" placeholder="例：猫砂、文房具"></div>
+  <div class="fg"><label class="fl">レシート写真（なくてもOK）</label>
+    <input type="file" id="exp-rcpt-in" accept="image/*" style="display:none;" onchange="expPickRcpt(this)">
+    <div style="display:flex;gap:6px;">
+      <button type="button" class="btn bso" style="flex:1;" id="exp-rcpt-btn" onclick="document.getElementById('exp-rcpt-in').click()">📷 レシート写真を付ける（任意）</button>
+      <button type="button" class="btn bs" id="exp-rcpt-clear" style="display:none;" onclick="expClearRcpt()">外す</button>
+    </div>
+    <img id="exp-rcpt-prev" alt="">
+  </div>
+  <button class="btn bp bf" style="font-size:16px;padding:14px;" onclick="expSave()">💾 保存する</button>
+  <div class="sep"></div>
+  <div class="exp-k" style="margin-bottom:4px;">最近の入力（今月分）</div>
+  <div id="exp-recent"></div>
+</div></div>
+<div class="ov" id="m-expsum"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>📊 月の総括</span><button class="mc" onclick="cModal('m-expsum')">✕</button></div>
+  <div class="exp-nav">
+    <button type="button" class="btn bso" onclick="expSumMove(-1)">＜ 前月</button>
+    <span id="exp-sum-ym"></span>
+    <button type="button" class="btn bso" onclick="expSumMove(0)">今月</button>
+    <button type="button" class="btn bso" onclick="expSumMove(1)">翌月 ＞</button>
+  </div>
+  <div id="exp-sum-body"></div>
+</div></div>
+<div class="ov" id="m-exp-photo"><div class="modal"><span class="mh"></span>
+  <div class="mt"><span>📷 レシート写真</span><button class="mc" onclick="cModal('m-exp-photo')">✕</button></div>
+  <div id="exp-photo-note" class="exp-empty"></div>
+  <img id="exp-photo-img" alt="" style="display:none;max-width:100%;border-radius:10px;margin:0 auto;">
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -777,7 +904,7 @@
 </div></div>
 
 
-<script src="app.js?v=20261020a"></script>
+<script src="app.js?v=20261029f"></script>
 <script>
 // =====================================================
 // WE CATS POS × 入口QR（来店チェックイン）・猫総選挙 の連携
@@ -799,8 +926,8 @@
   function hm(iso){ var d = new Date(iso); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function msg(t, err){ if(typeof toast === 'function') toast(t, err); }
   function rpc(fn, args){
-    return fetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method:'POST',
-      headers:{apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json'},
+    return wcSupaFetch(SUPA_URL + '/rest/v1/rpc/' + fn, {method:'POST',
+      headers:{apikey:SUPA_KEY, Authorization:'Bearer ' + wcAuthToken(), 'Content-Type':'application/json'},
       body:JSON.stringify(args || {})}).then(function(r){ if(!r.ok) throw new Error('http ' + r.status); return r.json(); });
   }
   var ERR = {wrong_password:'パスワードが違います', locked:'間違いが続いたため10分間ロック中です',
@@ -1152,16 +1279,16 @@
     }).catch(function(){ $('elc-s-err').textContent = '通信できませんでした'; });
   }
 
-  // メニューにボタンを足す（フォトコン管理の下）
+  // メニューにボタンを足す（「入口QR・総選挙」グループ #mn-qr の中）
   function addMenuButtons(){
     var menu = $('m-menu'); if(!menu || $('elc-menu')) return;
-    var anchor = Array.prototype.find.call(menu.querySelectorAll('button'), function(b){ return /フォトコン管理/.test(b.textContent); });
+    var grp = $('mn-qr');
     var wrap = document.createElement('div'); wrap.id = 'elc-menu'; wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px';
     wrap.innerHTML =
-      '<button class="btn bso bf" type="button" data-go="election-qr.html">📱 入口QR（来店・総選挙）</button>' +
-      '<button class="btn bso bf" type="button" data-go="election-admin.html">🗳️ 総選挙・会員の管理</button>' +
-      '<button class="btn bso bf" type="button" data-m="settings">⚙️ ボーナスカード・入口QRの設定</button>' +
-      '<button class="btn bso bf" type="button" data-m="pw">🔑 入口QR連携のパスワード</button>';
+      '<button class="btn bso bf" type="button" data-go="election-qr.html">📱 入口QR（来店・総選挙）<small>来店受付と総選挙のQRコード</small></button>' +
+      '<button class="btn bso bf" type="button" data-go="election-admin.html">🗳️ 総選挙・会員の管理<small>投票の管理と会員の一覧</small></button>' +
+      '<button class="btn bso bf" type="button" data-m="settings">⚙️ ボーナスカード・入口QRの設定<small>入口QRで配るカードの設定</small></button>' +
+      '<button class="btn bso bf" type="button" data-m="pw">🔑 入口QR連携のパスワード<small>スタッフ用パスワードの確認・変更</small></button>';
     wrap.addEventListener('click', function(e){
       var b = e.target.closest('button'); if(!b) return;
       cModal('m-menu');
@@ -1169,7 +1296,7 @@
       else if(b.dataset.m === 'settings') openSettings();
       else askStaffPw();
     });
-    if(anchor) anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
+    if(grp) grp.appendChild(wrap);
     else (menu.querySelector('.modal > div') || menu.querySelector('.modal')).appendChild(wrap);
   }
 
@@ -1197,7 +1324,7 @@
   function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } }
   function hm(iso){ var d = new Date(iso); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   function msg(t, err){ if(typeof toast === 'function') toast(t, err); }
-  function hdr(extra){ var h = {apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY}; for(var k in (extra || {})) h[k] = extra[k]; return h; }
+  function hdr(extra){ var h = {apikey:SUPA_KEY, Authorization:'Bearer ' + wcAuthToken()}; for(var k in (extra || {})) h[k] = extra[k]; return h; }
   function REST(){ return SUPA_URL + '/rest/v1/pos_visit_checkins'; }
 
   function hidden(){ try{ var o = JSON.parse(ls(HIDE_KEY) || '{}'); return o.d === td() ? o.ids : []; }catch(e){ return []; } }
@@ -1289,7 +1416,7 @@
   // ---------- 通信 ----------
   function poll(){
     if(state.busy) return; state.busy = true;
-    fetch(REST() + '?select=id,created_at,seq,visit_type,adults,children,pattern,names,ack_n,guest_id&day=eq.' + encodeURIComponent(td()) + '&order=created_at.asc', {headers: hdr()})
+    wcSupaFetch(REST() + '?select=id,created_at,seq,visit_type,adults,children,pattern,names,ack_n,guest_id&day=eq.' + encodeURIComponent(td()) + '&order=created_at.asc', {headers: hdr()})
       .then(function(r){ if(!r.ok) throw new Error('http ' + r.status); return r.json(); })
       .then(function(rows){
         var prev = state.ready ? state.rows.length : null;
@@ -1301,7 +1428,7 @@
       .then(function(){ state.busy = false; });
   }
   function claim(id, guestId, done){
-    fetch(REST() + '?id=eq.' + id, {method:'PATCH', headers: hdr({'Content-Type':'application/json', Prefer:'return=minimal'}), body: JSON.stringify({guest_id: String(guestId)})})
+    wcSupaFetch(REST() + '?id=eq.' + id, {method:'PATCH', headers: hdr({'Content-Type':'application/json', Prefer:'return=minimal'}), body: JSON.stringify({guest_id: String(guestId)})})
       .then(function(r){
         if(!r.ok) throw new Error('http ' + r.status);
         var row = rowById(id); if(row) row.guest_id = String(guestId);

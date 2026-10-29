@@ -2,17 +2,160 @@
 var SUPA_URL = 'https://kidxeqjovvakcqalblre.supabase.co';
 var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpZHhlcWpvdnZha2NxYWxibHJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MjcxMjYsImV4cCI6MjA4OTQwMzEyNn0.YHz0cVTpwQi1zBAZyZuFImDJv2gKQo9HUyC8w86tgsI';
 
+// ===== ログイン（Supabase Auth・純粋fetch版）=====
+// お店アカウント（メール＋パスワード）でログインした端末だけがデータを読み書きする。
+// セッションは localStorage に保存し、期限の5分前から自動で更新する。
+// Supabaseへの通信は全て supaFetch() を通し、Authorization にはログイン中の access_token を付ける。
+var AUTH_KEY = 'wc_supa_session';   // {access_token, refresh_token, expires_at(ミリ秒), email}
+var AuthSession = null;
+var _authRefreshing = null;
+var _appStarted = false, _appStartFn = null;
+function authLoad(){
+  try{ var s=JSON.parse(localStorage.getItem(AUTH_KEY)||'null'); return (s && s.refresh_token) ? s : null; }catch(e){ return null; }
+}
+AuthSession = authLoad();
+function authStore(d){
+  AuthSession = {
+    access_token: d.access_token,
+    refresh_token: d.refresh_token,
+    expires_at: d.expires_at ? d.expires_at*1000 : Date.now()+(d.expires_in||3600)*1000,
+    email: (d.user && d.user.email) || (AuthSession && AuthSession.email) || ''
+  };
+  try{ localStorage.setItem(AUTH_KEY, JSON.stringify(AuthSession)); if(AuthSession.email) localStorage.setItem('wc_auth_email', AuthSession.email); }catch(e){}
+  authUpdateWho();
+}
+function authClear(){
+  AuthSession = null;
+  try{ localStorage.removeItem(AUTH_KEY); }catch(e){}
+}
+function authLoggedIn(){ return !!(AuthSession && AuthSession.refresh_token); }
+// Authorization に付けるトークン（ログイン中は access_token、未ログイン時は anon キー）。トークンの取得はここだけ
+function authToken(){ return (AuthSession && AuthSession.access_token) || SUPA_KEY; }
+// 同じ端末の別タブが先に更新していたら、そちらを使う（使用済みの refresh_token で更新しないため）
+function authSyncFromStorage(){
+  var s = authLoad();
+  if(!s){ return; }
+  if(!AuthSession || (s.refresh_token !== AuthSession.refresh_token && s.expires_at >= AuthSession.expires_at)) AuthSession = s;
+}
+function authRefresh(){
+  if(_authRefreshing) return _authRefreshing;
+  authSyncFromStorage();
+  if(!authLoggedIn()) return Promise.resolve(false);
+  if(AuthSession.expires_at - Date.now() > 5*60*1000) return Promise.resolve(true);
+  _authRefreshing = fetch(SUPA_URL + '/auth/v1/token?grant_type=refresh_token', {
+    method: 'POST',
+    headers: {'apikey': SUPA_KEY, 'Content-Type': 'application/json'},
+    body: JSON.stringify({refresh_token: AuthSession.refresh_token})
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(d){
+      if(r.ok && d.access_token){ authStore(d); return true; }
+      // refresh_token が無効（取り消し・期限切れ）のときだけログアウト扱い。通信の失敗や混雑(429)では消さない
+      if(r.status===400 || r.status===401 || r.status===403){
+        authSyncFromStorage();
+        if(AuthSession && AuthSession.expires_at - Date.now() > 60*1000) return true;
+        authClear(); authShowScreen('ログインの有効期限が切れました。もう一度ログインしてください');
+      }
+      return false;
+    });
+  }).catch(function(e){ console.warn('ログインの更新に失敗（通信）:', e && e.message); return false; })
+    .then(function(ok){ _authRefreshing = null; return ok; });
+  return _authRefreshing;
+}
+// 通信の直前に呼ぶ：期限まで1分を切っていたら更新を待つ
+function authReady(){
+  authSyncFromStorage();
+  if(!authLoggedIn()) return Promise.resolve(false);
+  if(AuthSession.expires_at - Date.now() > 60*1000) return Promise.resolve(true);
+  return authRefresh();
+}
+// Supabase への通信は全てこれを通す（apikey は anon キー、Authorization はログイン中のトークン）
+function supaFetch(url, opts, _retried){
+  opts = opts || {};
+  if(!authLoggedIn()) return Promise.reject(new Error('not_logged_in'));
+  return authReady().then(function(){
+    if(!authLoggedIn()) throw new Error('not_logged_in');   // 更新に失敗してログアウトになった
+    var h =Object.assign({}, opts.headers || {}, {'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + authToken()});
+    return fetch(url, Object.assign({}, opts, {headers: h}));
+  }).then(function(r){
+    // トークン切れ（端末のスリープ明けなど）なら1回だけ更新してやり直す
+    if(r.status===401 && !_retried && authLoggedIn()){
+      AuthSession.expires_at = 0;
+      return authRefresh().then(function(ok){ return ok ? supaFetch(url, opts, true) : r; });
+    }
+    return r;
+  });
+}
+window.wcAuthToken = authToken;
+window.wcAuthLoggedIn = authLoggedIn;
+window.wcSupaFetch = supaFetch;
+setInterval(function(){ if(authLoggedIn()) authRefresh(); }, 60000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && authLoggedIn()) authRefresh(); });
+window.addEventListener('storage', function(e){ if(e.key===AUTH_KEY){ authSyncFromStorage(); if(!authLoad() && AuthSession){ authClear(); authShowScreen(); } } });
+
+function authShowScreen(message){
+  var s=document.getElementById('auth-screen'); if(!s) return;
+  s.style.display='flex';
+  var err=document.getElementById('auth-error');
+  if(err){ err.textContent=message||''; err.style.display=message?'block':'none'; }
+  var pw=document.getElementById('auth-input'); if(pw) pw.value='';
+  var em=document.getElementById('auth-email');
+  if(em && !em.value) em.value=localStorage.getItem('wc_auth_email')||'';
+}
+function authHideScreen(){
+  var s=document.getElementById('auth-screen'); if(s) s.style.display='none';
+}
+function authUpdateWho(){
+  var el=document.getElementById('auth-who');
+  if(el) el.textContent=(AuthSession && AuthSession.email) ? (AuthSession.email+' でログイン中') : 'この端末のログインを解除します';
+}
+// 起動：ログイン済みならすぐ（従来どおりの順序で）初期化、未ログインならログイン後に初期化
+function authStart(fn){
+  _appStartFn = fn;
+  try{ localStorage.removeItem('wc_auth'); }catch(e){}   // 旧・入口パスワード('0000')の記録
+  if(authLoggedIn()){ authHideScreen(); authUpdateWho(); _appStarted = true; fn(); }
+  else authShowScreen();
+}
+function authAfterLogin(){
+  authHideScreen(); authUpdateWho();
+  if(!_appStarted){ _appStarted = true; if(_appStartFn) _appStartFn(); }
+  else loadFromSupabase();   // ログアウト→再ログイン：最新を読み直す（送信待ちもここで送られる）
+}
+function authLogin(email, password){
+  return fetch(SUPA_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: {'apikey': SUPA_KEY, 'Content-Type': 'application/json'},
+    body: JSON.stringify({email: email, password: password})
+  }).then(function(r){
+    return r.json().catch(function(){ return {}; }).then(function(d){
+      if(r.ok && d.access_token){ authStore(d); return {ok:true}; }
+      return {ok:false, status:r.status};
+    });
+  });
+}
+function authLogout(){
+  askConfirm('この端末からログアウトしますか？\n（もう一度使うには、お店のメールアドレスとパスワードが必要です）', function(){
+    var s = AuthSession;
+    authClear();
+    authShowScreen();
+    // この端末のセッションだけ取り消す（scope=local。ほかの端末はログインしたまま）
+    if(s && s.access_token && s.expires_at > Date.now()){
+      fetch(SUPA_URL + '/auth/v1/logout?scope=local', {method:'POST', headers:{'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + s.access_token}})
+        .catch(function(){});
+    }
+  }, 'ログアウト');
+}
+
 function getSupaHeaders() {
   return {
     'apikey': SUPA_KEY,
-    'Authorization': 'Bearer ' + SUPA_KEY,
+    'Authorization': 'Bearer ' + authToken(),
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   };
 }
 
 function supaUpsertOnce(table, data) {
-  return fetch(SUPA_URL + '/rest/v1/' + table, {
+  return supaFetch(SUPA_URL + '/rest/v1/' + table, {
     method: 'POST',
     headers: Object.assign({}, getSupaHeaders(), {'Prefer': 'resolution=merge-duplicates,return=minimal'}),
     body: JSON.stringify(data)
@@ -71,7 +214,7 @@ function getPendingSyncKeys(table){
 }
 
 function supaDeleteOnce(table, id) {
-  return fetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(String(id)), {
+  return supaFetch(SUPA_URL + '/rest/v1/' + table + '?id=eq.' + encodeURIComponent(String(id)), {
     method: 'DELETE',
     headers: getSupaHeaders()
   }).then(function(r){
@@ -123,7 +266,7 @@ function supaLoad(table) {
   // 1000件ちょうど返ってきた場合は続きのページを追加取得して全件つなげる
   var PAGE=1000;
   function fetchPage(offset, acc){
-    return fetch(SUPA_URL + '/rest/v1/' + table + '?select=*&limit='+PAGE+'&offset='+offset, {
+    return supaFetch(SUPA_URL + '/rest/v1/' + table + '?select=*&limit='+PAGE+'&offset='+offset, {
       method: 'GET',
       headers: getSupaHeaders()
     }).then(function(r){
@@ -160,9 +303,11 @@ function manualRefresh(){
 function loadFromSupabase() {
   console.log('Loading from Supabase...');
   var tables = ['pos_guests','pos_merch','pos_merch_items','pos_customers','pos_cash','pos_settings','pos_cheki'];
-  Promise.all(tables.map(supaLoad)).then(function(results) {
+  // 経費（pos_expenses）は最後に追加で読む。表が無い・読めないときは null が返り、経費機能だけ無効になる
+  Promise.all(tables.map(supaLoad).concat([expLoadList()])).then(function(results) {
     var guests=results[0], merch=results[1], merchItems=results[2];
     var customers=results[3], cash=results[4], settings=results[5], cheki=results[6];
+    var expenses=results[7];
 
     flushSyncQueue();
     flushDeleteQueue();
@@ -253,6 +398,8 @@ function loadFromSupabase() {
       if(localChekiOnly.length>0){localChekiOnly.forEach(function(c){saveChekiToSupa(c);});}
       Cheki = cloudCheki.concat(localChekiOnly);
     }
+    // 経費：失敗しても他の読み込みを止めない
+    try{ expApplyLoaded(expenses); }catch(e){ console.warn('経費の読み込みをスキップ:', e.message); }
 
     // localStorageにデータがあってSupabaseが空なら移行（初回のみ）
     var migrated = localStorage.getItem('wc_migrated');
@@ -353,14 +500,14 @@ function deviceId(){
 }
 function heartbeatPresence(){
   var name=CurrentOperator||'未選択';
-  fetch(SUPA_URL + '/rest/v1/pos_presence', {
+  supaFetch(SUPA_URL + '/rest/v1/pos_presence', {
     method: 'POST',
     headers: Object.assign({}, getSupaHeaders(), {'Prefer': 'resolution=merge-duplicates,return=minimal'}),
     body: JSON.stringify({id:deviceId(),name:name,last_seen:new Date().toISOString()})
   }).catch(function(e){console.warn('presence sync skipped:',e.message);});
 }
 function loadPresence(){
-  fetch(SUPA_URL + '/rest/v1/pos_presence?select=*', {method:'GET', headers: getSupaHeaders()})
+  supaFetch(SUPA_URL + '/rest/v1/pos_presence?select=*', {method:'GET', headers: getSupaHeaders()})
     .then(function(r){return r.ok?r.json():null;})
     .then(function(rows){
       if(!rows)return;
@@ -402,7 +549,7 @@ function logAction(action, detail) {
     ua: navigator.userAgent.substring(0,50)
   };
   // 操作履歴は補助的な記録なので、失敗しても警告は出さない（お客様データの保存失敗警告と区別するため）
-  fetch(SUPA_URL + '/rest/v1/pos_logs', {
+  supaFetch(SUPA_URL + '/rest/v1/pos_logs', {
     method: 'POST',
     headers: Object.assign({}, getSupaHeaders(), {'Prefer': 'resolution=merge-duplicates,return=minimal'}),
     body: JSON.stringify(log)
@@ -561,21 +708,23 @@ try{
 })();
 
 
+// 起動ロック：以前の入口パスワード('0000')は廃止し、Supabase Auth のログインに置き換え（上の「ログイン」を参照）
 (function(){
-  var PW = '0000';
-  var STORAGE_KEY = 'wc_auth';
-  if(localStorage.getItem(STORAGE_KEY) === PW){
-    document.getElementById('auth-screen').style.display = 'none';
-  }
+  var busy = false;
   window.checkAuth = function(){
-    var input = document.getElementById('auth-input').value;
-    if(input === PW){
-      localStorage.setItem(STORAGE_KEY, PW);
-      document.getElementById('auth-screen').style.display = 'none';
-    } else {
-      document.getElementById('auth-error').style.display = 'block';
-      document.getElementById('auth-input').value = '';
-    }
+    if(busy) return;
+    var em = document.getElementById('auth-email'), pw = document.getElementById('auth-input');
+    var err = document.getElementById('auth-error');
+    var email = (em ? em.value : '').trim(), password = pw.value;
+    function showErr(t){ err.textContent = t; err.style.display = 'block'; }
+    if(!email || !password){ showErr('メールアドレスとパスワードを入力してください'); return; }
+    busy = true; err.style.display = 'none';
+    var btn = document.getElementById('auth-btn'); if(btn){ btn.disabled = true; btn.textContent = 'ログイン中…'; }
+    authLogin(email, password).then(function(r){
+      if(r.ok){ pw.value = ''; authAfterLogin(); }
+      else{ showErr(r.status===400 ? 'メールアドレスかパスワードが違います' : 'ログインできませんでした（' + r.status + '）'); pw.value = ''; }
+    }).catch(function(){ showErr('通信できませんでした。電波を確認してください'); })
+      .then(function(){ busy = false; if(btn){ btn.disabled = false; btn.textContent = 'ログイン'; } });
   };
 })();
 
@@ -1045,6 +1194,12 @@ function cc2(t,d){
   else{cC=Math.max(0,cC+d);document.getElementById('cc3').textContent=cC;}
   ppCalc();
 }
+// 新規画面のクイックボタン：人数をセットし入店時間を現在時刻にする（区分・パターン等は触らない）
+function quickParty(a,c){
+  aC=a;cC=c;document.getElementById('ca').textContent=aC;document.getElementById('cc3').textContent=cC;
+  setTime('r-time',ft(new Date()));
+  ppCalc();
+}
 
 // ===== ANKET =====
 function buildAqChips(){
@@ -1250,6 +1405,7 @@ function rGuests(){
   var stay=tg.filter(function(g){return g.st==='stay';}).sort(function(a,b){return a.ci.localeCompare(b.ci);});
   var done=tg.filter(function(g){return g.st==='done';}).sort(function(a,b){return a.ci.localeCompare(b.ci);});
   document.getElementById('bs').textContent=stay.length;
+  var sstEl=document.getElementById('sst');if(sstEl)sstEl.textContent=stay.length;
   document.getElementById('bd2').textContent=done.length;
   var tp=0;for(var i=0;i<tg.length;i++)tp+=tg[i].a+tg[i].c;
   var ts=0;for(var j=0;j<done.length;j++)ts+=done[j].pr;
@@ -1265,12 +1421,14 @@ function rGuests(){
       var ciArr=g.ci.split(':');var ih=parseInt(ciArr[0]),im=parseInt(ciArr[1]);
       var mn=(now.getHours()*60+now.getMinutes())-(ih*60+im);
       var dur=mn>=0?(Math.floor(mn/60)+':'+p2(mn%60)+' 経過'):'';
+      var el=mn>=0?((mn>=60?Math.floor(mn/60)+'時間'+(mn%60)+'分':mn+'分')+' 経過'):'';
       var bcS=g.bc?'background:'+g.bc+'22;border-left:4px solid '+g.bc+';':'';
       var bcD=g.bc?'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+g.bc+';margin-right:3px;border:1px solid rgba(0,0,0,.1);"></span>':'';
       sh+='<div class="gi" style="'+bcS+'" onclick="oDet(\''+g.id+'\')" >';
       sh+='<div class="gtop"><span class="gname">'+bcD+(g.tp==='new'?'ご新規様':'リピーター様')+(g.bcn?' <span style="font-size:10px;color:var(--tx2);">('+g.bcn+')</span>':'')+'</span><span class="sbdg">'+dur+'</span></div>';
+      if(el)sh+='<div class="g-el">⏱ '+el+'</div>';
       sh+='<div class="gmeta"><span class="tag">'+g.pt+'</span><span class="tag gr">大人'+g.a+'名'+(g.c>0?'・子'+g.c+'名':'')+'</span><span class="tag">入店 '+g.ci+'</span>'+(g.fn?'<span class="tag gr">🐱フリーにゃん</span>':'')+(g.hw?'<span class="tag gd">🎃ハロウィン</span>':'')+(g.mo?'<span class="tag">'+g.mo+'</span>':'')+'</div>';
-      sh+='<div style="margin-top:8px;display:flex;gap:6px;"><button class="btn bso bsm" onclick="event.stopPropagation();oGEdit(\''+g.id+'\')" >✏️</button><button class="btn bsu bsm" style="flex:1;" onclick="event.stopPropagation();oCO(\''+g.id+'\')" >退店処理</button></div>';
+      sh+='<div style="margin-top:10px;display:flex;gap:8px;align-items:stretch;"><button class="btn bso bsm" style="min-width:50px;" onclick="event.stopPropagation();oGEdit(\''+g.id+'\')" >✏️</button><button class="btn bsu g-co" style="flex:1;" onclick="event.stopPropagation();oCO(\''+g.id+'\')" >退店処理</button></div>';
       sh+='</div>';
     }
   }
@@ -1828,6 +1986,14 @@ function openDayAdd(){
   if(geKdBtn0){geKdBtn0.style.background='var(--sf2)';geKdBtn0.style.borderColor='var(--bd)';geKdBtn0.style.color='var(--tx2)';geKdBtn0.textContent='🧒 キッズデイ OFF';}
   oModal('m-gedit');
 }
+// 金種モーダル上部の固定バー（rcCash が計算した値を表示するだけ）
+function updCashBar(grand,diff,noPrev){
+  var gEl=document.getElementById('k-bar-grand'),dEl=document.getElementById('k-bar-diff');if(!gEl||!dEl)return;
+  gEl.textContent=yn(grand);
+  if(noPrev){dEl.textContent='—';dEl.style.color='var(--tx2)';}
+  else if(diff===0){dEl.textContent='✅ 一致';dEl.style.color='var(--ok)';}
+  else{dEl.textContent=(diff>0?'+':'-')+yn(Math.abs(diff));dEl.style.color=diff>0?'var(--ok)':'var(--ng)';}
+}
 function stab(t){
   var tabs={d:'ts-d',m:'ts-m',a:'ts-a',p:'ts-p',e:'ts-e',z:'ts-z'};var divs={d:'s-d',m:'s-m',a:'s-a',p:'s-p',e:'s-e',z:'s-z'};
   for(var k in tabs){document.getElementById(tabs[k]).classList.toggle('active',k===t);document.getElementById(divs[k]).style.display=k===t?'block':'none';}
@@ -2028,6 +2194,7 @@ function rcCash(){
   // 保存ボタン用に現在の差額を保持
   window._cashDiff = noPrev ? 0 : diff;
   window._cashNoPrev = noPrev;
+  updCashBar(grand,window._cashDiff,noPrev);
   var moEl=document.getElementById('k-mo');
   if(moEl && diff!==0 && !moEl.value){
     moEl.placeholder = diff>0 ? '例：チェキ売上の計上漏れ／つり銭多め' : '例：レジ打ち忘れ／釣銭間違い';
@@ -2916,6 +3083,311 @@ async function loadOwnerLogs(){
   el.innerHTML=h;
 }
 
+// ===== 経費（pos_expenses）=====
+// 旧・経費（loadExpBase / wc_expense）とは別物。Supabase の表 pos_expenses に保存する。
+// 表がまだ無い環境では読み込みが null になり、経費のボタンを出さない（入口QR連携と同じ流儀）。
+// レシート写真は圧縮した JPEG を data URL のまま receipt 列に入れる（顧客の photo 列と同じ持ち方）。
+// 一覧の読み込みでは写真本体を取らず、写真を見るときだけ1件ずつ取りに行く（起動を重くしないため）。
+var EXP_CATS = ['レシート等','固定費','家賃','携帯代','電気代'];
+var Exp = [];            // {id,date,category,amount,memo,created_at,hasRcpt,_pending}
+var ExpReady = false;    // pos_expenses を一度でも読めたら true
+var ExpCat = EXP_CATS[0];
+var ExpRcpt = null;      // 入力中のレシート写真（圧縮済み data URL）
+var ExpRcptCache = {};   // id -> data URL（この端末で入れた分・一度見た分）
+var ExpSumYM = '';
+// 前回クラウド保存に失敗して送信待ちになっている経費（起動直後の読み込みで送り直されるので、それまで一覧に出しておく）
+var ExpBootPending = (function(){
+  try{ return JSON.parse(localStorage.getItem('wc_sync_queue')||'[]').filter(function(x){return x.table==='pos_expenses'&&x.data;}).map(function(x){return x.data;}); }catch(e){ return []; }
+})();
+
+function expFetchAll(query){
+  // supaLoad と同じく 1000件ずつ全件取得。表が無い(404)・通信失敗は null
+  var PAGE=1000;
+  function page(offset, acc){
+    return supaFetch(SUPA_URL+'/rest/v1/pos_expenses?'+query+'&order=id.asc&limit='+PAGE+'&offset='+offset, {method:'GET', headers:getSupaHeaders()})
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(p){
+        if(!Array.isArray(p)) return null;
+        acc=acc.concat(p);
+        return p.length===PAGE ? page(offset+PAGE, acc) : acc;
+      });
+  }
+  return page(0, []);
+}
+function expLoadList(){
+  // 決して reject しない（loadFromSupabase 全体を止めないため）
+  return Promise.all([
+    expFetchAll('select=id,date,category,amount,memo,created_at'),
+    expFetchAll('select=id&receipt=not.is.null')
+  ]).then(function(r){
+    if(!r[0]) return null;
+    var has={}; (r[1]||[]).forEach(function(x){ has[String(x.id)]=true; });
+    return r[0].map(function(e){ return {id:String(e.id), date:e.date, category:e.category||EXP_CATS[0], amount:parseInt(e.amount)||0, memo:e.memo||'', created_at:e.created_at||'', hasRcpt:!!has[String(e.id)]}; });
+  }).catch(function(e){ console.warn('経費（pos_expenses）を読み込めません:', e && e.message); return null; });
+}
+function expApplyLoaded(rows){
+  if(rows===null || rows===undefined){
+    // 読めなかった：初回なら空のまま無効。以前読めていたなら今の表示を保つ
+    if(!ExpReady) Exp=[];
+    expUpdateEntry(); return;
+  }
+  ExpReady=true;
+  var del=getPendingDeleteIds('pos_expenses');
+  var cloud=rows.filter(function(e){ return !del[e.id]; });
+  var ids={}; cloud.forEach(function(e){ ids[e.id]=true; });
+  var local=Exp.filter(function(e){ return e._pending && !ids[e.id] && !del[e.id]; });
+  ExpBootPending.forEach(function(d){
+    var id=String(d.id);
+    if(ids[id] || del[id] || local.some(function(e){return e.id===id;})) return;
+    if(d.receipt) ExpRcptCache[id]=d.receipt;
+    local.push({id:id, date:d.date, category:d.category, amount:parseInt(d.amount)||0, memo:d.memo||'', created_at:d.created_at||'', hasRcpt:!!d.receipt, _pending:true});
+  });
+  ExpBootPending=[];
+  Exp=cloud.concat(local);
+  expUpdateEntry();
+  if(document.getElementById('m-exp') && document.getElementById('m-exp').classList.contains('on')) expRenderRecent();
+  if(document.getElementById('m-expsum') && document.getElementById('m-expsum').classList.contains('on')) expRenderSum();
+}
+function expUpdateEntry(){
+  // v20261029f: スタッフ側の入口は廃止、総括ボタンは常時表示。ExpReady での出し分けはしない（呼び出し元のため関数だけ残す）
+}
+function expEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function expMD(d){ var p=String(d||'').split('-'); return p.length===3 ? (parseInt(p[1])+'/'+parseInt(p[2])) : String(d||''); }
+function expSort(list){ return list.slice().sort(function(a,b){ return a.date===b.date ? (b.id>a.id?1:b.id<a.id?-1:0) : (a.date<b.date?1:-1); }); }
+
+// ---------- 画面1：オーナーが出した経費の入力（オーナーだけ） ----------
+function openExpInput(){
+  if(!isOwnerMode){ toast('オーナーログインが必要です',true); return; }
+  if(!ExpReady){ toast('経費の保存先（pos_expenses）がまだ準備されていません',true); return; }
+  document.getElementById('exp-date').value=td();
+  expSetCat(EXP_CATS[0]);
+  document.getElementById('exp-amt').value='';
+  document.getElementById('exp-memo').value='';
+  expClearRcpt();
+  expRenderRecent();
+  oModal('m-exp');
+  setTimeout(function(){ try{ document.getElementById('exp-amt').focus(); }catch(e){} }, 250);
+}
+function expSetDate(which){
+  var d=new Date(); if(which==='yesterday') d.setDate(d.getDate()-1);
+  document.getElementById('exp-date').value=fYMD(d);
+}
+function expSetCat(cat){
+  ExpCat=cat;
+  var box=document.getElementById('exp-cats'); if(!box) return;
+  box.innerHTML=EXP_CATS.map(function(c,i){
+    return '<button type="button" class="exp-chip'+(c===cat?' on':'')+'" onclick="expSetCat(EXP_CATS['+i+'])">'+c+'</button>';
+  }).join('');
+}
+function expAmtInput(el){
+  // 全角数字も受け付け、数字以外は取り除く
+  var v=el.value.replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);}).replace(/[^0-9]/g,'');
+  if(el.value!==v) el.value=v;
+}
+function expCompress(file){
+  return new Promise(function(resolve, reject){
+    var url=URL.createObjectURL(file), img=new Image();
+    img.onload=function(){
+      try{
+        var w=img.naturalWidth, h=img.naturalHeight, s=Math.min(1, 1000/Math.max(w,h));
+        var c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w*s)); c.height=Math.max(1,Math.round(h*s));
+        var ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(url);
+        var out=c.toDataURL('image/jpeg',0.7);
+        if(out.length>400000) out=c.toDataURL('image/jpeg',0.5);
+        resolve(out);
+      }catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); reject(new Error('image load failed')); };
+    img.src=url;
+  });
+}
+function expPickRcpt(input){
+  var f=input.files && input.files[0]; if(!f) return;
+  var lbl=document.getElementById('exp-rcpt-btn'); if(lbl) lbl.textContent='写真を読み込み中…';
+  expCompress(f).then(function(data){
+    ExpRcpt=data;
+    var img=document.getElementById('exp-rcpt-prev'); img.src=data; img.style.display='block';
+    document.getElementById('exp-rcpt-clear').style.display='';
+  }).catch(function(){ ExpRcpt=null; toast('この写真は読み込めませんでした',true); })
+    .then(function(){ if(lbl) lbl.textContent=ExpRcpt?'📷 写真を撮り直す':'📷 レシート写真を付ける（任意）'; input.value=''; });
+}
+function expClearRcpt(){
+  ExpRcpt=null;
+  var img=document.getElementById('exp-rcpt-prev'); if(img){ img.removeAttribute('src'); img.style.display='none'; }
+  var x=document.getElementById('exp-rcpt-clear'); if(x) x.style.display='none';
+  var lbl=document.getElementById('exp-rcpt-btn'); if(lbl) lbl.textContent='📷 レシート写真を付ける（任意）';
+  var inp=document.getElementById('exp-rcpt-in'); if(inp) inp.value='';
+}
+function expSave(){
+  if(!ExpReady){ toast('経費の保存先（pos_expenses）がまだ準備されていません',true); return; }
+  var amtEl=document.getElementById('exp-amt'); expAmtInput(amtEl);
+  var amount=parseInt(amtEl.value)||0;
+  if(amount<=0){ toast('金額を入れてください',true); amtEl.focus(); return; }
+  var date=document.getElementById('exp-date').value||td();
+  var memo=(document.getElementById('exp-memo').value||'').trim();
+  var row={id:String(Date.now()), date:date, category:ExpCat||EXP_CATS[0], amount:amount, memo:memo, receipt:ExpRcpt||null, created_at:new Date().toISOString()};
+  var rec={id:row.id, date:row.date, category:row.category, amount:row.amount, memo:row.memo, created_at:row.created_at, hasRcpt:!!row.receipt, _pending:true};
+  if(row.receipt) ExpRcptCache[row.id]=row.receipt;
+  Exp.push(rec);
+  supaUpsert('pos_expenses', row).then(function(ok){ if(ok){ rec._pending=false; expRenderRecent(); } });
+  logAction('経費入力', row.category+' '+yn(amount)+(memo?' '+memo:''));
+  amtEl.value=''; document.getElementById('exp-memo').value=''; expClearRcpt();
+  expRenderRecent();
+  toast('🧾 '+row.category+' '+yn(amount)+' を保存しました');
+  amtEl.focus();
+}
+function expRenderRecent(){
+  var el=document.getElementById('exp-recent'); if(!el) return;
+  var ym=td().slice(0,7);
+  var list=expSort(Exp.filter(function(e){ return String(e.date).slice(0,7)===ym; }));
+  if(list.length===0){ el.innerHTML='<div class="exp-empty">今月の入力はまだありません</div>'; return; }
+  el.innerHTML=list.map(function(e){
+    return '<div class="exp-row"><span class="exp-d">'+expMD(e.date)+'</span>'+
+      '<span class="exp-c">'+expEsc(e.category)+(e.memo?'<small>'+expEsc(e.memo)+'</small>':'')+'</span>'+
+      (e.hasRcpt?'<button type="button" class="exp-ph" onclick="expShowRcpt(\''+e.id+'\')">📷</button>':'')+
+      '<span class="exp-a">'+yn(e.amount)+(e._pending?'<small>送信待ち</small>':'')+'</span>'+
+      '<button type="button" class="exp-del" onclick="expDelete(\''+e.id+'\')">削除</button></div>';
+  }).join('');
+}
+function expDelete(id){
+  var e=Exp.find(function(x){ return x.id===id; }); if(!e) return;
+  askConfirm(expMD(e.date)+' '+e.category+' '+yn(e.amount)+' を削除しますか？', function(){
+    Exp=Exp.filter(function(x){ return x.id!==id; });
+    delete ExpRcptCache[id];
+    // まだ送信待ちの分が後から復活しないよう、送信待ちの列からも外す
+    try{
+      var q=JSON.parse(localStorage.getItem('wc_sync_queue')||'[]');
+      localStorage.setItem('wc_sync_queue', JSON.stringify(q.filter(function(x){ return !(x.table==='pos_expenses' && x.data && String(x.data.id)===id); })));
+    }catch(qe){}
+    supaDelete('pos_expenses', id);
+    logAction('経費削除', e.category+' '+yn(e.amount));
+    expRenderRecent();
+    if(document.getElementById('m-expsum').classList.contains('on')) expRenderSum();
+    toast('削除しました');
+  });
+}
+function expShowRcpt(id){
+  var img=document.getElementById('exp-photo-img'), note=document.getElementById('exp-photo-note');
+  img.removeAttribute('src'); img.style.display='none'; note.textContent='読み込み中…';
+  oModal('m-exp-photo');
+  if(ExpRcptCache[id]){ img.src=ExpRcptCache[id]; img.style.display='block'; note.textContent=''; return; }
+  supaFetch(SUPA_URL+'/rest/v1/pos_expenses?select=receipt&id=eq.'+encodeURIComponent(id), {method:'GET', headers:getSupaHeaders()})
+    .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+    .then(function(rows){
+      var d=rows && rows[0] && rows[0].receipt;
+      if(!d){ note.textContent='写真が見つかりませんでした'; return; }
+      ExpRcptCache[id]=d; img.src=d; img.style.display='block'; note.textContent='';
+    })
+    .catch(function(){ note.textContent='写真を読み込めませんでした（通信）'; });
+}
+
+// ---------- 画面2：月の総括（オーナーだけ） ----------
+// 売上 −（店のお金から出た経費＋オーナーが出した経費）＝ 残り
+// 店の経費はスタッフアプリの表 wecats_cash（type='expense'）を読むだけ。オーナーの経費は pos_expenses（Exp）。
+var ExpShop = {ym:'', rows:[], err:false, loading:false};
+function openExpSum(){
+  if(!isOwnerMode){ openOwnerLogin(); return; }
+  ExpSumYM=td().slice(0,7);
+  expFetchShop(ExpSumYM);
+  expRenderSum();
+  oModal('m-expsum');
+}
+function expSumMove(step){
+  if(step===0){ ExpSumYM=td().slice(0,7); }
+  else{
+    var p=ExpSumYM.split('-'), d=new Date(parseInt(p[0]), parseInt(p[1])-1+step, 1);
+    ExpSumYM=d.getFullYear()+'-'+p2(d.getMonth()+1);
+  }
+  expFetchShop(ExpSumYM);
+  expRenderSum();
+}
+function expFetchShop(ym){
+  // 表示月の店の経費を wecats_cash から取る。決して例外を外に出さない
+  var st={ym:ym, rows:[], err:false, loading:true};
+  ExpShop=st;
+  function done(){
+    if(ExpShop!==st) return; // 途中で月を切り替えた古い結果は捨てる
+    st.loading=false;
+    try{ if(document.getElementById('m-expsum').classList.contains('on')) expRenderSum(); }catch(e){}
+  }
+  try{
+    var p=ym.split('-'), n=new Date(parseInt(p[0]), parseInt(p[1]), 1);
+    var next=n.getFullYear()+'-'+p2(n.getMonth()+1)+'-01';
+    supaFetch(SUPA_URL+'/rest/v1/wecats_cash?select=date,description,amount&date=gte.'+ym+'-01&date=lt.'+next+'&type=eq.expense&order=date.asc', {method:'GET', headers:getSupaHeaders()})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+      .then(function(rows){
+        if(!Array.isArray(rows)) throw new Error('bad response');
+        st.rows=rows.map(function(x){ return {date:String(x.date||''), description:x.description||'', amount:parseInt(x.amount)||0}; });
+      })
+      .catch(function(e){ console.warn('店の経費（wecats_cash）を読み込めません:', e && e.message); st.err=true; })
+      .then(done);
+  }catch(e){ console.warn('店の経費（wecats_cash）を読み込めません:', e && e.message); st.err=true; done(); }
+}
+function expMonthSales(ym){
+  // 売上の定義は rcCash の autoTot・日別集計と同じ：退店済の来店料金（商品券分を除く）＋物販（商品券分を除く）＋チェキ
+  var gs=0, ms=0, cs=0;
+  G.forEach(function(g){ if(g.st==='done' && String(g.d).slice(0,7)===ym) gs+=((g.pr||0)-(g.tkt||0)); });
+  MS.forEach(function(m){ if(String(m.d).slice(0,7)===ym) ms+=((m.total||0)-(m.tkt||0)); });
+  Cheki.forEach(function(c){ if(String(c.d).slice(0,7)===ym) cs+=(c.total||0); });
+  return {guest:gs, merch:ms, cheki:cs, total:gs+ms+cs};
+}
+function expRenderSum(){
+  var el=document.getElementById('exp-sum-body'); if(!el || !ExpSumYM) return;
+  if(!isOwnerMode){ cModal('m-expsum'); return; }
+  var p=ExpSumYM.split('-');
+  document.getElementById('exp-sum-ym').textContent=parseInt(p[0])+'年'+parseInt(p[1])+'月';
+  var sales=expMonthSales(ExpSumYM);
+  // 店のお金から出た経費（wecats_cash）
+  var shopOk=ExpShop.ym===ExpSumYM && !ExpShop.loading && !ExpShop.err;
+  var shopRows=shopOk ? ExpShop.rows : [];
+  var shopTotal=0;
+  shopRows.forEach(function(r){ shopTotal+=r.amount; });
+  // オーナーが出した経費（pos_expenses）
+  var list=ExpReady ? expSort(Exp.filter(function(e){ return String(e.date).slice(0,7)===ExpSumYM; })) : [];
+  var total=0, byCat={};
+  list.forEach(function(e){ total+=e.amount; byCat[e.category]=(byCat[e.category]||0)+e.amount; });
+  var cats=EXP_CATS.concat(Object.keys(byCat).filter(function(c){ return EXP_CATS.indexOf(c)<0; }));
+  var allExp=shopTotal+total;
+  var rest=sales.total-allExp;
+  var h='';
+  h+='<div class="exp-box"><div class="exp-k">売上合計</div><div class="exp-v">'+yn(sales.total)+'</div>'+
+    '<div class="exp-sub">来店 '+yn(sales.guest)+' ／ 物販 '+yn(sales.merch)+' ／ チェキ '+yn(sales.cheki)+'</div></div>';
+  h+='<div class="exp-box"><div class="exp-k">店のお金から出た経費</div>';
+  if(!shopOk){
+    h+='<div class="exp-sub">'+((ExpShop.ym===ExpSumYM && ExpShop.err)?'読めませんでした':'読み込み中…')+'</div>';
+  }else{
+    h+='<div class="exp-v">'+yn(shopTotal)+'</div>';
+    if(shopRows.length===0) h+='<div class="exp-sub">記録なし</div>';
+    shopRows.forEach(function(r){ h+='<div class="exp-line"><span>'+expMD(r.date)+' '+expEsc(r.description)+'</span><span>'+yn(r.amount)+'</span></div>'; });
+  }
+  h+='</div>';
+  h+='<div class="exp-box"><div class="exp-k">オーナーが出した経費</div>';
+  if(!ExpReady){
+    h+='<div class="exp-sub">（準備中）</div>';
+  }else{
+    h+='<div class="exp-v">'+yn(total)+'</div>';
+    cats.forEach(function(c){ if(byCat[c]) h+='<div class="exp-line"><span>'+expEsc(c)+'</span><span>'+yn(byCat[c])+'</span></div>'; });
+    if(total===0) h+='<div class="exp-sub">記録なし</div>';
+  }
+  h+='</div>';
+  h+='<div class="exp-box"><div class="exp-k">経費合計（店＋オーナー）</div><div class="exp-v">'+yn(allExp)+'</div>'+
+    '<div class="exp-sub">店 '+yn(shopTotal)+' ／ オーナー '+yn(total)+'</div></div>';
+  h+='<div class="exp-box exp-rest'+(rest<0?' minus':'')+'"><div class="exp-k">残り（売上 − 経費合計）</div><div class="exp-v">'+(rest<0?'−':'')+yn(Math.abs(rest))+'</div>'+
+    (shopOk?'':'<div class="exp-sub">※店の経費を読めていないため、店の経費は含んでいません</div>')+'</div>';
+  if(!ExpReady){ el.innerHTML=h; return; }
+  h+='<button type="button" class="btn bso bf" style="margin-top:6px;" onclick="cModal(\'m-expsum\');openExpInput()">＋ オーナーが出した経費を入れる</button>';
+  h+='<div class="exp-k" style="margin:14px 0 4px">オーナーが出した経費の明細（'+list.length+'件）</div>';
+  if(list.length===0) h+='<div class="exp-empty">なし</div>';
+  else h+=list.map(function(e){
+    return '<div class="exp-row"><span class="exp-d">'+expMD(e.date)+'</span>'+
+      '<span class="exp-c">'+expEsc(e.category)+(e.memo?'<small>'+expEsc(e.memo)+'</small>':'')+'</span>'+
+      (e.hasRcpt?'<button type="button" class="exp-ph" onclick="expShowRcpt(\''+e.id+'\')">📷</button>':'')+
+      '<span class="exp-a">'+yn(e.amount)+'</span></div>';
+  }).join('');
+  el.innerHTML=h;
+}
+
 function rfAll(){
   try{rGuests();}catch(e){}
   try{rMerch();}catch(e){}
@@ -2946,5 +3418,6 @@ function init(){
   loadFromSupabase();
   startPresenceLoop();
 }
-init();
+// ログイン済みならすぐ init()、未ログインならログイン成功後に init()
+authStart(init);
 try{ applyHWVisibility(); }catch(e){}

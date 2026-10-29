@@ -330,7 +330,9 @@ var MAX_PEOPLE = 20;
               ack_n:(S.visit==='new'?S.acked.filter(Boolean).length:0),rules_version:(S.visit==='new'?RULES_VERSION:null),device_id:deviceId()};
     fetch(SUPA_URL+'/rest/v1/'+TABLE,{
       method:'POST',
-      headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=representation'},
+      // 受付番号(seq)を表示するため、登録した行を読み戻す（return=representation）。
+      // x-wc-device は「このスマホが登録した行だけ読める」RLS用の目印（device_id と同じ値）
+      headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json',Prefer:'return=representation','x-wc-device':deviceId()},
       body:JSON.stringify(body)
     }).then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
     .then(function(rows){
