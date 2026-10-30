@@ -573,7 +573,7 @@ function linkSheet(){
   sheet('常連さんと紐づける',
     '<p class="note" style="margin:0 0 10px">' + esc(m.nickname) + '（No.' + m.no + '）と同じ方を、POSの「常連さん」から選んでください。<br>' +
       '・この方が入口のQRを読むと、POSの常連さん欄にその名前が自動で入ります<br>' +
-      '・入口QRを使い始める前のPOSの来店回数を、推し猫カードの来店回数と称号に引き継ぎます（その分のごほうびは渡しません）<br>' +
+      '・推し猫カードの来店回数は、入口のQRで記録した分だけです（POSの来店回数は引き継ぎません）<br>' +
       '・電話番号などの連絡先はPOSには送られません</p>' +
     '<input class="in" id="pos-q" type="search" placeholder="常連さんの名前で検索" style="margin-bottom:10px">' +
     '<div id="pos-res"><p class="empty">検索しています…</p></div>' +
@@ -629,7 +629,7 @@ function loadVisits(){
         years.map(function(y){ return '<option value="' + y + '"' + (y === r.year ? ' selected' : '') + '>' + y + '年</option>'; }).join('') + '</select>' +
         '<span class="sm">QR来店 合計 ' + r.total + '件</span></div>' +
       '<div class="card" style="padding:4px 12px">' + (rows || '<p class="empty">この年の来店記録はまだありません。</p>') + '</div>' +
-      '<p class="note">入口のQRを読み取った日数（1日1回）の多い順です。POSの常連さんと紐づけた方は、その年の、入口QRを使い始める前のPOSの来店日数も足しています（同じ日は1回）。同じ回数なら、先にその回数に到達した方が上になります。年間来店TOPの表彰に使えます。</p>';
+      '<p class="note">入口のQRを読み取った日数（1日1回）の多い順です。同じ回数なら、先にその回数に到達した方が上になります。年間来店TOPの表彰に使えます。</p>';
     loadInsights();
   });
 }
