@@ -2178,7 +2178,7 @@ function rcCash(){
   var date=document.getElementById('k-d').value||td();var dt=0;for(var i=0;i<AD.length;i++)dt+=(CQ[AD[i].id]||0)*AD[i].v;
   var sup=parseInt(document.getElementById('k-sup').value)||0;var carry=parseInt(document.getElementById('k-carry').value)||0;
   var grand=dt+sup;
-  // 実際の金庫の金額 = 数えた金種合計そのもの（持ち帰りは「あるべき金額」の計算にだけ使う）
+  // 実際の金額 = 数えた金種合計そのもの（回収額は「あるべき金額」側の計算で引く）
   var net=grand;
   // 本日の売上：自動集計（来店料金＋物販＋チェキ）
   var dg=G.filter(function(g){return g.d===date&&g.st==='done';});var gs=0;for(var j=0;j<dg.length;j++)gs+=(dg[j].pr-(dg[j].tkt||0));
@@ -2199,10 +2199,10 @@ function rcCash(){
   var prevGap=!!(prevRec && prevRec.d!==prevDayStr);
   var prevGrand=prevRec?(prevRec.grand||prevRec.net):0;
   var prevNet=prevRec?((prevRec.grand||prevRec.net)-(prevRec.carry||0)):0;
-  // あるべき金額 = 前日の金庫（前日の持ち帰りを引いた残り） + 本日売上
-  // ※今日の持ち帰りは「数えた後」に出ていくお金なので、ここでは引かない
-  var expected=prevNet+tot;
-  // 過不足 = 実際の金庫（数えた金種合計） − あるべき金額
+  // 回収後にあるべき金額 = 前日の金庫（前日の持ち帰りを引いた残り） + 本日売上 − 今日の回収額
+  // ※店舗は「回収してから数える」運用のため、今日の回収額も引く（回収額0のときは従来どおり）
+  var expected=prevNet+tot-carry;
+  // 過不足 = 実際の金額（数えた金種合計） − 回収後にあるべき金額
   var diff=net-expected;
   var noPrev = !prevRec;
   var ch=document.getElementById('k-carry-h');if(ch)ch.textContent=carry>0?('金種合計 '+yn(grand)+' から '+yn(carry)+' を回収'):'金種合計から引かれます';
@@ -2218,7 +2218,8 @@ function rcCash(){
   h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">前日の金庫</span><b>'+(noPrev?'記録なし':yn(prevNet))+'</b></div>';
   if(prevRec && (prevRec.carry||0)>0)h+='<div style="display:flex;justify-content:space-between;padding-left:10px;"><span style="color:var(--tx2);font-size:11px;">（数えた '+yn(prevGrand)+' − 持ち帰り '+yn(prevRec.carry)+'）</span><span></span></div>';
   h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">＋ 本日の売上</span><b style="color:var(--ok);">'+yn(tot)+'</b></div>';
-  h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:4px;padding-top:4px;"><span style="font-weight:700;">＝ あるべき金額</span><b style="font-size:15px;">'+(noPrev?'—':yn(expected))+'</b></div>';
+  if(carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">− 回収額</span><b style="color:#a06010;">'+yn(carry)+'</b></div>';
+  h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:4px;padding-top:4px;"><span style="font-weight:700;">'+(carry>0?'＝ あるべき金額（回収後）':'＝ あるべき金額')+'</span><b style="font-size:15px;">'+(noPrev?'—':yn(expected))+'</b></div>';
   h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金額</span><b style="font-size:15px;color:var(--ac);">'+yn(net)+'</b></div>';
   h+='</div></div>';
   if(prevGap)h+='<div class="csb full" style="text-align:center;padding:10px;background:#fff8e8;border:1.5px solid var(--wn);"><div style="font-size:12px;color:#a06010;">⚠ 前日（'+prevDayStr.slice(5).replace('-','/')+'）の記録がありません<br>直近の記録（'+prevRec.d.slice(5).replace('-','/')+'）で計算しているので、その間の売上分は合いません</div></div>';
@@ -2349,8 +2350,8 @@ function rCash(){
     var gs=gSalesByDate[r.d]||0;
     var mr=msByDate[r.d];var cs=chekiSalesByDate[r.d]||0;var autoSales=gs+(mr?(mr.total-(mr.tkt||0)):0)+cs;
     var daySales=(typeof r.sales==='number' && r.sales>0)?r.sales:autoSales;
-    // あるべき金額 = 前日の金庫（持ち帰り後） ＋ 本日売上（今日の持ち帰りは数えた後の出金なので引かない）
-    var expected=prevNet+daySales;
+    // 回収後にあるべき金額 = 前日の金庫（持ち帰り後） ＋ 本日売上 − 今日の回収額（店舗は回収してから数える運用。回収額0のときは従来どおり）
+    var expected=prevNet+daySales-(r.carry||0);
     // 前日の記録が「昨日」かどうか
     var _pd2=new Date(r.d+'T00:00:00'); _pd2.setDate(_pd2.getDate()-1);
     var prevDayStr2=_pd2.getFullYear()+'-'+p2(_pd2.getMonth()+1)+'-'+p2(_pd2.getDate());
@@ -2366,9 +2367,9 @@ function rCash(){
     if(prevRec && (prevRec.carry||0)>0)h+='<div style="display:flex;justify-content:space-between;padding-left:10px;"><span style="color:var(--tx2);font-size:11px;">（数えた '+yn(prevRec.grand||prevRec.net)+' − 持ち帰り '+yn(prevRec.carry)+'）</span><span></span></div>';
     h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">＋ 売上</span><b style="color:var(--ok);">'+yn(daySales)+'</b></div>';
     if(giftCertByDate[r.d]>0)h+='<div style="display:flex;justify-content:space-between;padding-left:10px;"><span style="color:var(--tx2);font-size:12px;">内、商品券（現金影響分）</span><span style="color:#a06010;font-size:12px;">▲'+yn(giftCertByDate[r.d])+'</span></div>';
-    h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:2px;padding-top:2px;"><span style="font-weight:700;">あるべき金額</span><b>'+(prevRec?yn(expected):'—')+'</b></div>';
+    if(r.carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">− 回収額（持ち帰り'+(r.carryName?'：'+r.carryName:'')+'）</span><b style="color:#a06010;">'+yn(r.carry)+'</b></div>';
+    h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:2px;padding-top:2px;"><span style="font-weight:700;">'+(r.carry>0?'あるべき金額（回収後）':'あるべき金額')+'</span><b>'+(prevRec?yn(expected):'—')+'</b></div>';
     h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金庫</span><b style="font-size:16px;color:var(--ac);">'+yn(todayNet)+'</b></div>';
-    if(r.carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);font-size:12px;">🏦 持ち帰り（'+(r.carryName||'')+'）※数えた後の出金</span><span style="color:#a06010;font-size:12px;">'+yn(r.carry)+'</span></div>';
     h+='</div>';
     if(prevGap2)h+='<div style="font-size:11px;color:#a06010;background:#fff8e8;border:1px solid var(--wn);border-radius:8px;padding:6px 8px;margin-bottom:8px;">⚠ 前日（'+prevDayStr2.slice(5).replace('-','/')+'）の記録がありません（直近は'+prevRec.d.slice(5).replace('-','/')+'）。その間の売上分は合いません</div>';
     // 判定
