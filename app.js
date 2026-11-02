@@ -7,6 +7,7 @@ var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 // セッションは localStorage に保存し、期限の5分前から自動で更新する。
 // Supabaseへの通信は全て supaFetch() を通し、Authorization にはログイン中の access_token を付ける。
 var AUTH_KEY = 'wc_supa_session';   // {access_token, refresh_token, expires_at(ミリ秒), email}
+var AUTH_KEY_BK = 'wc_supa_session_bk';   // セッションの控え（本体が消えたときの復旧用）
 var AuthSession = null;
 var _authRefreshing = null;
 var _appStarted = false, _appStartFn = null;
@@ -14,6 +15,7 @@ function authLoad(){
   try{ var s=JSON.parse(localStorage.getItem(AUTH_KEY)||'null'); return (s && s.refresh_token) ? s : null; }catch(e){ return null; }
 }
 AuthSession = authLoad();
+if(!AuthSession) authRestoreBackup(true);   // 本体が消えていても控えがあれば復旧する
 function authStore(d){
   AuthSession = {
     access_token: d.access_token,
@@ -21,12 +23,23 @@ function authStore(d){
     expires_at: d.expires_at ? d.expires_at*1000 : Date.now()+(d.expires_in||3600)*1000,
     email: (d.user && d.user.email) || (AuthSession && AuthSession.email) || ''
   };
-  try{ localStorage.setItem(AUTH_KEY, JSON.stringify(AuthSession)); if(AuthSession.email) localStorage.setItem('wc_auth_email', AuthSession.email); }catch(e){}
+  try{ localStorage.setItem(AUTH_KEY, JSON.stringify(AuthSession)); localStorage.setItem(AUTH_KEY_BK, JSON.stringify(AuthSession)); if(AuthSession.email) localStorage.setItem('wc_auth_email', AuthSession.email); }catch(e){}
   authUpdateWho();
 }
 function authClear(){
   AuthSession = null;
-  try{ localStorage.removeItem(AUTH_KEY); }catch(e){}
+  try{ localStorage.removeItem(AUTH_KEY); localStorage.removeItem(AUTH_KEY_BK); }catch(e){}
+}
+// 控え（wc_supa_session_bk）からの復旧。本体が無いとき（force=true）か、控えの方が新しいときに使う
+function authRestoreBackup(force){
+  try{
+    var bk=JSON.parse(localStorage.getItem(AUTH_KEY_BK)||'null');
+    if(!bk || !bk.refresh_token) return false;
+    if(!force && AuthSession && bk.refresh_token===AuthSession.refresh_token) return false;
+    AuthSession = bk;
+    try{ localStorage.setItem(AUTH_KEY, JSON.stringify(bk)); }catch(e){}
+    return true;
+  }catch(e){ return false; }
 }
 function authLoggedIn(){ return !!(AuthSession && AuthSession.refresh_token); }
 // Authorization に付けるトークン（ログイン中は access_token、未ログイン時は anon キー）。トークンの取得はここだけ
@@ -37,7 +50,7 @@ function authSyncFromStorage(){
   if(!s){ return; }
   if(!AuthSession || (s.refresh_token !== AuthSession.refresh_token && s.expires_at >= AuthSession.expires_at)) AuthSession = s;
 }
-function authRefresh(){
+function authRefresh(_retried){
   if(_authRefreshing) return _authRefreshing;
   authSyncFromStorage();
   if(!authLoggedIn()) return Promise.resolve(false);
@@ -53,6 +66,8 @@ function authRefresh(){
       if(r.status===400 || r.status===401 || r.status===403){
         authSyncFromStorage();
         if(AuthSession && AuthSession.expires_at - Date.now() > 60*1000) return true;
+        // 控えに別のセッションが残っていたら、そちらで1回だけ更新を試す（消すのはその後）
+        if(!_retried && authRestoreBackup()){ _authRefreshing = null; return authRefresh(true); }
         authClear(); authShowScreen('ログインの有効期限が切れました。もう一度ログインしてください');
       }
       return false;
@@ -309,6 +324,9 @@ function loadFromSupabase() {
     var customers=results[3], cash=results[4], settings=results[5], cheki=results[6];
     var expenses=results[7];
 
+    // 送信待ちキーは flush でキューが空になる前に控える（後段の「端末にしかない分を残す」判定が効かなくなるため）
+    var pendingSnap={};
+    ['pos_guests','pos_merch','pos_customers','pos_cash','pos_cheki'].forEach(function(t){pendingSnap[t]=getPendingSyncKeys(t);});
     flushSyncQueue();
     flushDeleteQueue();
     if(guests) {
@@ -320,7 +338,7 @@ function loadFromSupabase() {
         bc:g.binder_color, bcn:g.binder_name, mo:g.memo, aq:g.survey||{}
       };});
       var cloudGIds={};cloudG.forEach(function(g){cloudGIds[String(g.id)]=true;});
-      var pendingG=getPendingSyncKeys('pos_guests');
+      var pendingG=pendingSnap['pos_guests'];
       var localGOnly=JSON.parse(localStorage.getItem('wc_g')||'[]').filter(function(g){return !cloudGIds[String(g.id)]&&pendingG[String(g.id)];});
       if(localGOnly.length>0){localGOnly.forEach(function(g){saveGuestToSupa(g);});}
       G = cloudG.concat(localGOnly);
@@ -329,7 +347,7 @@ function loadFromSupabase() {
       var pendingDelMS=getPendingDeleteIds('pos_merch');
       var cloudMS = merch.filter(function(m){return !pendingDelMS[String(m.date)];}).map(function(m){return {id:m.id,d:m.date,i:m.items,total:m.total,tkt:m.gift_cert||0};});
       var cloudMSDates={};cloudMS.forEach(function(m){cloudMSDates[m.d]=true;});
-      var pendingMS=getPendingSyncKeys('pos_merch');
+      var pendingMS=pendingSnap['pos_merch'];
       var localMSOnly=JSON.parse(localStorage.getItem('wc_ms')||'[]').filter(function(m){return !cloudMSDates[m.d]&&pendingMS[m.d];});
       if(localMSOnly.length>0){localMSOnly.forEach(function(m){saveMerchToSupa(m);});}
       MS = cloudMS.concat(localMSOnly);
@@ -348,7 +366,7 @@ function loadFromSupabase() {
         visits:c.visits||[], memos:c.memos||[]
       };});
       var cloudCUIds={};cloudCU.forEach(function(c){cloudCUIds[String(c.id)]=true;});
-      var pendingCU=getPendingSyncKeys('pos_customers');
+      var pendingCU=pendingSnap['pos_customers'];
       var localCUOnly=JSON.parse(localStorage.getItem('wc_cu')||'[]').filter(function(c){return !cloudCUIds[String(c.id)]&&pendingCU[String(c.id)];});
       if(localCUOnly.length>0){localCUOnly.forEach(function(c){saveCustomerToSupa(c);});}
       CU = cloudCU.concat(localCUOnly);
@@ -357,7 +375,7 @@ function loadFromSupabase() {
       var pendingDelCR=getPendingDeleteIds('pos_cash');
       var cloudCR = cash.filter(function(c){return !pendingDelCR[String(c.id)];}).map(function(c){return Object.assign({},c.data,{d:c.date,id:c.id});});
       var cloudCRIds={};cloudCR.forEach(function(c){cloudCRIds[String(c.id)]=true;});
-      var pendingCR=getPendingSyncKeys('pos_cash');
+      var pendingCR=pendingSnap['pos_cash'];
       var localCROnly=JSON.parse(localStorage.getItem('wc_cr')||'[]').filter(function(c){return !cloudCRIds[String(c.id||c.d)]&&pendingCR[String(c.id||c.d)];});
       if(localCROnly.length>0){localCROnly.forEach(function(c){saveCashToSupa(c);});}
       CR = cloudCR.concat(localCROnly);
@@ -393,7 +411,7 @@ function loadFromSupabase() {
       var pendingDelCheki=getPendingDeleteIds('pos_cheki');
       var cloudCheki = cheki.filter(function(c){return !pendingDelCheki[String(c.id)];}).map(function(c){return {id:c.id,d:c.date,cats:c.cats||[],multi:!!c.multi,qty:c.qty,price:c.price,total:c.total};});
       var cloudChekiIds={};cloudCheki.forEach(function(c){cloudChekiIds[String(c.id)]=true;});
-      var pendingCheki=getPendingSyncKeys('pos_cheki');
+      var pendingCheki=pendingSnap['pos_cheki'];
       var localChekiOnly=JSON.parse(localStorage.getItem('wc_cheki')||'[]').filter(function(c){return !cloudChekiIds[String(c.id)]&&pendingCheki[String(c.id)];});
       if(localChekiOnly.length>0){localChekiOnly.forEach(function(c){saveChekiToSupa(c);});}
       Cheki = cloudCheki.concat(localChekiOnly);
@@ -408,19 +426,19 @@ function loadFromSupabase() {
       var localMS=JSON.parse(localStorage.getItem('wc_ms')||'[]');
       var localCU=JSON.parse(localStorage.getItem('wc_cu')||'[]');
       var localCR=JSON.parse(localStorage.getItem('wc_cr')||'[]');
-      if((!guests||guests.length===0)&&localG.length>0) {
+      if((guests&&guests.length===0)&&localG.length>0) {
         G=localG; localG.forEach(function(g){saveGuestToSupa(g);});
         localStorage.setItem('wc_migrated','1');
       }
-      if((!merch||merch.length===0)&&localMS.length>0) {
+      if((merch&&merch.length===0)&&localMS.length>0) {
         MS=localMS; localMS.forEach(function(m){saveMerchToSupa(m);});
         localStorage.setItem('wc_migrated','1');
       }
-      if((!customers||customers.length===0)&&localCU.length>0) {
+      if((customers&&customers.length===0)&&localCU.length>0) {
         CU=localCU; localCU.forEach(function(c){saveCustomerToSupa(c);});
         localStorage.setItem('wc_migrated','1');
       }
-      if((!cash||cash.length===0)&&localCR.length>0) {
+      if((cash&&cash.length===0)&&localCR.length>0) {
         CR=localCR; localCR.forEach(function(r){saveCashToSupa(r);});
         localStorage.setItem('wc_migrated','1');
       }
@@ -962,6 +980,17 @@ function jpHolidaySet(year){
     }
   });
   Object.assign(hols,addSub);
+  // 国民の休日：前後が祝日の平日は休日（例：敬老の日と秋分の日に挟まれた日）
+  var addCit={};
+  Object.keys(hols).forEach(function(key){
+    var d=new Date(key);
+    var nx=new Date(d);nx.setDate(nx.getDate()+1);
+    var nxKey=nx.getFullYear()+'-'+p2(nx.getMonth()+1)+'-'+p2(nx.getDate());
+    var af=new Date(d);af.setDate(af.getDate()+2);
+    var afKey=af.getFullYear()+'-'+p2(af.getMonth()+1)+'-'+p2(af.getDate());
+    if(hols[afKey]&&!hols[nxKey]&&nx.getDay()!==0&&nx.getDay()!==6)addCit[nxKey]=true;
+  });
+  Object.assign(hols,addCit);
   return hols;
 }
 var _jpHolCache={};
@@ -1315,7 +1344,7 @@ function rcCO(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);isKD=g.kd?true:isSat(g.d);
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);
   document.getElementById('co-dur').textContent=r.dur||'—';
   document.getElementById('co-det').textContent=r.bd;
   document.getElementById('co-tot').textContent=yn(Math.max(0,r.t-disc));
@@ -1327,12 +1356,13 @@ function confCO(){
   if(!g){toast('対象のお客様が見つかりません',true);return;}
   var ci=getTime('co-ci')||g.ci;
   var co=getTime('co-co')||ft(new Date());
+  if(co&&ci&&co<ci){toast('退店時刻が入店時刻より前になっています。時刻を確認してください',true);return;}
   var cup=parseInt(document.getElementById('co-cup').value)||0;
   var tkt=parseInt(document.getElementById('co-tkt').value)||0;
   var sup=parseInt(document.getElementById('co-sup').value)||0;
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);isKD=g.kd?true:isSat(g.d);
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);
   var mo=document.getElementById('co-mo').value;
   if(otha>0)mo=(mo?mo+' ':'')+(othn||'その他割引')+' -¥'+otha.toLocaleString();
   g.ci=ci;g.co=co;g.pr=Math.max(0,r.t-cup-sup-otha);g.tkt=tkt;g.mo=mo;g.st='done';g.fn=window._coFN;if(window._coHW||g.hw!==undefined)g.hw=!!window._coHW;
@@ -1354,7 +1384,7 @@ function showRcpt(){
   var othn=document.getElementById('co-othn').value.trim();
   var otha=parseInt(document.getElementById('co-otha').value)||0;
   var disc=cup+tkt+sup+otha;
-  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);isKD=g.kd?true:isSat(g.d);
+  var r=calcP(g.a,g.c,ci,co,g.d,window._coFN,g.kd?true:undefined,!!window._coHW);
   var tot=Math.max(0,r.t-disc);
   document.getElementById('rc-ppl').textContent='大人 '+g.a+'名'+(g.c>0?' ・ 子ども '+g.c+'名':'');
   document.getElementById('rc-dur').textContent=r.dur||'—';
@@ -1632,15 +1662,14 @@ function openMerchEdit(date){
   // 指定日の物販データをMQに読み込んで編集
   var m=MS.find(function(x){return x.d===date;});
   if(!m)return;
-  // 一旦その日のデータを削除
-  MS=MS.filter(function(x){return x.d!==date;});
+  // 保存済みデータは消さない（保存時に saveMerchCombined が差し替える。
+  // 先に消すと夜カフェ券・商品券の引き継ぎが効かず、「編集をやめる」で当日分が消える）
   // MQに数量を設定
   for(var i=0;i<m.i.length;i++) MQ[String(m.i[i].id)]=m.i[i].q;
   // 保存日付を変更するためにtd()の代わりにdateを使う必要がある
   // → 編集用の日付をグローバルに保持
   window._editMerchDate=date;
   var de=document.getElementById('merch-date');if(de)de.value=date;
-  sv();
   rMerch();
   toast(date+'の物販を編集モードにしました。変更後「保存」を押してください');
 }
@@ -1655,6 +1684,7 @@ function deleteMerchHistory(date){
 }
 function exitMerchEdit(){
   window._editMerchDate=null;
+  var de2=document.getElementById('merch-date');if(de2)de2.value=td();
   for(var i=0;i<MI.length;i++)MQ[String(MI[i].id)]=0;
   rMerch();rGuests();
   toast('編集をやめて通常モードに戻りました');
@@ -1700,6 +1730,8 @@ function saveMerchCombined(){
     document.getElementById('nc-tkt-on').checked=false;document.getElementById('nc-tkt-body').style.display='none';
   }
   if(tktEl)tktEl.value=0;
+  // 日付欄を今日に戻す（編集した過去日が残ると次の通常保存がその日を上書きする）
+  if(dateEl)dateEl.value=td();
   rMerch();rGuests();
   toast(wasEdit?(wasEdit+' の物販を保存しました 🛍️'):'物販を保存しました 🛍️');
 }
@@ -1723,9 +1755,8 @@ function editMerch(){
   if(!tr)return;
   for(var i=0;i<tr.i.length;i++) MQ[tr.i[i].id]=tr.i[i].q;
   window._editMerchDate=t;
-  // 一旦保存データを削除して編集モードへ
-  MS=MS.filter(function(m){return m.d!==t;});
-  sv();rMerch();rGuests();
+  // 保存済みデータは消さない（保存時に差し替わる。「編集をやめる」が無害になる）
+  rMerch();rGuests();
   toast('編集モードにしました。変更後「保存」を押してください');
 }
 function delMI(id){
@@ -2162,9 +2193,15 @@ function rcCash(){
   // 前日のレジ残高を取得
   var prevSorted=CR.filter(function(r){return r.d<date;}).sort(function(a,b){return b.d.localeCompare(a.d);});
   var prevRec=prevSorted.length?prevSorted[0]:null;
-  var prevNet=prevRec?(prevRec.grand||prevRec.net):0;
-  // あるべき金額 = 前日残高 + 本日売上 − 持ち帰り
-  var expected=prevNet+tot-carry;
+  // 前日の記録が「昨日」かどうか（古い記録を掴んでいると、その間の売上分が合わなくなる）
+  var _pd=new Date(date+'T00:00:00'); _pd.setDate(_pd.getDate()-1);
+  var prevDayStr=_pd.getFullYear()+'-'+p2(_pd.getMonth()+1)+'-'+p2(_pd.getDate());
+  var prevGap=!!(prevRec && prevRec.d!==prevDayStr);
+  var prevGrand=prevRec?(prevRec.grand||prevRec.net):0;
+  var prevNet=prevRec?((prevRec.grand||prevRec.net)-(prevRec.carry||0)):0;
+  // あるべき金額 = 前日の金庫（前日の持ち帰りを引いた残り） + 本日売上
+  // ※今日の持ち帰りは「数えた後」に出ていくお金なので、ここでは引かない
+  var expected=prevNet+tot;
   // 過不足 = 実際の金庫（数えた金種合計） − あるべき金額
   var diff=net-expected;
   var noPrev = !prevRec;
@@ -2179,11 +2216,12 @@ function rcCash(){
   // わかりやすい内訳表（上から順に読める）
   h+='<div class="csb full" style="background:#fff;border:1.5px solid var(--bd);"><div style="width:100%;font-size:13px;line-height:2.2;">';
   h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">前日の金庫</span><b>'+(noPrev?'記録なし':yn(prevNet))+'</b></div>';
+  if(prevRec && (prevRec.carry||0)>0)h+='<div style="display:flex;justify-content:space-between;padding-left:10px;"><span style="color:var(--tx2);font-size:11px;">（数えた '+yn(prevGrand)+' − 持ち帰り '+yn(prevRec.carry)+'）</span><span></span></div>';
   h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">＋ 本日の売上</span><b style="color:var(--ok);">'+yn(tot)+'</b></div>';
-  if(carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">－ 持ち帰り</span><b style="color:var(--wn);">'+yn(carry)+'</b></div>';
   h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:4px;padding-top:4px;"><span style="font-weight:700;">＝ あるべき金額</span><b style="font-size:15px;">'+(noPrev?'—':yn(expected))+'</b></div>';
   h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金額</span><b style="font-size:15px;color:var(--ac);">'+yn(net)+'</b></div>';
   h+='</div></div>';
+  if(prevGap)h+='<div class="csb full" style="text-align:center;padding:10px;background:#fff8e8;border:1.5px solid var(--wn);"><div style="font-size:12px;color:#a06010;">⚠ 前日（'+prevDayStr.slice(5).replace('-','/')+'）の記録がありません<br>直近の記録（'+prevRec.d.slice(5).replace('-','/')+'）で計算しているので、その間の売上分は合いません</div></div>';
   // 判定（大きく・差額を強調）
   if(noPrev){
     h+='<div class="csb full" style="text-align:center;padding:14px;background:var(--sf2);"><div style="font-size:13px;color:var(--tx2);">前日の記録がないため<br>過不足は判定できません</div></div>';
@@ -2304,15 +2342,19 @@ function rCash(){
     // 前日比で過不足を計算（月をまたいでも全期間から直前の記録を探す）
     var prevRec=null;
     for(var pIdx=crSorted.length-1;pIdx>=0;pIdx--){if(crSorted[pIdx].d<r.d){prevRec=crSorted[pIdx];break;}}
-    // 前日・当日とも「数えた金種合計(grand)」を実際の金庫として使う
-    var prevNet=prevRec?(prevRec.grand||prevRec.net):0;
+    // 前日・当日とも「数えた金種合計(grand)」を実際の金庫として使う。前日の金庫は前日の持ち帰りを引いた残り
+    var prevNet=prevRec?((prevRec.grand||prevRec.net)-(prevRec.carry||0)):0;
     var todayNet=r.grand||r.net;
     // 本日の売上
     var gs=gSalesByDate[r.d]||0;
     var mr=msByDate[r.d];var cs=chekiSalesByDate[r.d]||0;var autoSales=gs+(mr?(mr.total-(mr.tkt||0)):0)+cs;
     var daySales=(typeof r.sales==='number' && r.sales>0)?r.sales:autoSales;
-    // あるべき金額 = 前日残高 ＋ 本日売上 − 持ち帰り
-    var expected=prevNet+daySales-(r.carry||0);
+    // あるべき金額 = 前日の金庫（持ち帰り後） ＋ 本日売上（今日の持ち帰りは数えた後の出金なので引かない）
+    var expected=prevNet+daySales;
+    // 前日の記録が「昨日」かどうか
+    var _pd2=new Date(r.d+'T00:00:00'); _pd2.setDate(_pd2.getDate()-1);
+    var prevDayStr2=_pd2.getFullYear()+'-'+p2(_pd2.getMonth()+1)+'-'+p2(_pd2.getDate());
+    var prevGap2=!!(prevRec && prevRec.d!==prevDayStr2);
     var diff=prevRec?(todayNet-expected):0;
     var dc=diff>0?'plus':diff<0?'minus':'zero';var dl=diff>0?('⚠️ +'+yn(diff)+' 多い'):diff<0?('⚠️ '+yn(Math.abs(diff))+' 不足'):'✅ ぴったり';
     h+='<div class="card" style="margin-bottom:8px;">';
@@ -2321,12 +2363,14 @@ function rCash(){
     // 内訳（前日＋売上−持ち帰り＝あるべき、実際）
     h+='<div style="font-size:13px;line-height:2;background:var(--sf2);border-radius:10px;padding:10px 12px;margin-bottom:8px;">';
     h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">前日の金庫</span><b>'+(prevRec?yn(prevNet):'記録なし')+'</b></div>';
+    if(prevRec && (prevRec.carry||0)>0)h+='<div style="display:flex;justify-content:space-between;padding-left:10px;"><span style="color:var(--tx2);font-size:11px;">（数えた '+yn(prevRec.grand||prevRec.net)+' − 持ち帰り '+yn(prevRec.carry)+'）</span><span></span></div>';
     h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">＋ 売上</span><b style="color:var(--ok);">'+yn(daySales)+'</b></div>';
     if(giftCertByDate[r.d]>0)h+='<div style="display:flex;justify-content:space-between;padding-left:10px;"><span style="color:var(--tx2);font-size:12px;">内、商品券（現金影響分）</span><span style="color:#a06010;font-size:12px;">▲'+yn(giftCertByDate[r.d])+'</span></div>';
-    if(r.carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);">－ 持ち帰り（'+(r.carryName||'')+'）</span><b style="color:#a06010;">'+yn(r.carry)+'</b></div>';
     h+='<div style="display:flex;justify-content:space-between;border-top:1.5px dashed var(--bd);margin-top:2px;padding-top:2px;"><span style="font-weight:700;">あるべき金額</span><b>'+(prevRec?yn(expected):'—')+'</b></div>';
     h+='<div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">実際の金庫</span><b style="font-size:16px;color:var(--ac);">'+yn(todayNet)+'</b></div>';
+    if(r.carry>0)h+='<div style="display:flex;justify-content:space-between;"><span style="color:var(--tx2);font-size:12px;">🏦 持ち帰り（'+(r.carryName||'')+'）※数えた後の出金</span><span style="color:#a06010;font-size:12px;">'+yn(r.carry)+'</span></div>';
     h+='</div>';
+    if(prevGap2)h+='<div style="font-size:11px;color:#a06010;background:#fff8e8;border:1px solid var(--wn);border-radius:8px;padding:6px 8px;margin-bottom:8px;">⚠ 前日（'+prevDayStr2.slice(5).replace('-','/')+'）の記録がありません（直近は'+prevRec.d.slice(5).replace('-','/')+'）。その間の売上分は合いません</div>';
     // 判定
     var diffStyle=dc==='plus'?'background:#fff8e8;border:1px solid var(--wn);color:#a06010;':dc==='minus'?'background:#fef0ec;border:1px solid var(--pk);color:var(--ng);':'background:#eaf5ef;border:1px solid var(--ok);color:var(--ok);';
     h+='<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">';
@@ -2402,7 +2446,9 @@ function oGEdit(id){
   document.getElementById('ge-id').value=id;document.getElementById('ge-tp').value=g.tp;document.getElementById('ge-pt').value=g.pt;
   geSetCnt('a',g.a);geSetCnt('c',g.c);setTime('ge-ci',g.ci);
   setTime('ge-co',g.co||'');document.getElementById('ge-pr').value=g.pr||'';document.getElementById('ge-mo').value=g.mo||'';
-  document.getElementById('ge-disc-name').value='';document.getElementById('ge-disc-amt').value=0;
+  document.getElementById('ge-disc-name').value=(g.tkt>0)?'商品券':'';
+  document.getElementById('ge-disc-amt').value=g.tkt||0;
+  window._geOrigTkt=g.tkt||0;
   buildMemberSelects();var gem=document.getElementById('ge-member');if(gem)gem.value=g.member||'';
   window._geFN=!!g.fn;window._geKD=!!g.kd;window._geHW=!!g.hw;updateGEHWBtn();showHWField('ge-hw-btn',ShowHW||!!g.hw);
   var geFnBtn=document.getElementById('ge-fn-btn'),geKdBtn=document.getElementById('ge-kd-btn');
@@ -2459,6 +2505,9 @@ function saveGEdit(){
   if(discAmt>0){
     if(isGiftCertName(discName)){tktE=discAmt;}
     else{pr=Math.max(0,pr-discAmt);}
+  }else{
+    // 割引を入力しなかった場合は元の商品券額を維持する（編集で消さない）
+    tktE=window._geOrigTkt||0;
   }
   var moVal=document.getElementById('ge-mo').value;
   if(discName&&discAmt>0)moVal=(moVal?moVal+' ':'')+discName+' -¥'+discAmt.toLocaleString();
@@ -3042,14 +3091,17 @@ function recalcAllGuests(){
       if(g.st!=='done'||!g.co){continue;}
       // 手動割引・手動金額の記録（メモに割引記載）はスキップして保護
       if(g.mo && (g.mo.indexOf('-¥')>=0 || g.mo.indexOf('割引')>=0)){skipped++;continue;}
-      var r=calcP(g.a,g.c,g.ci,g.co,g.d,g.fn,undefined,!!g.hw);
-      if(g.pr!==r.t){
+      var r=calcP(g.a,g.c,g.ci,g.co,g.d,g.fn,g.kd?true:undefined,!!g.hw);
+      if(r.t<g.pr){
         g.pr=r.t;changed++;
         saveGuestToSupa(g);
+      } else if(r.t>g.pr){
+        // クーポン・応援券などメモに残らない割引の可能性があるため、金額が増える再計算はしない
+        skipped++;
       }
     }
     sv();rfAll();
-    toast('再計算完了：'+changed+'件を修正'+(skipped>0?'（手動割引'+skipped+'件は保護）':''));
+    toast('再計算完了：'+changed+'件を修正'+(skipped>0?'（割引等の'+skipped+'件は保護）':''));
   },'再計算する');
 }
 async function loadOwnerLogs(){
