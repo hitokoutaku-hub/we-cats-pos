@@ -90,6 +90,7 @@ function supaFetch(url, opts, _retried){
   return authReady().then(function(){
     if(!authLoggedIn()) throw new Error('not_logged_in');   // 更新に失敗してログアウトになった
     var h =Object.assign({}, opts.headers || {}, {'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + authToken()});
+    var _dk = deviceStoredKey(); if(_dk) h['x-wc-device'] = _dk;   // 端末キー（登録済み端末の印）
     return fetch(url, Object.assign({}, opts, {headers: h}));
   }).then(function(r){
     // トークン切れ（端末のスリープ明けなど）なら1回だけ更新してやり直す
@@ -127,11 +128,23 @@ function authUpdateWho(){
 function authStart(fn){
   _appStartFn = fn;
   try{ localStorage.removeItem('wc_auth'); }catch(e){}   // 旧・入口パスワード('0000')の記録
-  if(authLoggedIn()){ authHideScreen(); authUpdateWho(); _appStarted = true; fn(); }
+  if(authLoggedIn()){
+    deviceGate().then(function(ok){
+      if(ok){ deviceHideLock(); authHideScreen(); authUpdateWho(); _appStarted = true; fn(); }
+      else deviceShowLock();
+    });
+  }
   else authShowScreen();
 }
 function authAfterLogin(){
-  authHideScreen(); authUpdateWho();
+  deviceGate().then(function(ok){
+    if(ok) deviceEnter();
+    else deviceShowLock();
+  });
+}
+// 端末チェック通過後の入場処理
+function deviceEnter(){
+  deviceHideLock(); authHideScreen(); authUpdateWho();
   if(!_appStarted){ _appStarted = true; if(_appStartFn) _appStartFn(); }
   else loadFromSupabase();   // ログアウト→再ログイン：最新を読み直す（送信待ちもここで送られる）
 }
@@ -158,6 +171,80 @@ function authLogout(){
         .catch(function(){});
     }
   }, 'ログアウト');
+}
+
+// ===== 端末ロック（タブレット専用アカウントは登録済み端末だけ） =====
+// タブレット用アカウントでログインした端末は、端末キー（この端末のブラウザ内にだけ保存）が
+// サーバーに登録済みのものと一致しないとアプリに入れない。
+// メール＋パスワードだけでは（例：個人の携帯から）開けないようにするため。
+// 吉村さん・高橋さんのアカウントは対象外（今まで通りどの端末でも入れる）。
+// 端末の登録はロック画面からオーナーパスワードでだけ行える。
+var TABLET_EMAIL = 'wecatscafe+tablet@gmail.com';
+var DEVICE_KEY_LS = 'wc_device_key';
+function deviceIsTablet(){ return !!(AuthSession && AuthSession.email === TABLET_EMAIL); }
+function deviceStoredKey(){ try{ return localStorage.getItem(DEVICE_KEY_LS) || ''; }catch(e){ return ''; } }
+function deviceHash(key){
+  var buf = new TextEncoder().encode(key);
+  return crypto.subtle.digest('SHA-256', buf).then(function(h){
+    return Array.prototype.map.call(new Uint8Array(h), function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+  });
+}
+function deviceGate(){
+  if(!deviceIsTablet()) return Promise.resolve(true);
+  deviceShowLock('checking');
+  var key = deviceStoredKey();
+  if(!key) return Promise.resolve(false);
+  return deviceHash(key).then(function(hash){
+    return supaFetch(SUPA_URL + '/rest/v1/rpc/wc_device_check', {
+      method: 'POST', headers: getSupaHeaders(),
+      body: JSON.stringify({p_key_hash: hash})
+    });
+  }).then(function(r){ return r.ok ? r.json() : false; })
+    .then(function(v){ return v === true; })
+    .catch(function(){ return false; });
+}
+function deviceShowLock(mode){
+  var s = document.getElementById('device-lock'); if(!s) return;
+  s.style.display = 'flex';
+  var chk = document.getElementById('device-lock-checking');
+  var main = document.getElementById('device-lock-main');
+  if(chk) chk.style.display = (mode === 'checking') ? 'block' : 'none';
+  if(main) main.style.display = (mode === 'checking') ? 'none' : 'block';
+}
+function deviceHideLock(){
+  var s = document.getElementById('device-lock'); if(s) s.style.display = 'none';
+}
+function deviceLockMsg(t){
+  var m = document.getElementById('device-lock-msg');
+  if(m){ m.textContent = t || ''; m.style.display = t ? 'block' : 'none'; }
+}
+function deviceRetry(){
+  deviceLockMsg('');
+  deviceGate().then(function(ok){ if(ok) deviceEnter(); else deviceShowLock(); });
+}
+function deviceRegister(){
+  var inp = document.getElementById('device-owner-pw');
+  var pw = inp ? inp.value : '';
+  if(pw !== OWNER_PW){ deviceLockMsg('オーナーパスワードが違います'); return; }
+  var bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  var key = Array.prototype.map.call(bytes, function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+  try{ localStorage.setItem(DEVICE_KEY_LS, key); }catch(e){}
+  deviceLockMsg('登録しています…');
+  deviceHash(key).then(function(hash){
+    return supaFetch(SUPA_URL + '/rest/v1/rpc/wc_device_register', {
+      method: 'POST', headers: getSupaHeaders(),
+      body: JSON.stringify({p_key_hash: hash, p_label: 'shop-tablet'})
+    });
+  }).then(function(r){
+    if(!r.ok) throw new Error('register failed');
+    if(inp) inp.value = '';
+    deviceLockMsg('');
+    deviceEnter();
+  }).catch(function(){
+    try{ localStorage.removeItem(DEVICE_KEY_LS); }catch(e){}
+    deviceLockMsg('登録できませんでした。電波を確認してもう一度お願いします');
+  });
 }
 
 function getSupaHeaders() {

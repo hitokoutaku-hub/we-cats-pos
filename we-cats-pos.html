@@ -36,6 +36,24 @@
   </div>
 </div>
 
+<!-- 端末ロック画面（タブレット専用アカウントは登録済み端末でのみ使用可） -->
+<div id="device-lock" style="position:fixed;inset:0;background:linear-gradient(135deg,#f4a4ad,#e8838f);z-index:10001;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;">
+  <div style="font-family:'Noto Sans JP',sans-serif;font-size:22px;font-weight:800;color:#fff;letter-spacing:.5px;margin-bottom:14px;text-align:center;">📱 この端末は登録されていません</div>
+  <div id="device-lock-checking" style="font-size:14px;color:#fff;display:none;">端末を確認中…</div>
+  <div id="device-lock-main" style="width:100%;max-width:340px;display:none;">
+    <div style="font-size:13px;color:rgba(255,255,255,.92);text-align:center;line-height:1.8;margin-bottom:18px;">このアカウントは、登録された店のタブレットでのみ使えます。<br>お手数ですが、吉村さんに連絡してください。</div>
+    <button onclick="deviceRetry()" style="width:100%;padding:14px;background:#fff;color:#e8838f;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">もう一度確認する</button>
+    <div style="background:rgba(255,255,255,.18);border-radius:16px;padding:16px;margin-top:14px;">
+      <div style="font-size:12px;color:#fff;text-align:center;margin-bottom:10px;">オーナー用：この端末を登録する</div>
+      <input type="password" id="device-owner-pw" placeholder="オーナーパスワード" autocomplete="off"
+        style="width:100%;padding:12px;border-radius:10px;border:none;font-size:16px;text-align:center;letter-spacing:4px;font-family:'Noto Sans JP',sans-serif;outline:none;margin-bottom:10px;box-sizing:border-box;">
+      <button onclick="deviceRegister()" style="width:100%;padding:12px;background:rgba(255,255,255,.9);color:#c2546a;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">この端末を登録する</button>
+      <div id="device-lock-msg" style="color:#fff0e0;font-size:12px;text-align:center;margin-top:8px;display:none;"></div>
+    </div>
+    <button onclick="authLogout()" style="width:100%;padding:10px;background:transparent;color:rgba(255,255,255,.85);border:none;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;margin-top:10px;">ログアウト</button>
+  </div>
+</div>
+
 
 
 <div class="hdr-wrap">
@@ -51,7 +69,7 @@
     </div>
   </div>
   <div class="hdate" id="hdate"></div>
-  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20261103a</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:2px;">ver. 20261120a</div>
 </div>
 
 <div class="nav">
@@ -904,7 +922,7 @@
 </div></div>
 
 
-<script src="app.js?v=20261103a"></script>
+<script src="app.js?v=20261120a"></script>
 <script>
 // =====================================================
 // WE CATS POS × 入口QR（来店チェックイン）・猫総選挙 の連携
