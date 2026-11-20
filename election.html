@@ -358,6 +358,8 @@ function showPlanForm(me, kind){
       (night ? '' : '<p class="hint">営業 12:00〜18:00（最終受付 17:00）</p>') + '</div>' +
     '<div class="f"><label for="pl-people">人数</label><select class="in" id="pl-people">' +
       [1,2,3,4,5,6,7,8,9,10].map(function(n){ return '<option value="' + n + '"' + (n === 1 ? ' selected' : '') + '>' + n + '名</option>'; }).join('') + '</select></div>' +
+    (r.has_phone ? '' : '<div class="f"><label for="pl-phone">携帯電話番号 <span class="req">必須</span></label><input class="in" id="pl-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="090-1234-5678">' +
+      '<p class="hint">キャンセル防止のため、予約には電話番号をお願いしています。登録しておくと、次回から入力はいりません。お店からお電話することはありません。</p></div>') +
     '<div class="f"><label for="pl-note">ひとこと <span class="opt">任意・100文字まで</span></label><input class="in" id="pl-note" maxlength="100" placeholder="例：子ども1人います／初めての友達と行きます"></div>' +
     '<p class="muted" style="font-size:12px">' + (night ? '確認中のあいだも席は確保されます。' : 'お店の空き状況によっては、お受けできないことがあります。') + '予定が変わったら、カードから取り消してください。</p>' +
     '<button class="btn" type="button" id="pl-go">予約する</button><p class="err" id="pl-err"></p>' +
@@ -366,14 +368,18 @@ function showPlanForm(me, kind){
   $('pl-back').onclick = function(){ showMine(me); };
   $('pl-go').onclick = function(){
     if(!$('pl-date').value){ $('pl-err').textContent = '日にちを選んでください。'; return; }
+    if($('pl-phone') && !$('pl-phone').value.trim()){ $('pl-err').textContent = '電話番号を入力してください。'; return; }
     var b = this; b.setAttribute('aria-busy', 'true');
     rpc('el_plan_add', {p_member:member.id, p_secret:member.secret, p_date:$('pl-date').value, p_time:$('pl-time').value,
-      p_people:+$('pl-people').value, p_note:$('pl-note').value, p_kind:night ? 'night' : 'day'}).then(function(x){
+      p_people:+$('pl-people').value, p_note:$('pl-note').value, p_kind:night ? 'night' : 'day',
+      p_phone:$('pl-phone') ? $('pl-phone').value : null}).then(function(x){
       b.removeAttribute('aria-busy');
       if(x && x.ok) return showMine(me);
       var M = {same_day:'その日はもう予約しています。変えたいときは、前の予約を取り消してください。',
         too_many:'予約できるのは3件までです。', past:'その時間はもう過ぎています。', date:'選べない日にちです。',
         time:'選べない時間です。', people:'人数を選んでください。', disabled:'いまは予約の受付をお休みしています。',
+        phone_required:'電話番号を入力してください。', phone:'電話番号を正しく入力してください。',
+        phone_used:'その電話番号は、ほかの方の登録に使われています。スタッフに声をかけてください。',
         night_day:'その日は夜カフェの日ではありません。',
         full:'ごめんなさい、その日は' + (x && x.left ? '残り' + x.left + '席です。人数を減らすか、' : '満席です。') + '別の日をお選びください。',
         auth:'このスマホの登録情報が見つかりませんでした。'};
@@ -441,11 +447,11 @@ function showRegister(){
   show('<div class="card"><p class="maru" style="font-size:18px;margin-bottom:10px">推し猫を1匹えらんでね</p><div class="cats" id="cats">' + (cats || '<p class="muted">猫の登録がまだです。スタッフに声をかけてください。</p>') + '</div><p class="err" id="e-cat"></p></div>' +
     '<div class="card">' +
       '<div class="f"><label for="nick">ニックネーム <span class="req">必須</span></label><input class="in" id="nick" maxlength="20" autocomplete="nickname" placeholder="ねこまる"><p class="err" id="e-nick"></p></div>' +
-      '<p class="muted" style="margin-bottom:10px">携帯電話番号かInstagramの、どちらか1つ以上を入力してください</p>' +
-      '<div class="f"><label for="phone">携帯電話番号</label><input class="in" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="090-1234-5678"></div>' +
-      '<div class="f"><label for="insta">Instagram</label><input class="in" id="insta" autocomplete="off" autocapitalize="off" placeholder="@wecats_fan">' +
+      '<p class="muted" style="margin-bottom:10px">携帯電話番号とInstagramは、どちらも任意です（入れなくても登録できます）</p>' +
+      '<div class="f"><label for="phone">携帯電話番号 <span class="opt">任意</span></label><input class="in" id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="090-1234-5678"></div>' +
+      '<div class="f"><label for="insta">Instagram <span class="opt">任意</span></label><input class="in" id="insta" autocomplete="off" autocapitalize="off" placeholder="@wecats_fan">' +
         '<label class="chk" id="share-row" hidden><input type="checkbox" id="share"> 結果発表で@を紹介してもOK</label></div>' +
-      '<p class="hint" style="margin-top:-8px">入賞のご連絡と登録の復元に使います。ご連絡はInstagramのDMかSMSで行い、お電話や宣伝はしません。公開されることはありません。</p><p class="err" id="e-contact"></p>' +
+      '<p class="hint" style="margin-top:-8px">入賞のご連絡と登録の復元に使います。ご連絡はInstagramのDMかSMSで行い、お電話や宣伝はしません。公開されることはありません。<br>電話番号を登録しておくと、予約のときに入力しなくて済みます。<br>どちらも登録がないと、景品の当選連絡ができないため景品をお渡しできません。スマホを変えたときの復元もできません。</p><p class="err" id="e-contact"></p>' +
     '</div>' + rulesBox() +
     '<div class="card"><label class="chk" style="margin-top:0"><input type="checkbox" id="consent"> 参加のルールに同意する</label><p class="err" id="e-consent"></p>' +
     '<button class="btn" id="reg-go" type="button">' + regLabel() + '</button><p class="err" id="e-send"></p></div>');
@@ -461,7 +467,6 @@ function showRegister(){
     var ok = true;
     if(!pickedCat){ $('e-cat').textContent = '推し猫を選んでください。'; ok = false; }
     if(!$('nick').value.trim()){ $('e-nick').textContent = 'ニックネームを入力してください。'; ok = false; }
-    if(!$('phone').value.trim() && !$('insta').value.trim()){ $('e-contact').textContent = '携帯電話番号かInstagramを入力してください。'; ok = false; }
     if(!$('consent').checked){ $('e-consent').textContent = '参加のルールへの同意が必要です。'; ok = false; }
     if(!ok){ var f = document.querySelector('.err:not(:empty)'); if(f) f.scrollIntoView({block:'center', behavior:'smooth'}); return; }
     var cat = info.cats.find(function(c){ return c.id === pickedCat; });
@@ -487,7 +492,6 @@ $('cf-ok').onclick = function(){
       var M = {exists:'この電話番号またはInstagramは、すでに登録されています。下の「前に登録した」から復元してください。',
         phone:'電話番号を正しく入力してください。', insta:'Instagramのアカウント名を正しく入力してください（英数字・ピリオド・アンダーバー）。',
         nickname:'ニックネームは20文字以内で入力してください。', cat:'その猫は選べなくなりました。別の猫を選んでください。',
-        contact:'電話番号かInstagramを入力してください。',
         device_used:'このスマホでは、今日すでに別の方の来店が記録されています。ご自身のスマホで登録してください。'};
       if(r.error === 'qr_expired') return showExpired();
       $('e-send').innerHTML = esc(M[r.error] || '登録できませんでした。') +
